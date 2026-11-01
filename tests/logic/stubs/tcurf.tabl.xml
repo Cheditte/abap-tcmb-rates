@@ -1,0 +1,56 @@
+<?xml version='1.0' encoding='utf-8'?>
+<abapGit xmlns:asx="http://www.sap.com/abapxml" version="v1.0.0" serializer="LCL_OBJECT_TABL">
+ <asx:abap version="1.0">
+  <asx:values>
+   <DD02V>
+    <TABNAME>TCURF</TABNAME>
+    <TABCLASS>INTTAB</TABCLASS>
+    <DDLANGUAGE>E</DDLANGUAGE>
+   </DD02V>
+   <DD03P_TABLE>
+    <DD03P>
+     <FIELDNAME>KURST</FIELDNAME>
+     <ADMINFIELD>0</ADMINFIELD>
+     <DATATYPE>CHAR</DATATYPE>
+     <LENG>4</LENG>
+     <DECIMALS>0</DECIMALS>
+    </DD03P>
+    <DD03P>
+     <FIELDNAME>FCURR</FIELDNAME>
+     <ADMINFIELD>0</ADMINFIELD>
+     <DATATYPE>CUKY</DATATYPE>
+     <LENG>5</LENG>
+     <DECIMALS>0</DECIMALS>
+    </DD03P>
+    <DD03P>
+     <FIELDNAME>TCURR</FIELDNAME>
+     <ADMINFIELD>0</ADMINFIELD>
+     <DATATYPE>CUKY</DATATYPE>
+     <LENG>5</LENG>
+     <DECIMALS>0</DECIMALS>
+    </DD03P>
+    <DD03P>
+     <FIELDNAME>GDATU</FIELDNAME>
+     <ADMINFIELD>0</ADMINFIELD>
+     <DATATYPE>NUMC</DATATYPE>
+     <LENG>8</LENG>
+     <DECIMALS>0</DECIMALS>
+    </DD03P>
+    <DD03P>
+     <FIELDNAME>FFACT</FIELDNAME>
+     <ADMINFIELD>0</ADMINFIELD>
+     <DATATYPE>DEC</DATATYPE>
+     <LENG>9</LENG>
+     <DECIMALS>0</DECIMALS>
+    </DD03P>
+    <DD03P>
+     <FIELDNAME>TFACT</FIELDNAME>
+     <ADMINFIELD>0</ADMINFIELD>
+     <DATATYPE>DEC</DATATYPE>
+     <LENG>9</LENG>
+     <DECIMALS>0</DECIMALS>
+    </DD03P>
+   </DD03P_TABLE>
+  </asx:values>
+ </asx:abap>
+</abapGit>

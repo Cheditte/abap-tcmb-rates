@@ -1,0 +1,4 @@
+/node_modules/
+/.abaplint-deps/
+/npm-debug.log*
+/.logic-tests/

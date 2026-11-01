@@ -1,0 +1,21 @@
+{
+  "name": "abap-tcmb-rates",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local static checks for the ABAP TCMB exchange-rate loader",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "lint": "node scripts/lint.mjs",
+    "lint:740": "node scripts/lint.mjs 740",
+    "lint:758": "node scripts/lint.mjs 758",
+    "test:logic": "node scripts/test-logic.mjs"
+  },
+  "devDependencies": {
+    "@abaplint/cli": "2.120.92",
+    "@abaplint/transpiler-cli": "2.14.15",
+    "@abaplint/runtime": "2.14.15"
+  }
+}
