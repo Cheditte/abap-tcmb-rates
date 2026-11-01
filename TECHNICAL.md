@@ -18,17 +18,33 @@ Rates are quoted in **TRY**. `TARGET_CURRENCY` must be blank or `TRY`; no cross 
 |---|---|
 | Language | Standard ABAP for on-premise/private systems; **not an ABAP Cloud implementation**. |
 | Static targets | abaplint checks 7.40 SP08 and 7.58. This does not guarantee runtime support. |
-| Runtime evidence | Historical ABAP Platform 2023 tests only; current changes await SAP validation. |
-| Installation | abapGit objects in `src/`; no generated SM30 dialogs or profile data. |
+| Runtime evidence | An isolated fresh installation completed in SAP; final editor acceptance remains partial. See the [validation record](docs/validation-2026-11-02.md). |
+| Installation | Single-file SE38 installer and simple settings report; abapGit is optional. No generated SM30 dialogs or profile data. |
 | Connectivity | SAP application-server access to `www.tcmb.gov.tr:443`, or prepared local files. Basis must verify the actual certificate chain and STRUST PSE. |
 | SAP configuration | Currencies, rate types, TCURF factors in OBBS; a factory calendar for `NEXT_WORKDAY`. |
 | Permissions | Import/development and profile maintenance for setup; runtime BAPI, table and file permissions must be tested separately. |
 
 Accounting must choose the source field, SAP rate type, validity rule and overwrite policy. The project does not determine statutory accounting or tax treatment.
 
+## Standalone installer and settings report
+
+`installer/zche_tcmb_install.prog.abap` is generated from `src/` and `installer/template.abap` with `npm run build:installer`, retaining the 7.40 SP08 syntax target. It embeds metadata, class/interface source and ABAP Unit includes, with no abapGit or GitHub connection at installation time. It does not create a package: supply an existing Z/Y package and your modifiable Workbench task. `$TMP` requires an empty task.
+
+Preflight rejects existing active/inactive objects in TADIR and native catalogs. It does not update DDIC schemas. Actual installation performs CTS registration, DDIC creation/activation, OO source saving and batch activation. DDIC activation return codes are checked. Dynamic `CL_OO_FACTORY` source APIs fall back to classic `CL_OO_SOURCE` when unavailable. These internal SAP repository APIs can vary by release; local lint does not validate them. An isolated fresh installation completed; final settings-save and transport acceptance remain pending in the validation record. A partial installation is neither rolled back nor automatically resumed.
+
+`ZCHE_TCMB_CONFIG` edits one mapping and an explicit currency list. Three-table updates use one LUW with rollback and profile-lock cleanup on failure. It checks S_TABU_NAM, SCC4 and CTS. Existing settings must be loaded first; changed profile/mapping/currency snapshots are rejected on save. Advanced profiles are not silently reduced. Transport keys are restricted to client + 20-character profile key, with a generic suffix for MAP/CURR children. Verify removal behavior on target systems during SAP acceptance too. Evaluate direct-SQL maintenance logging and your environment's audit requirements separately.
+
+Client controls use CCCORACTIV's actual values: blank = manual recording, 1 = automatic recording, 2 = no changes, 3 = local changes only. Local saves require an empty task and state blank/3; transport saves require a task and state blank/1. Unknown states fail closed. These rules do not change SCC4 settings.
+
+## Advanced profile maintenance
+
+The date-rule field is CHAR12. `NEXT_WORKDAY` cannot fit classic DD07V fixed-value keys, so the domain has no truncated fixed values. The simple settings report supplies F4 choices and application validation. In advanced maintenance, enter the full rule name; `NEXT_WORKD` is invalid.
+
+For multiple rate-type mappings, exclusions, renamed SAP currencies or custom sources, maintain the three tables through SM30. This **optional** route requires dialogs not supplied by the repository. In DEV use SE11 → Utilities → Table Maintenance Generator (or SE54 → Generated Objects → Create/Change). Select appropriate authorization groups, customer function groups, one-step screens and standard recording routines. Example groups: `ZCHE_TCMB_PROF_M`, `ZCHE_TCMB_MAP_M`, `ZCHE_TCMB_CURR_M`; select available names in your landscape. Separate groups can use screen 0001. Review the SE11 maintenance setting if disabled. Transport objects/settings normally rather than generating in production. This generation route still awaits SAP acceptance. None of it is needed for the simple settings report.
+
 ## Profile settings
 
-All three tables are client dependent. Values below are examples; no profile data is supplied. See the [usage guide](WALKTHROUGH.md) for installation and SM30 dialog generation.
+All three tables are client dependent. Values below are examples; no profile data is supplied. See the [usage guide](WALKTHROUGH.md) for standalone installation and the simple settings report.
 
 **`ZCHE_TCMB_PROF`: one profile**
 
@@ -152,13 +168,15 @@ Install Node.js 22+ and Git, then:
 
 ```sh
 npm ci --ignore-scripts
+npm run build:installer
+npm run check:installer
 npm run lint
 npm run test:logic
 ```
 
 `npm run lint:740` and `npm run lint:758` run the targets separately. The runner fetches fixed-revision SAP stubs into ignored `.abaplint-deps/`; npm tooling is locked. GitHub Actions runs the same checks. Incomplete dependency stubs cannot replace SAP activation, ATC, ABAP Unit or integration tests.
 
-`test:logic` transpiles selected calculator, runner and writer tests to JavaScript with simplified DDIC stubs and a fake persistence boundary. It uses pinned transpiler/runtime dependencies and an exact `open-abap-core` revision. It does not establish SAP activation, BAPI/database/commit behavior, authorizations, factory calendars, input integration or exact SAP decimal/overflow semantics.
+`test:logic` transpiles selected calculator, configuration-rule, runner and writer tests to JavaScript with simplified DDIC stubs and a fake persistence boundary. It uses pinned transpiler/runtime dependencies and an exact `open-abap-core` revision. It does not establish SAP activation, BAPI/database/commit behavior, authorizations, factory calendars, input integration or exact SAP decimal/overflow semantics.
 
 **Historical evidence:** the revision exported on 1 November 2026 was reported to pass 26 tests on ABAP Platform 2023, with real USD/EUR/JPY writes/readback, inverse quotation, file input and background jobs. These results **do not validate subsequent changes**. Fresh installation, restricted users, SM59, maintenance-dialog generation and older releases remain acceptance tasks.
 

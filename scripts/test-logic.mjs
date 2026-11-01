@@ -10,7 +10,7 @@ const root = fileURLToPath(new URL("../", import.meta.url));
 const coreRevision = "f735eed652288c8ed85b3083a187cc3e7e4a9b97";
 const sourceObjects = [
   "zif_che_tcmb", "zif_che_tcmb_rate_store", "zif_che_tcmb_day_loader",
-  "zcl_che_tcmb_writer", "zcl_che_tcmb_calc", "zcl_che_tcmb_runner", "zcx_che_tcmb",
+  "zcl_che_tcmb_writer", "zcl_che_tcmb_calc", "zcl_che_tcmb_runner", "zcx_che_tcmb", "zcl_che_tcmb_config_rules",
 ];
 
 async function run(commandArguments, cwd, logName) {

@@ -26,5 +26,7 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Check ABAP 7.40 SP08 and 7.58 syntax
         run: npm run lint
+      - name: Verify standalone installer payload and source completeness
+        run: npm run check:installer
       - name: Run transpiled logic tests
         run: npm run test:logic

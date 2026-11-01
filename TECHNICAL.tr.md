@@ -18,17 +18,35 @@ Kurların karşılığı **TRY**'dir. `TARGET_CURRENCY` boş veya `TRY` olmalıd
 |---|---|
 | Dil | On-premise/private sistemler için standart ABAP; **ABAP Cloud uygulaması değildir**. |
 | Statik hedefler | abaplint ile 7.40 SP08 ve 7.58 kontrol edilir; çalışma zamanı garantisi değildir. |
-| Çalışma zamanı kanıtı | Yalnızca önceki revizyonun ABAP Platform 2023 testleri; güncel değişiklikler SAP doğrulaması bekliyor. |
-| Kurulum | abapGit nesneleri `src/` altında; hazır SM30 ekranı veya profil verisi yok. |
+| Çalışma zamanı kanıtı | Ayrı test adlarıyla temiz kurulum tamamlandı; son ayar ekranı kabulü kısmi. [Test kaydı](docs/validation-2026-11-02.md). |
+| Kurulum | Tek dosyalı SE38 installer ve basit ayar programı; abapGit isteğe bağlıdır. Hazır SM30 ekranı veya profil verisi yok. |
 | Bağlantı | SAP uygulama sunucusundan `www.tcmb.gov.tr:443` erişimi veya hazırlanmış dosyalar. Gerçek sertifika zinciri ve STRUST PSE'sini Basis doğrulamalı. |
 | SAP ayarları | Para birimleri, kur tipleri, OBBS'de TCURF oranları; `NEXT_WORKDAY` için fabrika takvimi. |
 | Yetkiler | Kurulumda geliştirme/içe aktarma ve profil bakımı; çalışma kullanıcısının BAPI, tablo ve dosya yetkileri ayrıca test edilmeli. |
 
 Kaynak alanı, SAP kur tipi, geçerlilik ve üzerine yazma kuralını muhasebe belirlemelidir. Proje mevzuata göre muhasebe veya vergi uygulaması seçmez.
 
+## Tek dosyalı kurulum ve ayar programı
+
+`installer/zche_tcmb_install.prog.abap`, `src/` ve `installer/template.abap` dosyalarından `npm run build:installer` ile üretilir. 7.40 SP08 sözdizimi hedefi korunur. abapGit veya GitHub bağlantısına ihtiyaç duymadan gömülü metaveriyi, sınıf/arayüz kaynaklarını ve ABAP Unit include'larını kurar. Paket oluşturmaz; mevcut Z/Y paketini ve kullanıcının değiştirilebilir Workbench task'ını ister. `$TMP` için task boş olmalıdır.
+
+Ön kontrol mevcut nesneleri hem TADIR hem yerel kataloglarda arar. Mevcut aktif/pasif nesneler engeldir; DDIC şeması güncellenmez. Gerçek kurulumda CTS kayıtları, DDIC oluşturma/aktivasyon, OO kaynak kaydı ve toplu aktivasyon yapılır. DDIC aktivasyon dönüş kodları kontrol edilir. Dinamik `CL_OO_FACTORY` kaynak API'si, bulunmadığı durumda klasik `CL_OO_SOURCE` yolu kullanılır. SAP'nin iç repository API'leri sürüme göre değişebilir; yerel lint bunları doğrulamaz. Ayrı test adlarıyla temiz kurulum tamamlandı; son profil kaydı ve transport kabulü test kaydında açık kalan maddelerdir. Yarıda kalmış kurulum otomatik geri alınmaz veya devam ettirilmez.
+
+`ZCHE_TCMB_CONFIG` tek eşleme ve açık para birimi listesi için sade editördür. Üç tablo aynı LUW içinde kaydedilir; hata halinde rollback ve profil kilidi temizliği yapılır. S_TABU_NAM, SCC4 ve CTS kontrolleri uygulanır. Mevcut profil önce yüklenmelidir; son okunan profil/eşleme/para birimleri değişmişse kayıt reddedilir. İleri profil yapıları sessizce daraltılmaz. Transport anahtarları istemci + 20 karakter profil anahtarıyla sınırlandırılır; MAP/CURR alt satırları için generic son ek kullanılır. SAP kabulünde silinen satırların hedefteki etkisini de doğrulayın. Doğrudan SQL bakımının tablo loglaması/ortamınızdaki izleme gereksinimlerini ayrıca değerlendirin.
+
+İstemci kontrolü CCCORACTIV değerlerini kullanır: boş = elle kayıt, 1 = otomatik kayıt, 2 = değişiklik yasak, 3 = yalnız yerel değişiklik. Yerel kayıtta task boş ve durum boş/3 olmalıdır; transportlu kayıtta task gerekir ve durum boş/1 olmalıdır. Bilinmeyen durumlar reddedilir. SCC4 ayarı değiştirilmez.
+
+<a id="advanced-profile-maintenance"></a>
+
+Tarih kuralı alanı CHAR12'dir. `NEXT_WORKDAY`, klasik DD07V sabit değer anahtarına sığmadığından domain'de kesilmiş sabit değerler tutulmaz. Basit ayar ekranı F4 seçenekleri ve uygulama doğrulaması sağlar. İleri bakımda tam kural adını yazın; `NEXT_WORKD` geçersizdir.
+
+## İleri profil bakımı
+
+Birden fazla kur tipi eşlemesi, dışlama, farklı SAP para birimi kodu veya özel kaynak için üç tabloyu SM30 ile yönetin. Bu **isteğe bağlı** yolun ekranları depoda yoktur. DEV'de SE11 → Utilities → Table Maintenance Generator (veya SE54 → Generated Objects → Create/Change) ile her tablo için uygun yetki grubu, müşteri fonksiyon grubu, tek adımlı ekran ve standart kayıt rutinini seçip üretin. Örnek fonksiyon grupları `ZCHE_TCMB_PROF_M`, `ZCHE_TCMB_MAP_M`, `ZCHE_TCMB_CURR_M`'dir; adları kurumunuza göre seçin. Ayrı gruplarda ekran 0001 olabilir. Bakım engelliyse SE11 bakım ayarını inceleyin. Nesne/ayarları normal transportla taşıyın; canlıda ekran üretmeyin. Bu üretim yolu henüz SAP'de doğrulanmadı. Basit kullanım için bunları yapmanız gerekmez.
+
 ## Profil ayarları
 
-Üç tablo istemciye bağlıdır. Aşağıdaki değerler örnektir; hazır profil verisi sağlanmaz. İlk kurulum ve SM30 ekranları için [kullanım rehberine](WALKTHROUGH.tr.md) bakın.
+Üç tablo istemciye bağlıdır. Aşağıdaki değerler örnektir; hazır profil verisi sağlanmaz. İlk kurulum ve basit ayar ekranı için [kullanım rehberine](WALKTHROUGH.tr.md) bakın.
 
 **`ZCHE_TCMB_PROF`: bir profil**
 
@@ -152,13 +170,15 @@ Node.js 22+ ve Git ile:
 
 ```sh
 npm ci --ignore-scripts
+npm run build:installer
+npm run check:installer
 npm run lint
 npm run test:logic
 ```
 
 `npm run lint:740` ve `npm run lint:758` hedefleri ayrı çalıştırır. SAP tanımları sabit `abaplint/deps` revizyonuyla yok sayılan `.abaplint-deps/` içine alınır; npm sürümü kilitlidir. GitHub Actions aynı kontrolleri çalıştırır. Eksik bağımlılık tanımları; SAP aktivasyonu, ATC, ABAP Unit ve entegrasyon testlerinin yerine geçmez.
 
-`test:logic`, hesaplayıcı, çalıştırıcı ve yazıcının seçilmiş testlerini basitleştirilmiş DDIC tanımları ve sahte kalıcılık katmanıyla JavaScript'e çevirir. Çevirici/çalışma zamanı ve `open-abap-core` revizyonu sabittir. SAP aktivasyonu, gerçek BAPI/veritabanı/commit, yetki, fabrika takvimi, girdi entegrasyonu ve SAP ondalık/taşma davranışlarını doğrulamaz.
+`test:logic`, hesaplayıcı, ayar doğrulayıcısı, çalıştırıcı ve yazıcının seçilmiş testlerini basitleştirilmiş DDIC tanımları ve sahte kalıcılık katmanıyla JavaScript'e çevirir. Çevirici/çalışma zamanı ve `open-abap-core` revizyonu sabittir. SAP aktivasyonu, gerçek BAPI/veritabanı/commit, yetki, fabrika takvimi, girdi entegrasyonu ve SAP ondalık/taşma davranışlarını doğrulamaz.
 
 **Geçmiş kanıt:** 1 Kasım 2026'da dışa aktarılan önceki revizyonda ABAP Platform 2023 üzerinde 26 testin geçtiği; USD/EUR/JPY yazma ve geri okuma, ters kotasyon, dosya ve job testlerinin yapıldığı raporlandı. Bu sonuçlar **sonraki değişiklikleri doğrulamaz**. Boş kurulum, kısıtlı kullanıcı, SM59, bakım ekranı üretimi ve eski sürümler kabul testi bekliyor.
 

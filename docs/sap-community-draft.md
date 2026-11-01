@@ -71,8 +71,8 @@ Clarify that the factory calendar changes validity, while source retrieval consi
 
 Author evidence to add:
 
-1. Exact commit imported into a clean DEV package using abapGit; show activation and test evidence.
-2. One-time SE54 maintenance-dialog generation and normal transport. The repository does not include generated SM30 dialogs or ready-made profile data.
+1. Exact commit installed in a clean DEV package with the single-file SE38 installer; show preflight, activation and test evidence. abapGit remains an optional route.
+2. `ZCHE_TCMB_CONFIG` for a single mapping and explicit currencies, with normal settings transport. Generated SM30 dialogs are only needed for optional advanced maintenance; no ready-made profile data is supplied.
 3. A `DEMO` profile restricted to USD/JPY; explain its mapping as an example, not an accounting recommendation.
 4. Dry-run result showing dates, factors and statuses; explain that the BAPI is not called in test mode.
 5. Controlled real write in a sandbox, OB08/conversion readback, then `UNCHANGED` on a repeat run.
@@ -97,13 +97,14 @@ Use an evidence table completed by the author:
 
 | Check | Commit / environment | Actual outcome |
 |---|---|---|
-| Fresh abapGit installation and activation | To fill after execution | Pending |
+| Fresh SE38 installation and activation | Isolated ZTS8 names in $TMP; payload hash and limits recorded | Completed; final editor correction awaits SAP rerun. See [evidence](validation-2026-11-02.md). |
 | ATC and complete ABAP Unit suite | To fill after execution | Pending |
 | Direct/inverse real write and SAP readback | To fill after execution | Pending |
 | Restricted user, locks and failed commits | To fill after execution | Pending |
 | Background job and later-day failure recovery | To fill after execution | Pending |
 | Local static checks | Pinned tooling, 7.40 SP08 and 7.58 targets | Record current run |
-| Transpiled local logic tests | JavaScript, DDIC stubs and fake persistence | 39 passed locally on 2 November 2026; JavaScript emulation, not SAP execution. Rerun for the publication commit. |
+| Transpiled local logic tests | JavaScript, DDIC stubs and fake persistence | 59 passed locally on 2 November 2026; JavaScript emulation, not SAP execution. Rerun for the publication commit. |
+| Installer payload checks | Generated ABAP decoded back into metadata, source and tests | 3 local checks; does not validate SAP repository APIs. |
 
 Historical context only: an earlier revision was reported to pass 26 ABAP Unit tests and end-to-end checks on an ABAP Platform 2023 trial on 1 November 2026. That report does not certify the changed revision or older releases.
 

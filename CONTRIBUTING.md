@@ -8,6 +8,8 @@ Requirements: Node.js 22+, npm and Git. From the repository root:
 
 ```sh
 npm ci --ignore-scripts
+npm run build:installer
+npm run check:installer
 npm run lint
 npm run test:logic
 ```
@@ -26,14 +28,16 @@ Update the CLI lockfile and dependency SHA deliberately when upgrading tooling. 
 2. Keep changes focused. Add ABAP Unit regression coverage for changed calculation, validation and error behavior. Use dependency boundaries for database/BAPI orchestration rather than touching real exchange rates in unit tests.
 3. Export SAP objects with abapGit when available. If editing serialized source locally, disclose that it has not yet been imported or executed in SAP.
 4. Run local checks, then perform the applicable SAP acceptance checks below. Record what passed, failed or was unavailable; a test count is not evidence that those tests ran.
-5. Update both READMEs and the unreleased changelog when user-visible behavior changes.
+5. Regenerate the installer after any source/metadata/template change; commit the generated file and run check:installer. Update both READMEs, guides and the unreleased changelog when user-visible behavior changes.
 
 ## SAP acceptance checklist
 
 Run this in an authorized DEV/test client with a dedicated profile and limited currencies. Record the exact Git commit, SAP_BASIS release/SP, kernel, abapGit version, client, source type and tested configuration. Redact internal hosts, credentials and business data from shared evidence.
 
+- [ ] Standalone: create only ZCHE_TCMB_INSTALL in a clean 7.40 SP08+ DEV/sandbox. Verify that Check only leaves repository objects/settings/rates unchanged, package/task and permission checks fail safely, and existing active/inactive objects stop before mutation. Execute a fresh real installation, verify DDIC/OO activation, test includes, English labels and CTS objects. Repeat on an older supported release; test classic source-API fallback where available. Capture the exact commit and errors.
+- [ ] Settings report: create/load/save a limited profile; verify S_TABU_NAM restrictions, SCC4 protection, concurrency lock/stale-change rejection, failed-write rollback, transport keys (including removed child rows), and local-save restrictions. Confirm advanced profiles cannot be flattened. Transport settings into a test client and compare all three tables.
 - [ ] Import into a clean package with abapGit; verify DDIC dependencies, activation and all test classes. Run ATC and the complete package ABAP Unit suite. Record results for the current commit.
-- [ ] Generate and transport the three table-maintenance dialogs following the [usage guide](WALKTHROUGH.md#12-generate-the-settings-screens-once). Create the `DEMO` profile, mapping and USD/JPY inclusion rows through SM30. Confirm client isolation and restricted maintenance authorization.
+- [ ] Generate and transport the three table-maintenance dialogs following the optional [advanced-maintenance route](TECHNICAL.md#advanced-profile-maintenance). Create the `DEMO` profile, mapping and USD/JPY inclusion rows through SM30. Confirm client isolation and restricted maintenance authorization.
 - [ ] Test HTTPS directly and through an SM59 destination when supported by the environment. Verify the actual TLS trust chain. Exercise connection failure, HTTP error, malformed XML and bulletin-date mismatch.
 - [ ] Test file input with a valid file, missing file, unreadable file, invalid XML and a folder containing spaces. File-open failures must be `ERROR`, not an inferred holiday.
 - [ ] Confirm invalid dates, units, numeric values, duplicate currencies, unsupported targets and invalid profile choices are rejected without writing rates.

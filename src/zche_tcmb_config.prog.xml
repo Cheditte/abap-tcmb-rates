@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<abapGit version="v1.0.0" serializer="LCL_OBJECT_PROG" serializer_version="v1.0.0">
+  <asx:abap xmlns:asx="http://www.sap.com/abapxml" version="1.0">
+    <asx:values>
+      <PROGDIR>
+        <NAME>ZCHE_TCMB_CONFIG</NAME>
+        <SUBC>1</SUBC>
+        <FIXPT>X</FIXPT>
+        <UCCHECK>X</UCCHECK>
+      </PROGDIR>
+      <TPOOL>
+        <item>
+          <ID>R</ID>
+          <ENTRY>TCMB: simple profile settings</ENTRY>
+          <LENGTH>29</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_PROF</KEY>
+          <ENTRY>Profile name</ENTRY>
+          <LENGTH>20</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_DESC</KEY>
+          <ENTRY>Description</ENTRY>
+          <LENGTH>19</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_RULE</KEY>
+          <ENTRY>Valid-from date rule</ENTRY>
+          <LENGTH>28</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_CAL</KEY>
+          <ENTRY>Factory calendar</ENTRY>
+          <LENGTH>24</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_TYPE</KEY>
+          <ENTRY>SAP rate type</ENTRY>
+          <LENGTH>21</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_SRC</KEY>
+          <ENTRY>TCMB rate field</ENTRY>
+          <LENGTH>23</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>S_CURR</KEY>
+          <ENTRY>Currency codes (single values)</ENTRY>
+          <LENGTH>38</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_KEEP</KEY>
+          <ENTRY>Existing: S keep/U update</ENTRY>
+          <LENGTH>33</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_NONE</KEY>
+          <ENTRY>No bulletin (I/W/E)</ENTRY>
+          <LENGTH>27</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_INV</KEY>
+          <ENTRY>Add inverse quotation</ENTRY>
+          <LENGTH>29</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_FILE</KEY>
+          <ENTRY>Read from server files</ENTRY>
+          <LENGTH>30</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_DEST</KEY>
+          <ENTRY>SM59 destination (optional)</ENTRY>
+          <LENGTH>35</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_URL</KEY>
+          <ENTRY>Base URL (usually blank)</ENTRY>
+          <LENGTH>32</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_PATH</KEY>
+          <ENTRY>Server folder (file source)</ENTRY>
+          <LENGTH>35</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_EXIT</KEY>
+          <ENTRY>Exit class (normally blank)</ENTRY>
+          <LENGTH>35</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_TASK</KEY>
+          <ENTRY>Your transport task</ENTRY>
+          <LENGTH>27</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_LOCAL</KEY>
+          <ENTRY>Local settings, no transport</ENTRY>
+          <LENGTH>36</LENGTH>
+        </item>
+        <item>
+          <ID>S</ID>
+          <KEY>P_SAVE</KEY>
+          <ENTRY>Save settings when executing</ENTRY>
+          <LENGTH>36</LENGTH>
+        </item>
+      </TPOOL>
+    </asx:values>
+  </asx:abap>
+</abapGit>

@@ -8,30 +8,9 @@
     <DATATYPE>CHAR</DATATYPE>
     <LENG>000012</LENG>
     <OUTPUTLEN>000012</OUTPUTLEN>
-    <VALEXI>X</VALEXI>
     <DDTEXT>TCMB rate date rule</DDTEXT>
     <DOMMASTER>E</DOMMASTER>
    </DD01V>
-   <DD07V_TAB>
-    <DD07V>
-     <VALPOS>0001</VALPOS>
-     <DDLANGUAGE>E</DDLANGUAGE>
-     <DOMVALUE_L>SAME_DAY</DOMVALUE_L>
-     <DDTEXT>Bulletin date</DDTEXT>
-    </DD07V>
-    <DD07V>
-     <VALPOS>0002</VALPOS>
-     <DDLANGUAGE>E</DDLANGUAGE>
-     <DOMVALUE_L>NEXT_DAY</DOMVALUE_L>
-     <DDTEXT>Next calendar day</DDTEXT>
-    </DD07V>
-    <DD07V>
-     <VALPOS>0003</VALPOS>
-     <DDLANGUAGE>E</DDLANGUAGE>
-     <DOMVALUE_L>NEXT_WORKD</DOMVALUE_L>
-     <DDTEXT>Next working day (factory calendar)</DDTEXT>
-    </DD07V>
-   </DD07V_TAB>
   </asx:values>
  </asx:abap>
 </abapGit>
