@@ -77,7 +77,7 @@ Author evidence to add:
 4. Dry-run result showing dates, factors and statuses; explain that the BAPI is not called in test mode.
 5. Controlled real write in a sandbox, OB08/conversion readback, then `UNCHANGED` on a repeat run.
 
-The README contains the concrete setup sequence. Describe only steps the author has actually completed; list the rest as limitations.
+The [usage guide](../WALKTHROUGH.md) contains the concrete setup sequence; the [technical reference](../TECHNICAL.md) covers fields and extension points. Describe only steps the author has actually completed; list the rest as limitations.
 
 ## 5. Explain failure handling and recovery
 

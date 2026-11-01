@@ -15,6 +15,7 @@ This revision is pre-release. The changes below have local static and JavaScript
 
 ### Added
 
+- Separate English/Turkish setup and usage guides and technical references, with static setup diagrams, explicit sample values and first-run result explanations.
 - Pinned local abaplint tooling, fixed-revision SAP stubs and GitHub Actions checks for 7.40 SP08 and 7.58 syntax targets.
 - A reproducible JavaScript-transpiled logic regression harness for selected calculator, runner and writer tests, with pinned dependencies and an explicit SAP-runtime limitation.
 - English/Turkish installation and first-run instructions, a DEV maintenance-dialog setup path, partial-write recovery guidance and explicit support limits.

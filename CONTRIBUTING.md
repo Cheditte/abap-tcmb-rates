@@ -33,7 +33,7 @@ Update the CLI lockfile and dependency SHA deliberately when upgrading tooling. 
 Run this in an authorized DEV/test client with a dedicated profile and limited currencies. Record the exact Git commit, SAP_BASIS release/SP, kernel, abapGit version, client, source type and tested configuration. Redact internal hosts, credentials and business data from shared evidence.
 
 - [ ] Import into a clean package with abapGit; verify DDIC dependencies, activation and all test classes. Run ATC and the complete package ABAP Unit suite. Record results for the current commit.
-- [ ] Generate and transport the three table-maintenance dialogs following the README. Create the `DEMO` profile, mapping and USD/JPY inclusion rows through SM30. Confirm client isolation and restricted maintenance authorization.
+- [ ] Generate and transport the three table-maintenance dialogs following the [usage guide](WALKTHROUGH.md#12-generate-the-settings-screens-once). Create the `DEMO` profile, mapping and USD/JPY inclusion rows through SM30. Confirm client isolation and restricted maintenance authorization.
 - [ ] Test HTTPS directly and through an SM59 destination when supported by the environment. Verify the actual TLS trust chain. Exercise connection failure, HTTP error, malformed XML and bulletin-date mismatch.
 - [ ] Test file input with a valid file, missing file, unreadable file, invalid XML and a folder containing spaces. File-open failures must be `ERROR`, not an inferred holiday.
 - [ ] Confirm invalid dates, units, numeric values, duplicate currencies, unsupported targets and invalid profile choices are rejected without writing rates.
