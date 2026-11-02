@@ -6,7 +6,7 @@
 
 `src/zche_tcmb_load.prog.abap` is one executable report containing types, business logic, selection screen, local classes and SAP Unit tests. It creates no custom DDIC objects or global classes. `src/package.devc.xml` and report XML are metadata for optional abapGit import.
 
-The syntax target is **ABAP 7.00**: explicit declarations, `CREATE OBJECT`, classic Open SQL, `CONCATENATE`, packed numbers and `CL_AUNIT_ASSERT`. Tests use `"#AU` comments rather than `RISK LEVEL`/`DURATION` additions. API/runtime compatibility on actual 7.00/7.01/7.02 systems remains unverified; activation on 7.58 does not establish it. [Validation record](docs/validation.md).
+The syntax target is **ABAP 7.00**: explicit declarations, `CREATE OBJECT`, classic Open SQL, `CONCATENATE`, packed numbers and `CL_AUNIT_ASSERT`. Tests use `"#AU` comments rather than `RISK LEVEL`/`DURATION` additions. API/runtime compatibility on actual 7.00/7.01/7.02 systems remains unverified; activation on SAP_BASIS 816 does not establish it. [Validation record](docs/validation.md).
 
 For manual creation, enable **Fixed point arithmetic** in report attributes. Do not force 72-character lines; import the complete source including tests. `SELECTION_TEXTS_MODIFY` creates labels; `VRM_SET_VALUES` fills the date-rule list. The text table must be exactly `STANDARD TABLE OF rsseltexts WITH DEFAULT KEY`. Verify these interfaces on the target older release.
 
@@ -55,7 +55,7 @@ The factory calendar changes validity, not which days are downloaded. Start/end 
 
 Direct rate: `TCMB value × FFACT / (Unit × TFACT)`. The newest TCURF ratio effective on the valid-from date is used; Unit and both factors must be positive. Intermediate values use `TYPE p LENGTH 16 DECIMALS 10`; TCURR has five decimals. Overflow or rounding to zero produces `ERROR`. Ratios follow FI decisions rather than an automatically applied example.
 
-`P_INV` has only been exercised on the S/4HANA 2023 test environment. Inverse quotation uses the same direct-pair ratio, reversing the output factors. TCURR stores an indirect quote with a negative sign; its calculated magnitude is positive. Verify direction and amounts through standard SAP readback such as `CONVERT_TO_LOCAL_CURRENCY`. The exercised environment and limits are recorded in [verification](docs/validation.md).
+`P_INV` has only been exercised on the ABAP Cloud Developer Trial 2025 test system. Inverse quotation uses the same direct-pair ratio, reversing the output factors. TCURR stores an indirect quote with a negative sign; its calculated magnitude is positive. Verify direction and amounts through standard SAP readback such as `CONVERT_TO_LOCAL_CURRENCY`. The exercised environment and limits are recorded in [verification](docs/validation.md).
 
 ## Sources
 

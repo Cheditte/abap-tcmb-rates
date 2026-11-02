@@ -34,7 +34,7 @@ Choose **Türkçe** or **English** on the report. Save reusable settings as a st
 
 | Environment / check | Status |
 |---|---|
-| SAP ABAP Platform 2023 / SAP_BASIS 7.58 — v0.3.0 | Warning-free activation, 55/55 SAP Unit tests, HTTPS preview and dynamic-date preview job passed. |
+| ABAP Cloud Developer Trial 2025 (SAP_BASIS 816, S4FND 109) — v0.3.0 | Warning-free activation, 55/55 SAP Unit tests, HTTPS preview and dynamic-date preview job passed. |
 | v0.3.1 | ABAP 7.00 lint passes. Fixes mapping collisions and result retention after errors; SAP runtime tests were not repeated. |
 | v0.3.0 | v700 lint/source checks pass; invalid direct URL and parent-folder selections rejected. Earlier revision: limited writes verified in OB08. |
 | ECC 6.0 / SAP_BASIS 7.00–7.02 | 7.00 syntax target; runtime not yet tested. Feedback welcome. |

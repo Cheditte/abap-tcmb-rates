@@ -34,7 +34,7 @@ Programdan **Türkçe** veya **English** seçebilirsiniz. Tekrar kullanacağın�
 
 | Ortam / kontrol | Durum |
 |---|---|
-| SAP ABAP Platform 2023 / SAP_BASIS 7.58 — v0.3.0 | Uyarısız etkinleşti; 55/55 SAP testi, HTTPS ön izleme ve dinamik tarihli deneme job'ı geçti. |
+| ABAP Cloud Developer Trial 2025 (SAP_BASIS 816, S4FND 109) — v0.3.0 | Uyarısız etkinleşti; 55/55 SAP testi, HTTPS ön izleme ve dinamik tarihli deneme job'ı geçti. |
 | v0.3.1 | ABAP 7.00 sözdizimi kontrolü hatasız. Eşleme çakışması ve hata sonrası sonuç koruma düzeltildi; SAP çalışma testleri tekrarlanmadı. |
 | v0.3.0 | v700 lint/kaynak kontrolü geçti; geçersiz adres ve klasör reddedildi. Önceki revizyonda sınırlı kayıt OB08 ile doğrulandı. |
 | ECC 6.0 / SAP_BASIS 7.00–7.02 | 7.00 sözdizimi hedefleniyor; bu sistemlerde henüz çalıştırılmadı. Geri bildirime açık. |
