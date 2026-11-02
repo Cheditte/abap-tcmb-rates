@@ -87,7 +87,7 @@ Still needed: exact current source identity; native 48-test results; unambiguous
 
 ## Direct GUI evidence — 2 November 2026
 
-With explicit operator authorization, the documentation session used the open A4H/001 SAP GUI and saved original captures without editing their contents. [Capture hashes](images/live-captures-2026-11-02.json) identify the 13 published PNGs. These actions extend the earlier evidence; they do not establish the installed source hash.
+With explicit operator authorization, the documentation session used the open A4H/001 SAP GUI and saved the original captures. At the operator’s request, the 13 published PNGs were subsequently retouched locally to remove the mouse pointer and blue halo. Covered text and controls were restored from matching native screen areas or their existing labels; no rate, date, selection or status value was changed. The 1571 × 1392 dimensions are preserved, and pixels outside each small edited region are unchanged. [Capture hashes and edited bounds](images/live-captures-2026-11-02.json) identify the original and published versions. Originals remain in Git commit 65b4c84. These actions extend the earlier evidence; they do not establish the installed source hash.
 
 - Foreground selection: explicit T, 2026-07-01–2026-08-01, USD and EUR confirmed in the multiple-selection dialog, FX_BUY → M, SAME_DAY, TRY, inverse off, Keep, no-bulletin information, HTTPS, destination/URL blank. **Test was checked before execution.**
 - Foreground result: 4 planned new, 0 updated, 40 unchanged, 0 skipped, 1 no-bulletin day (15 July), 0 errors. Missing keys are 1 July USD, 6 July USD/EUR and 7 July USD. They were not written or recovered.

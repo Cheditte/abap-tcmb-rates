@@ -1,54 +1,223 @@
 [
   {
     "file": "sap-live-02-preview-settings.png",
-    "sha256": "04d4369a863db0cfc555ce25865a5b4d8236875fb655ead7a1c01946a8b0f665"
+    "sha256": "4e392ed4a56fc4c590e2d9b69403daeee33705229e473f9f80063c9d0edbdc42",
+    "original_sha256": "04d4369a863db0cfc555ce25865a5b4d8236875fb655ead7a1c01946a8b0f665",
+    "edit": "Mouse pointer and blue halo removed locally; covered native controls/text restored.",
+    "dimensions": [
+      1571,
+      1392
+    ],
+    "edited_bounds": [
+      0,
+      702,
+      98,
+      839
+    ],
+    "changed_pixels": 12325
   },
   {
     "file": "sap-live-03-multiple-currencies.png",
-    "sha256": "71cac15d46457bcbd00fad8c5d676d5c64acf9bbe4e02017f7a812b8e753cabe"
+    "sha256": "32c96793be333d179a4851ef70657eb4fcba9bf9ee9cd9f8ac7b73d9552bbbc6",
+    "original_sha256": "71cac15d46457bcbd00fad8c5d676d5c64acf9bbe4e02017f7a812b8e753cabe",
+    "edit": "Mouse pointer and blue halo removed locally; covered native controls/text restored.",
+    "dimensions": [
+      1571,
+      1392
+    ],
+    "edited_bounds": [
+      321,
+      547,
+      458,
+      684
+    ],
+    "changed_pixels": 16077
   },
   {
     "file": "sap-live-04-preview-results.png",
-    "sha256": "3ee6db238485abce70620f36c75ca0872f78ccf784d0d87be9d10261de0b52be"
+    "sha256": "e96fe3fa26e3b820e86fbf8f36380e1ce6f60d251307ddba38e36d2f7172fb92",
+    "original_sha256": "3ee6db238485abce70620f36c75ca0872f78ccf784d0d87be9d10261de0b52be",
+    "edit": "Mouse pointer and blue halo removed locally; covered native controls/text restored.",
+    "dimensions": [
+      1571,
+      1392
+    ],
+    "edited_bounds": [
+      321,
+      551,
+      458,
+      684
+    ],
+    "changed_pixels": 15270
   },
   {
     "file": "sap-live-05-variant-attributes.png",
-    "sha256": "9592e8fcb4d6ac8b58b46d66a181cf353c71c67a333c09e9efe1aa2ed5b05f88"
+    "sha256": "30a1ce0e63fcb9a0e5f66b32a27b4ba8c038ea77c8592be98ef2e3dc0088893b",
+    "original_sha256": "9592e8fcb4d6ac8b58b46d66a181cf353c71c67a333c09e9efe1aa2ed5b05f88",
+    "edit": "Mouse pointer and blue halo removed locally; covered native controls/text restored.",
+    "dimensions": [
+      1571,
+      1392
+    ],
+    "edited_bounds": [
+      126,
+      108,
+      341,
+      242
+    ],
+    "changed_pixels": 17820
   },
   {
     "file": "sap-live-07-sm36-job-name.png",
-    "sha256": "a3fc7ef0dc0ce0477356a5d86c1178d1b749a605d996c38f5cf099ee723b7382"
+    "sha256": "b957bc7043f4f1b8816ae9e9f34f4f0ad8b39e9d38687b1c1c4624acd174b6e6",
+    "original_sha256": "a3fc7ef0dc0ce0477356a5d86c1178d1b749a605d996c38f5cf099ee723b7382",
+    "edit": "Mouse pointer and blue halo removed locally; covered native controls/text restored.",
+    "dimensions": [
+      1571,
+      1392
+    ],
+    "edited_bounds": [
+      135,
+      106,
+      320,
+      243
+    ],
+    "changed_pixels": 16098
   },
   {
     "file": "sap-live-08-sm36-step.png",
-    "sha256": "74c297c0abf68d48573abd5b0c4c25deab919031beebff6891c907ebf5b9944c"
+    "sha256": "22592674b798b1dc3fc3ffa4fb4ef8ff714450a2b3a7e8a9a7edcfeffde25f32",
+    "original_sha256": "74c297c0abf68d48573abd5b0c4c25deab919031beebff6891c907ebf5b9944c",
+    "edit": "Mouse pointer and blue halo removed locally; covered native controls/text restored.",
+    "dimensions": [
+      1571,
+      1392
+    ],
+    "edited_bounds": [
+      120,
+      326,
+      257,
+      448
+    ],
+    "changed_pixels": 13669
   },
   {
     "file": "sap-live-10-sm36-immediate.png",
-    "sha256": "2e53b8b9889a0e03228a9dd03846fd4c60ef677ce4fb9fc023ced20b99390119"
+    "sha256": "6f24e83620a3bf187ccc99fea1cf6a185ea2f9d8cb1dec4a88a5b52f6f3705a5",
+    "original_sha256": "2e53b8b9889a0e03228a9dd03846fd4c60ef677ce4fb9fc023ced20b99390119",
+    "edit": "Mouse pointer and blue halo removed locally; covered native controls/text restored.",
+    "dimensions": [
+      1571,
+      1392
+    ],
+    "edited_bounds": [
+      1,
+      139,
+      135,
+      276
+    ],
+    "changed_pixels": 14368
   },
   {
     "file": "sap-live-12-sm36-released.png",
-    "sha256": "d7720d1de9eba16994c66f15ae95c4812eb35ae2acef426577e23832ea595c78"
+    "sha256": "b857978e51c8e82bf19f877a516b5ea6a6c29d071d1d35c2b5064057ae2c4403",
+    "original_sha256": "d7720d1de9eba16994c66f15ae95c4812eb35ae2acef426577e23832ea595c78",
+    "edit": "Mouse pointer and blue halo removed locally; covered native controls/text restored.",
+    "dimensions": [
+      1571,
+      1392
+    ],
+    "edited_bounds": [
+      234,
+      593,
+      371,
+      730
+    ],
+    "changed_pixels": 15887
   },
   {
     "file": "sap-live-13-sm37-selection.png",
-    "sha256": "e7743cdb55bc1e36f33e43d9aeedbc7e7031bd5f8a2fdb1db138304bbeae2e68"
+    "sha256": "ec8bd970ef2f19e3a815c90d26a39bbd08cb67326bb9b43311f4a467d3a70e65",
+    "original_sha256": "e7743cdb55bc1e36f33e43d9aeedbc7e7031bd5f8a2fdb1db138304bbeae2e68",
+    "edit": "Mouse pointer and blue halo removed locally; covered native controls/text restored.",
+    "dimensions": [
+      1571,
+      1392
+    ],
+    "edited_bounds": [
+      45,
+      3,
+      184,
+      122
+    ],
+    "changed_pixels": 14126
   },
   {
     "file": "sap-live-14-sm37-finished.png",
-    "sha256": "cddb5b03f880363f1fca9f3cf5d574e3af2045a6bf3cf4f4b29fcf3669af3335"
+    "sha256": "8564901e6e6440a91d1ed07175178ca5540f6dd518d4d5bc260660928e290203",
+    "original_sha256": "cddb5b03f880363f1fca9f3cf5d574e3af2045a6bf3cf4f4b29fcf3669af3335",
+    "edit": "Mouse pointer and blue halo removed locally; covered native controls/text restored.",
+    "dimensions": [
+      1571,
+      1392
+    ],
+    "edited_bounds": [
+      45,
+      3,
+      186,
+      122
+    ],
+    "changed_pixels": 14066
   },
   {
     "file": "sap-live-15-sm37-job-log.png",
-    "sha256": "63738ac1f3a2ffa55bca6da9c78a9a70a760737a822e437edec28826ca03c945"
+    "sha256": "36ab53a85392da7f6db5a0acc74d05f34920d654b25080d52e866d108637c4c5",
+    "original_sha256": "63738ac1f3a2ffa55bca6da9c78a9a70a760737a822e437edec28826ca03c945",
+    "edit": "Mouse pointer and blue halo removed locally; covered native controls/text restored.",
+    "dimensions": [
+      1571,
+      1392
+    ],
+    "edited_bounds": [
+      326,
+      50,
+      463,
+      187
+    ],
+    "changed_pixels": 15458
   },
   {
     "file": "sap-live-16-spool-list.png",
-    "sha256": "64cfb623be1164555011879b0c185fd16dc9bf6311441bbda29c0df272475023"
+    "sha256": "18a5d3f18c23275987ed87435ef4929ca27fbf506e5b7ce93ab0c2c43a277bd2",
+    "original_sha256": "64cfb623be1164555011879b0c185fd16dc9bf6311441bbda29c0df272475023",
+    "edit": "Mouse pointer and blue halo removed locally; covered native controls/text restored.",
+    "dimensions": [
+      1571,
+      1392
+    ],
+    "edited_bounds": [
+      234,
+      50,
+      371,
+      187
+    ],
+    "changed_pixels": 15345
   },
   {
     "file": "sap-live-17-spool-results.png",
-    "sha256": "acc75b1671d303aafc80a55c413e3f8c82ad6f118584e61e86c86a7fcc082714"
+    "sha256": "17c283bb68df42cba216c672302ce0cdfee39e34dc995c977ba371ef8e23a8d8",
+    "original_sha256": "acc75b1671d303aafc80a55c413e3f8c82ad6f118584e61e86c86a7fcc082714",
+    "edit": "Mouse pointer and blue halo removed locally; covered native controls/text restored.",
+    "dimensions": [
+      1571,
+      1392
+    ],
+    "edited_bounds": [
+      44,
+      135,
+      181,
+      267
+    ],
+    "changed_pixels": 15795
   }
 ]
