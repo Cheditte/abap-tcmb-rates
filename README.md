@@ -2,53 +2,53 @@
 
 > **English** | [Türkçe](README.tr.md)
 
-Use this project to load the daily exchange rates published by the Central Bank of the Republic of Türkiye (TCMB) into SAP. You choose the currencies, buying or selling rates, and the date from which each rate is valid.
+Use this project to load the daily exchange rates published by the Central Bank of the Republic of Türkiye (TCMB) into SAP. You choose the currencies, buying or selling rates, and the date from which the rates are valid.
 
-Preview the results **without saving exchange rates**, review them, then run the actual load. Once verified, you can schedule it as a daily SAP background job.
+**The flow:** SAP reads TCMB's daily bulletin and shows the results based on your settings, without saving exchange rates. Review them, choose to save, then verify the records in **OB08**, SAP's exchange-rate maintenance transaction.
 
-![Usage journey: retrieve the TCMB bulletin, preview the results, then save and check SAP rates](docs/images/overview-en.svg)
+![TCMB daily bulletin and profile choices lead to a preview, then an explicit choice to save and verify in OB08](docs/images/overview-en.svg)
 
-## Start here
+## What do you need to start?
 
-**[Open the step-by-step installation and usage guide →](WALKTHROUGH.md)**
+The person installing the project should be an **ABAP developer** who can create and run reports in SE38. You can complete all the preparations yourself if you have the relevant access. Involve the FI or Basis/network owner where needed.
 
-The guide assumes you are an ABAP developer who can run reports in SE38 and manage development objects. It explains where FI decisions and connectivity permissions are needed. Complete those tasks yourself if you have the relevant access, or involve the team that manages them.
+![Three preparations: SAP development access, decisions about the rates, and HTTPS connectivity from SAP to TCMB](docs/images/prepare-en.svg)
 
-**[Open / save the SE38 installer](https://raw.githubusercontent.com/Cheditte/abap-tcmb-rates/main/installer/zche_tcmb_install.prog.abap)** — create report `ZCHE_TCMB_INSTALL` in SE38 and follow the guide to upload it. Use `ZCHE_TCMB_CONFIG` for settings and `ZCHE_TCMB_LOAD` for daily operation.
+The standard HTTPS route needs no extra helper software on the SAP server. **No TCMB account, password or API key is required.** The SAP application server needs access to `www.tcmb.gov.tr:443` and certificate trust. Opening the site on your computer does not establish connectivity from SAP.
 
-**The single-file installation completed in an SAP sandbox using isolated test names.** Validate in your own DEV environment too; the installer stops if any target object exists. [Validation scope](docs/validation-2026-11-02.md).
+## From installation to first use
 
-## Think of setup in three steps
+Start by **uploading one file in SE38**, without abapGit. The three reports have different purposes:
 
-| Step | What you do | What is ready afterwards |
+| Order | Report to open in SE38 | What you do |
 |---|---|---|
-| **1. Install in SAP** | Run the single-file installer through SE38 and select your package. | The report and configuration tables. |
-| **2. Choose your rules** | Save currencies, rate mappings and validity rules with the simple settings report. Check that SAP can reach TCMB. | Settings that define which rates to load and how. |
-| **3. Try it, then use it** | Preview one day and a few currencies. Verify the output, perform a real load, then schedule a job if needed. | SAP exchange rates you can check in OB08. |
+| 1 · Install | `ZCHE_TCMB_INSTALL` | Create the SAP objects in your package from the downloaded file. |
+| 2 · Configure | `ZCHE_TCMB_CONFIG` | Save currencies, rate type and date choices in a profile. |
+| 3 · Use | `ZCHE_TCMB_LOAD` | Select the profile and bulletin date; preview first, then choose to save. |
 
-A **profile** is a saved group of settings that you reuse for each run. The report is **`ZCHE_TCMB_LOAD`**; run it through SE38. **OB08** is the SAP transaction for displaying and maintaining exchange rates.
+A **profile** is a saved set of choices you reuse for each run. You create your first profile; none is preinstalled. Installation and saving a profile do not save exchange rates. Rates are written by the third report when you clear the test flag.
 
-## What you need
+**[Step-by-step installation and use, with SAP screenshots →](WALKTHROUGH.md)**
 
-- A development/sandbox SAP system and object-creation permissions. **abapGit is optional**; a single-file SE38 installer is provided.
-- SAP currencies, rate types and translation ratios. Confirm these choices against your FI/accounting process.
-- HTTPS access from the **SAP application server** to **`www.tcmb.gov.tr:443`**. Opening the site on your laptop does not establish connectivity from SAP.
+[Open / save the single-file installer](https://raw.githubusercontent.com/Cheditte/abap-tcmb-rates/main/installer/zche_tcmb_install.prog.abap). Create report `ZCHE_TCMB_INSTALL` in SE38; follow the guide to upload it and perform the first checks.
 
-**The standard HTTPS route does not require an extra helper application on the SAP server.** Network and certificate configuration may be necessary. For SAP systems without outbound access, an [alternative route](WALKTHROUGH.md#read-from-files) reads XML files staged in a server folder; preparing those files is outside this project.
+Start in DEV/a sandbox with **one day and a few currencies**. After verifying the results, you can schedule daily use as an SAP background job.
 
 ## Scope and current status
 
-- The quote currency is **TRY**. The project does not calculate cross rates between other currencies.
-- It loads standard SAP exchange-rate records through a BAPI; it does not create accounting documents.
-- Test mode is selected by default. In a test run, `NEW` / `UPDATED` describe what a real load would do.
-- **Pre-release: v0.1.** Installation and runtime checks are documented in the [validation record](docs/validation-2026-11-02.md). Static checks for 7.40 SP08 and 7.58 do not establish runtime compatibility on older SAP releases.
+- The quote currency is **TRY**. The project does not calculate cross rates or create accounting documents. It loads standard SAP exchange-rate records through a BAPI.
+- Test mode is selected by default. Seeing `NEW` / `UPDATED` in a preview does not mean anything was saved.
+- The installer is for a **clean first installation**. Existing target objects stop the run without replacement or updates. Use normal transports for subsequent systems.
+- **Pre-release: v0.1.** An isolated SAP installation completed; final settings-save, transport and end-to-end acceptance checks remain pending. Static checks for 7.40 SP08 and 7.58 do not establish runtime compatibility on those releases. [Validation scope and remaining checks](docs/validation-2026-11-02.md).
+
+If SAP has no outbound internet access, an [alternative route](WALKTHROUGH.md#read-from-files) reads XML files staged in an SAP server folder. Downloading/preparing those files is outside this project.
 
 ## Choose a guide
 
 | Your task | Document |
 |---|---|
-| Install, create a first profile and run the report | [Installation and usage](WALKTHROUGH.md) |
-| Look up settings, call classes from your own code, extend the project or understand errors | [Technical reference](TECHNICAL.md) |
+| Install, configure and perform the first run | [Installation and usage guide](WALKTHROUGH.md) |
+| Look up all fields, call the classes from your own ABAP or extend the project | [Technical reference](TECHNICAL.md) |
 | Run checks or contribute | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Review changes | [CHANGELOG.md](CHANGELOG.md) |
 

@@ -1,190 +1,224 @@
-# Kurulum ve kullanım rehberi
+# Kurulumdan ilk kur kaydına
 
 > [English](WALKTHROUGH.md) | **Türkçe** · [Proje özeti](README.tr.md) · [Teknik başvuru](TECHNICAL.tr.md)
 
-Bu rehberin sonunda `ZCHE_TCMB_LOAD` programını çalıştırıp seçtiğiniz bir günün TCMB kurlarını önce kaydetmeden inceleyebileceksiniz. Ardından deneme sisteminde kayıt yapıp sonucu OB08'de kontrol edeceksiniz.
+## Önce büyük resim
 
-**Başlangıç noktası:** SAP geliştirme yetkisi olan bir ABAP geliştiricisisiniz. İlk kurulumu DEV/deneme sisteminde yapın. Proje ön sürümdür; tamamlanan kurulum denemesi ve kalan kontroller [test kaydında](docs/validation-2026-11-02.md) açıklanır.
+Yapacağımız iş şu: **SAP, TCMB'nin günlük kur bültenini okuyacak; seçtiğiniz kurları önce kaydetmeden gösterecek.** Siz sonucu doğruladıktan sonra SAP'ye kayıt yapabileceksiniz. Sonucu OB08'den, yani SAP'nin döviz kuru bakım işleminden kontrol edeceksiniz.
 
-![Kurulum haritası: SAP nesnelerini kur, profil ve erişimi hazırla, önce dene sonra kaydet](docs/images/setup-tr.svg)
+Bunun için önce projeyi kuracağız, sonra hangi kurları istediğimizi kaydedeceğiz. Sonraki kullanımlarda yalnız yükleme programını çalıştıracağız:
 
-## Önce hazırlıkları ayırın
+![SE38 yolu: ilk kurulumda ZCHE_TCMB_INSTALL, ayarlar için ZCHE_TCMB_CONFIG, her kullanımda ZCHE_TCMB_LOAD](docs/images/setup-tr.svg)
 
-| Hazırlık | Nerede yapılır? | Ne için gerekir? |
-|---|---|---|
-| Projeyi içe aktarma ve ayar ekranları | SAP geliştirme sistemi | Installer ve ayar programını çalıştırmak. Bunu siz yaparsınız. |
-| Para birimi, kur tipi, oran ve tarih kararı | SAP FI ayarları ve kendi muhasebe süreciniz | Doğru kurun doğru tarih ve kur tipiyle kaydedilmesi. Gerekirse FI sorumlusuyla belirleyin. |
-| TCMB bağlantısı | SAP uygulama sunucusunun ağ ve SSL ayarları | SAP'nin bültene ulaşması. Yetki sizdeyse siz, değilse Basis/ağ sorumlusu yapar. |
+**Bu rehber kimin için?** SE38'de program oluşturup çalıştırabilen bir ABAP geliştiricisi için. İlk kurulum ve gerçek kayıt denemesini DEV/deneme sisteminde yapın. Proje ön sürümdür: ayrı adlarla kurulum tamamlandı; son ayar kaydı ve uçtan uca kabul kontrolleri bekliyor. [Doğrulama kaydı](docs/validation-2026-11-02.md).
 
-Normal HTTPS yolunda sunucuya RDP/SSH ile bağlanıp ek yazılım kurmanız gerekmez. SAP GUI içindeki bağlantı/sertifika ayarları ve ağ izinleri yeterli olabilir. Sunucu erişimi yalnızca alternatif dosya yolu gibi ortamınızın gerektirdiği durumlarda gerekir.
+İlerleyeceğimiz sıra: [0 · Hazırlık](#hazirlik) → [1 · Kurulum](#kurulum) → [2 · Profil](#profil) → [3 · Bağlantı ve ön izleme](#onizleme) → [4 · İlk kayıt](#ilk-kayit) → [5 · Günlük kullanım](#gunluk-kullanim).
 
-## 1. SAP nesnelerini tek dosyayla kurun
+<a id="hazirlik"></a>
 
-Bu yol için abapGit kurmanız, her sınıfı elle oluşturmanız veya SE54'te ayar ekranı üretmeniz gerekmez. Installer gerekli nesneleri oluşturur; ayarlar ayrı bir SE38 programından girilir. Tek dosyalı kurulum ayrı test adlarıyla SAP deneme sisteminde tamamlandı. Kendi DEV ortamınızda ön kontrol ve kabul adımlarını yine uygulayın.
+## 0. Başlamadan önce neleri hazırlayacağız?
 
-### 1.1. Paketi ve görevi hazırlayın
+![Üç hazırlık: SAP geliştirme erişimi, kur seçimleri ve SAP sunucusundan TCMB bağlantısı](docs/images/prepare-tr.svg)
 
-1. SE80'de transport edilebilir bir müşteri paketi oluşturun veya uygun mevcut paketi seçin. Örneğin `ZCHE_TCMB`; bu örnek ad yerine kendi **Z/Y paketinizi** kullanabilirsiniz.
-2. SE09'da değiştirilebilir bir Workbench request altında **kendi kullanıcınıza ait geliştirme task'ını** hazırlayın. Installer'a ana request numarasını değil bu alt görevin numarasını gireceksiniz. Örnek transport numarası kopyalamayın; kendi sisteminizden seçin.
+**SAP tarafı:** geliştirme sisteminizde nesne oluşturma ve transport yetkiniz olmalı. Proje için bir müşteri paketi ve kendi transport alt görevinizi hazırlayacağız. Kurulum adımında nasıl seçeceğiniz açıklanıyor.
 
-Yalnız yerel deneme için `$TMP` seçilebilir; bu durumda task alanı boş kalır. Sistemler arasında taşıyacaksanız müşteri paketi kullanın. Kurulum için nesne oluşturma/değiştirme ve CTS yetkileri gerekir.
+**Kur seçimleri:** hangi para birimlerini alacağınızı, alış ya da satış kurundan hangisini kullanacağınızı ve kurların hangi tarihten itibaren geçerli olacağını belirleyin. SAP'deki **kur tipi**, kurları kullanım amacına göre ayırır. **OBBS dönüşüm oranları**, SAP'nin kuru kaç birim üzerinden kullandığını belirler; örneğin TCMB, JPY'yi 100 birim üzerinden yayımlayabilir. Para birimi/kur tipi tanımlarını ve ilgili tarihte geçerli oranları doğrulayın; rastgele `1:1` oran girmeyin. FI sürecini siz yönetmiyorsanız bu seçimleri FI sorumlusuyla netleştirin.
 
-### 1.2. Tek dosyayı SE38'e yükleyin
+**Bağlantı:** SAP uygulama sunucusundan `www.tcmb.gov.tr:443` için HTTPS erişimi ve sertifika güveni gerekir. Normal kullanımda sunucuya RDP/SSH ile bağlanıp ek yazılım kurmayacağız. TCMB kullanıcı adı, şifre veya API anahtarı da gerekmiyor. Bağlantı yetkisi sizdeyse işlemi kendiniz yapabilirsiniz; değilse Basis/ağ sorumlusuyla tamamlayın. Bağlantıyı 3. adımda SAP içinden sınayacağız.
 
-1. [Kurulum dosyasını açıp bilgisayarınıza kaydedin](https://raw.githubusercontent.com/Cheditte/abap-tcmb-rates/main/installer/zche_tcmb_install.prog.abap). İndirdiğiniz `zche_tcmb_install.prog.abap` dosyasının **tamamını** kullanın. Kaynak klasöründeki tek bir sınıfı veya GitHub HTML sayfasını yüklemeyin.
-2. SE38'de **`ZCHE_TCMB_INSTALL`** adlı çalıştırılabilir program oluşturun. Aynı müşteri paketine/uygun transport görevinize kaydedin.
-3. Kaynak düzenleyicisinde **Utilities → More Utilities → Upload/Download → Upload** ile dosyayı yükleyin; gerekirse tüm kodu kaynak alanına yapıştırın. Menü adları SAP diline göre değişebilir. Sözdizimi kontrolünü yapıp etkinleştirin. Kurulum programı bu aşamada TCMB projesinin başka nesnelerine ihtiyaç duymaz.
-4. F8 ile çalıştırın. **Existing target package / P_PACK** alanına kendi paketinizi, **Your Workbench task / P_TASK** alanına kendi alt görevinizi girin.
-5. **Check only - create nothing / P_TEST işaretli kalsın.** F8 ile ön kontrol yapın. `READY` satırlarını ve `Preflight passed` sonucunu arayın. Bu işlem nesne, profil veya kur kaydı oluşturmaz; gerçek kurulumun başarılı olacağını tek başına kanıtlamaz.
-6. Ön kontrol başarılıysa seçim ekranına dönün; **yalnız kurulum yapmak istediğinizde** Check only işaretini kaldırıp F8'e basın. `Installation completed` sonucunu kontrol edin. Paket ABAP Unit ve uygun ATC kontrollerini çalıştırın.
+<a id="kurulum"></a>
 
-**Installer temiz ilk kurulum içindir.** Aynı isimli aktif/pasif nesne varsa üzerine yazmadan durur; güncelleme veya otomatik onarım yapmaz. Yarıda kalırsa önceki nesneler oluşmuş olabilir. Log, SE11/SE24/SE38 aktivasyon durumları ve transport listesini inceleyin; nesneleri silerek veya korumayı kaldırarak tekrar denemeyin. Hatalı adım düzeltildikten sonra yetkili geliştiriciyle mevcut nesnelerin durumuna göre kurtarma yapın. Kurulum tek bir geri alınabilir işlem değildir.
+## 1. Projeyi SAP'ye kurun
 
-**Bu bölümün sonucu:** `ZCHE_TCMB_CONFIG` ve `ZCHE_TCMB_LOAD` aktif olmalı. Kurulum profil veya döviz kuru yazmaz. Diğer sistemlere nesneleri normal transport süreciyle taşıyın; installer'ı her hedefte yeniden çalıştırmayın.
+Bu adımı **SAP geliştirme sisteminde, SE80/SE09 ve SE38'de** yapacağız. Sonunda ayar ve yükleme programları hazır olacak; henüz profil veya döviz kuru oluşmayacak. abapGit kurmanız veya sınıfları tek tek oluşturmanız gerekmez.
 
-### Ekranda nasıl görünüyor?
+### 1.1. Kendi paketinizi ve alt görevinizi seçin
 
-**Dosyayı yükleme:** SE38 kaynak düzenleyicisinde bu menüyü açıp indirdiğiniz `.abap` dosyasını seçin.
+1. **SE80**'de transport edilebilir bir müşteri paketi oluşturun veya uygun mevcut paketi seçin. `ZCHE_TCMB` yalnız örnek addır; kendi **Z/Y paketinizi** kullanabilirsiniz.
+2. **SE09**'da değiştirilebilir bir Workbench request altında **kendi kullanıcınıza ait task'ı** seçin/hazırlayın. Task, ana request'in altındaki görevdir. Installer'a ana request'i değil, bu alt görevin numarasını gireceksiniz.
 
-![SE38 içinde Utilities, More Utilities, Upload/Download ve Upload menüleri](docs/images/sap-upload.png)
+Yalnız kendi sisteminizde yerel bir deneme yapıyorsanız `$TMP` seçebilirsiniz; bu durumda task boş kalır ve nesneler transport edilemez. Diğer sistemlere taşıyacaksanız müşteri paketiyle ilerleyin. Paket ve görev numaraları size aittir; ekran görüntülerindeki örnekleri kopyalamayın.
 
-**Ön kontrol:** önce Check only işaretli çalıştırın. Paket alanına kendi paketinizi girin; ekrandaki örnek adı kopyalamanız gerekmez. Task, SE09'daki kendi alt görevinizdir. Yalnız `$TMP` denemesinde boş bırakılır.
+### 1.2. Tek dosyayı indirin ve SE38'e yükleyin
 
-![Kurulum ekranında paket, Workbench task ve işaretli Check only alanları](docs/images/sap-installer.png)
+1. **[Kurulum dosyasını açıp bilgisayarınıza kaydedin](https://raw.githubusercontent.com/Cheditte/abap-tcmb-rates/main/installer/zche_tcmb_install.prog.abap).** Dosya adı `zche_tcmb_install.prog.abap` olmalı. GitHub'ın HTML sayfasını veya kaynak klasöründen tek bir sınıfı değil, bu dosyanın tamamını kullanın.
+2. **SE38**'de `ZCHE_TCMB_INSTALL` adlı **çalıştırılabilir program** oluşturun. Kendi paketinize ve uygun Workbench task'ınıza kaydedin.
+3. Kaynak düzenleyicisinde **Utilities → More Utilities → Upload/Download → Upload** yoluyla indirdiğiniz dosyayı seçin. Menü dili değişebilir; alternatif olarak kaynak metninin tamamını yapıştırabilirsiniz.
 
-**Başarılı kurulumun sonunda:** `Installation completed` satırını arayın. Bu aşamada profil veya kur kaydı oluşmaz.
+![SE38 kaynak düzenleyicisinde kurulum dosyasını yüklemek için Upload menüsü](docs/images/sap-upload.png)
 
-![Gerçek SAP denemesinde 44 nesnenin kurulmasından sonra Installation completed sonucu](docs/images/sap-install-complete.png)
+4. Kaynağı kaydedin, sözdizimi kontrolünü yapın ve programı etkinleştirin. Bu kurulum programı, projedeki diğer nesneler henüz yokken etkinleştirilebilir.
 
-Görseller SAP GUI'den alınmıştır; tema ve menü dili sisteminizde farklı olabilir. Tamamlanma görüntüsündeki `ZTS8` adları mevcut projeyi korumak için kullandığımız test kopyasına aittir. Siz rehberdeki `ZCHE_TCMB_INSTALL`, `ZCHE_TCMB_CONFIG` ve `ZCHE_TCMB_LOAD` adlarıyla ilerleyin.
+### 1.3. Önce kurulumun ön kontrolünü yapın
 
-### Alternatif: abapGit
+1. `ZCHE_TCMB_INSTALL` programını **F8** ile açın.
+2. **Existing target package (`P_PACK`)** alanına 1.1'de seçtiğiniz paketi girin.
+3. **Your Workbench task (`P_TASK`)** alanına kendi Workbench alt görevinizi girin. Yalnız `$TMP` denemesinde boş bırakın.
+4. **Check only - create nothing (`P_TEST`) işaretli kalsın.** F8'e basın.
 
-abapGit kullanmayı tercih ederseniz `https://github.com/Cheditte/abap-tcmb-rates` deposunu müşteri paketinize alıp Pull/aktivasyon yapabilirsiniz. İnternet erişimi olmayan kurulumda New Offline → Import zip → Pull zip yolu da vardır. Aynı nesneleri iki yöntemle üst üste kurmayın. Bu yolla da basit ayarlar için `ZCHE_TCMB_CONFIG` kullanılabilir; SM30 isteğe bağlı ileri bakım yoludur. [abapGit kurulum rehberi](https://docs.abapgit.org/user-guide/getting-started/install.html).
+![Paket, Workbench alt görevi ve işaretli Check only alanıyla kurulum ön kontrolü](docs/images/sap-installer.png)
 
-## 2. İlk profilinizi ve bağlantıyı hazırlayın
+**Kontrol noktası:** `READY` satırlarını ve `Preflight passed` sonucunu görmelisiniz. Henüz hiçbir nesne, profil veya kur oluşturulmaz. Bu, gerçek kurulumun tamamlandığı anlamına gelmez.
 
-### 2.1. Önce hangi kuru alacağınızı seçin
+### 1.4. Nesneleri oluşturun
 
-Bu rehberdeki **`DEMO`**, sizin oluşturacağınız örnek profil adıdır; kurulumla otomatik gelmez. Örnek, USD ve JPY için döviz alış kurunu aynı gün geçerli olacak şekilde inceler. **`M`, `FX_BUY` ve `SAME_DAY` iş kuralı önerisi değildir**; kendi FI sürecinize göre seçin.
+1. Ön kontrol başarılıysa seçim ekranına dönün.
+2. **Kurulumu başlatmak için Check only işaretini kaldırıp F8'e basın.**
+3. Sonuçta **`Installation completed`** satırını arayın. `ZCHE_TCMB_CONFIG` ve `ZCHE_TCMB_LOAD` programlarının aktif olduğunu doğrulayın; paket ABAP Unit ve uygun ATC kontrollerini çalıştırın.
 
-- **Kur tipi:** SAP'de farklı amaçlarla tuttuğunuz kur grubudur. Örnekte `M` kullanılır; sisteminizde tanımlı ve uygun olmalıdır.
-- **TCMB alanı:** döviz alış, döviz satış, efektif alış/satış veya ortalama. Örnekte döviz alış için `FX_BUY` kullanılır. [Bütün seçenekler](TECHNICAL.tr.md#tcmb-alanları).
-- **Geçerlilik tarihi:** bültenin tarihiyle aynı gün, ertesi gün veya fabrika takvimine göre sonraki iş günü olabilir. İlk örnekte `SAME_DAY` kullanılır.
-- **Dönüşüm oranı:** SAP'nin kuru kaç birim üzerinden kullandığını belirler. Örneğin TCMB, JPY'yi 100 birim üzerinden yayımlayabilir. İlgili para çifti/kur tipi için OBBS'deki oranların geçerlilik tarihini de kapsadığını doğrulayın; rastgele `1:1` girmeyin.
+![Ayrı test adlarıyla yapılan SAP kurulumunda Installation completed sonucu](docs/images/sap-install-complete.png)
 
-### 2.2. Basit ayar ekranında profili kaydedin
+Bu gerçek SAP görüntüsündeki **`ZTS8` adları test kopyasına aittir**. Siz rehberdeki `ZCHE_TCMB_*` adlarıyla devam edin. SAP teması ve menü dili sisteminizde farklı olabilir.
 
-1. **SE38 → `ZCHE_TCMB_CONFIG` → F8** ile ayar ekranını açın. `DEMO` hazır gelmez; şimdi oluşturacaksınız.
-2. Aşağıdaki örneği kendi FI kararlarınıza göre doldurun. Ekran etiketleri İngilizcedir; alan adları parantez içindedir.
+**Mevcut nesne veya yarım kurulum varsa:** installer temiz ilk kurulum içindir; aktif/pasif mevcut nesnenin üzerine yazmaz, güncelleme veya otomatik onarım yapmaz. Yarıda durursa önceki nesneler oluşmuş olabilir. Log, aktivasyon durumları ve transport listesini inceleyin; nesne silerek veya korumayı kaldırarak tekrar denemeyin. [Kurulum davranışı ve kurtarma ayrıntıları](TECHNICAL.tr.md#tek-dosyalı-kurulum-ve-ayar-programı).
 
-| Ekran alanı | İlk deneme |
+<a id="profil"></a>
+
+## 2. Hangi kurları alacağınızı bir profile kaydedin
+
+**SE38 → `ZCHE_TCMB_CONFIG`** programında seçimlerinizi kaydedeceğiz. **Profil**, bu ayar grubunun adıdır; aynı seçimleri her seferinde yeniden girmenizi önler. Bu adım yalnız ayar kaydeder, döviz kuru yazmaz.
+
+### 2.1. Ayar ekranını doldurun
+
+1. **SE38 → `ZCHE_TCMB_CONFIG` → F8** ile ekranı açın.
+2. İlk deneme için aşağıdaki alanları doldurun. `DEMO` hazır gelmez; şimdi oluşturacağınız profilin örnek adıdır. `M`, `FX_BUY` ve `SAME_DAY` seçimleri de örnektir; kendi FI sürecinize göre doğrulayın.
+
+| Ekranda göreceğiniz alan | Ne gireceksiniz? |
 |---|---|
-| Profile name (`P_PROF`) | `DEMO` |
-| Description (`P_DESC`) | Kendi açıklamanız |
-| Valid-from date rule (`P_RULE`) | `SAME_DAY` |
-| SAP rate type (`P_TYPE`) | Örnekte `M`; kendi uygun kur tipiniz |
-| TCMB rate field (`P_SRC`) | Örnekte `FX_BUY` |
-| Currency codes (`S_CURR`) | Çoklu seçimde tekil değerler olarak `USD` ve `JPY`; aralık/dışlama kullanmayın |
-| Existing: S keep/U update (`P_KEEP`) | `S`: farklı mevcut kuru koru |
-| No bulletin (I/W/E) (`P_NONE`) | `I`: sonuçta bildir |
-| Your transport task (`P_TASK`) | SE09/SE10'daki kendi değiştirilebilir Customizing veya Workbench alt göreviniz |
+| Profile name (`P_PROF`) | Örneğin `DEMO`: daha sonra yükleme programında seçeceğiniz ad. |
+| Description (`P_DESC`) | Bu profilin ne için olduğunu anlatan kendi açıklamanız. |
+| Valid-from date rule (`P_RULE`) | Örnekte `SAME_DAY`: kur, bültenin tarihiyle geçerli olur. |
+| SAP rate type (`P_TYPE`) | Örnekte `M`; SAP'de tanımlı ve sürecinize uygun kur tipi. |
+| TCMB rate field (`P_SRC`) | Örnekte `FX_BUY`: TCMB döviz alış kuru. |
+| Currency codes (`S_CURR`) | Örnekte `USD` ve `JPY`; bir sonraki adımda ayrı satırlara gireceğiz. |
+| Existing: S keep/U update (`P_KEEP`) | `S`: aynı tarihte farklı bir kur zaten varsa onu korur. `U` değişikliğe izin verir. |
+| No bulletin (I/W/E) (`P_NONE`) | Örnekte `I`: bülten yoksa bilgi olarak bildirir. `W` uyarı, `E` hata davranışıdır. |
 
-3. İlk HTTPS denemesinde fabrika takvimi, ters yön, dosya kaynağı, SM59 hedefi, özel URL, klasör ve exit alanları boş/işaretsiz kalabilir. SM59 gerekiyorsa sonraki bölüme göre kendi hedefinizi girin. Karşılık para birimi `TRY` olarak kaydedilir.
-4. **Save settings when executing (`P_SAVE`)** kutusunu işaretleyip F8'e basın. `Settings saved` sonucunu ve transport anahtarlarını kontrol edin. Bu işlem yalnız ayarları kaydeder; döviz kuru yazmaz.
+3. İlk HTTPS denemesinde fabrika takvimi, ters yön, dosya kaynağı, SM59 hedefi, özel URL, sunucu klasörü ve exit alanlarını boş/işaretsiz bırakın. Kurumunuzda SM59 zorunluysa [3.1'deki bağlantı seçeneğini](#baglanti) uygulayın. Karşılık para birimi `TRY`'dir. [Diğer tarih kuralları](TECHNICAL.tr.md#tarih-kuralları) · [Diğer TCMB alanları](TECHNICAL.tr.md#tcmb-alanları).
 
-Mevcut profili değiştirecekseniz önce adını girip **Load existing profile into this screen** düğmesine basın. Ekranı doldurmadan var olan profilin üzerine kayıt yapılamaz. Başkası siz düzenlerken değiştirdiyse yeniden yüklemeniz istenir. Birden fazla eşleme, dışlamalar veya farklı SAP para birimi kodları içeren profiller bu basit ekranda değiştirilmez; [ileri bakım yolunu](TECHNICAL.tr.md#advanced-profile-maintenance) kullanın.
+Aşağıdaki görüntü **kaydetmeden önce doldurulmuş ekranı** gösterir. Görseldeki transport numarasını kopyalamayın; kendi görevinizi 2.3'te seçeceksiniz. Görüntüden sonra uzun alan etiketleri kısaltıldı; alanlar ve seçimler aynıdır.
 
-**Yetki ve transport:** üç ayar tablosu için `S_TABU_NAM` görüntüleme (03) / değiştirme (02) yetkileri gerekir. Kapalı istemcide kayıt engellenir. Yalnız değişiklikleri otomatik kaydetmeden izin veren bir deneme istemcisinde **Local settings, no transport (P_LOCAL)** seçilip task boş bırakılabilir. Bu seçim taşıma yapmaz; günlük kullanım için müşteri paketiniz ve normal transport sürecinizle ilerleyin.
+![DEMO profilinin örnek seçimlerle doldurulmuş ayar ekranı; henüz kayıt başarısını göstermez](docs/images/sap-settings.png)
 
-Para birimi listesi bu ekranda zorunludur. Boş bir ileri bakım tablosu ise bütün dışlanmamış bülten para birimlerini değerlendirebilir. İlk denemeyi sınırlı tutun.
+### 2.2. Para birimlerini ayrı satırlara girin
 
-### Ekrandaki örneği takip edin
+1. **Currency codes** alanının sağındaki **çoklu seçim** düğmesine basın.
+2. **Select Single Values** sekmesinde `USD` ve `JPY` değerlerini ayrı satırlara yazın. İlk denemede aralık ve dışlama kullanmayın.
+3. Seçimleri aktararak ana ekrana dönün.
 
-Profil adını ve seçimlerinizi girin. Para birimlerinin yanındaki **çoklu seçim** düğmesiyle USD ve JPY'yi ayrı satırlara ekleyin. **Select Single Values** sekmesini kullanın; aralık veya dışlama seçmeyin.
+![Çoklu seçim penceresinde USD ve JPY'nin Select Single Values altında ayrı satırlara girilmesi](docs/images/sap-currencies.png)
 
-![USD ve JPY'nin Select Single Values sekmesinde ayrı satırlara girilmesi](docs/images/sap-currencies.png)
+### 2.3. Ayarları kaydedin
 
-Aşağıdaki görüntü **kaydetmeden önce doldurulmuş ekranı** gösterir; başarılı kayıt kanıtı değildir. Görseldeki transport numarasını kopyalamayın. Kendi task'ınızı seçin; istemciniz yalnız yerel değişikliğe izin veriyorsa Local settings seçip task'ı boş bırakın.
+1. **Your transport task (`P_TASK`)** alanına SE09/SE10'daki **kendi değiştirilebilir Customizing veya Workbench alt görevinizi** girin. Ana request numarası girmeyin. Bu, ayar verilerini taşıma görevidir; kurulumda kullanılan Workbench göreviyle aynı olmak zorunda değildir.
+2. **Save settings when executing (`P_SAVE`)** kutusunu işaretleyin ve F8'e basın.
+3. **`Settings saved`** sonucunu arayın; ayar anahtarlarının görevinize kaydedildiğini kontrol edin.
 
-![DEMO profili, kur seçimleri, para birimleri ve Save settings kutusuyla doldurulmuş ayar ekranı](docs/images/sap-settings.png)
+Yerel kayda izin veren bir deneme istemcisinde **Local settings, no transport (`P_LOCAL`)** seçilip task boş bırakılabilir. Bu durumda ayarlar taşınmaz. Kayıt için üç ayar tablosunda `S_TABU_NAM` görüntüleme/değiştirme yetkileri gerekir. Kapalı veya bu kayıt türüne izin vermeyen istemcide işlem engellenir; istemci kuralını aşmak için SCC4 değiştirmeyin. [İstemci ve transport kuralları](TECHNICAL.tr.md#tek-dosyalı-kurulum-ve-ayar-programı).
 
-`S` mevcut farklı kuru korur, `U` güncellemeye izin verir. Bülten bulunamadığında `I` bilgi, `W` uyarı, `E` hata davranışıdır. Görüntüden sonra uzun alan etiketleri ekrana sığacak şekilde kısaltıldı; alan adları ve seçimler aynıdır.
+**Kontrol noktası:** profiliniz kayıtlı olmalı; henüz OB08'e kur yazılmadı. Mevcut bir profili yeniden açıyorsanız adını girip **Load existing profile into this screen** düğmesini kullanın. Başkası değiştirdiyse yeniden yükleyin. Birden fazla eşleme, dışlama veya farklı SAP para birimi kodları için [ileri bakım](TECHNICAL.tr.md#advanced-profile-maintenance) gerekir.
 
-### 2.3. SAP'nin bültene ulaşmasını sağlayın
+<a id="onizleme"></a>
 
-Varsayılan kaynak adresi `https://www.tcmb.gov.tr/kurlar`'dır; kendinize ait bir adresle değiştirmeniz gerekmez. Bu yol için TCMB kullanıcı adı, şifre veya API anahtarı girilmez.
+## 3. SAP bağlantısını sınayın ve ilk sonucu kaydetmeden görün
 
-| Durum | Yapılacak işlem |
+<a id="baglanti"></a>
+
+### 3.1. Yükleme ekranını açıp bağlantıyı deneyin
+
+1. **SE38 → `ZCHE_TCMB_LOAD` → F8** ile ekranı açın.
+2. **Rate profile (`P_PROF`)** alanına oluşturduğunuz profil adını girin; örneğimizde `DEMO`.
+3. **Test the connection to TCMB** düğmesine basın.
+
+Program yakın tarihteki bir bülteni alıp okuyabilmeli. Düğme **son yedi günde** bülten arar; seçtiğiniz tarih alanını kullanmaz ve döviz kuru kaydetmez.
+
+Varsayılan kaynak **`https://www.tcmb.gov.tr/kurlar`** adresidir. Bu gerçek kaynak adresidir; kendinize ait bir adresle değiştirmeyin. Doğrudan erişim çalışıyorsa profilin bağlantı alanlarını boş bırakabilirsiniz.
+
+<details>
+<summary>Bağlantı çalışmıyorsa: doğrudan HTTPS, SM59 veya interneti kapalı SAP</summary>
+
+- **Doğrudan HTTPS:** SAP uygulama sunucusunun dış erişimini ve STRUST'taki SSL client **Anonymous** PSE'sinde gerçek sertifika zincirine güveni kontrol edin. Kendi bilgisayarınızdaki tarayıcı testi yeterli değildir.
+- **SM59/proxy gerekiyorsa:** tip **G** HTTP hedefi oluşturun; sunucu `www.tcmb.gov.tr`, port `443`, SSL etkin, path prefix boş olsun. Proxy ve hedefin SSL PSE'sini kurumunuza göre ayarlayın. Ayar programındaki SM59 alanına **sizin oluşturduğunuz hedefin adını** girin; teknik alan adı `RFC_DESTINATION`'dır. Profili yeniden kaydedip bağlantıyı deneyin.
+- **Yetki sizde değilse:** Basis/ağ sorumlusuna “SAP uygulama sunucusundan www.tcmb.gov.tr:443 için HTTPS erişimi ve sertifika güveni gerekiyor” bilgisini iletin.
+- **SAP internete çıkamıyorsa:** [sunucu dosyasından okuma](#dosyadan-okuma) seçeneğine geçin.
+
+</details>
+
+### 3.2. Tek günü test modunda çalıştırın
+
+1. **Bulletin date(s) (`S_DATE`)** alanına **bülteni yayımlanmış geçmiş bir hafta içi günü** girin. İlk denemede tek gün kullanın. Bugünün bülteni henüz yayımlanmamış olabilir.
+2. **Date rule (`P_RULE`)** boş kalsın; profilin tarih kuralı kullanılır.
+3. **Test run, write nothing (`P_TEST`) işaretli kalsın.** F8'e basın.
+4. Sonuçtaki para birimlerini, kur tipini, bülten tarihini, **`VALID_FROM` geçerlilik tarihini**, oranları ve açıklamaları kontrol edin. TCMB değeriyle SAP kurunu karşılaştırırken birim ve dönüşüm oranlarını dikkate alın.
+
+| Sonuç | Test çalıştırmasında anlamı |
 |---|---|
-| SAP doğrudan internete çıkabiliyor | Profilde bağlantı alanları boş kalabilir. SAP'nin HTTPS ve sertifika güvenini doğrulayın. Doğrudan yol STRUST'taki SSL client **Anonymous** PSE'sini kullanır. |
-| Kurum SM59 bağlantısı/proxy kullanıyor | SM59'da TCMB'ye HTTP hedefi (tip G), sunucu `www.tcmb.gov.tr`, port `443`, SSL etkin ve path prefix boş olacak şekilde hazırlayın. Profilin `RFC_DESTINATION` alanına **sizin oluşturduğunuz hedefin adını** girin. Ağ/proxy ve hedefin SSL PSE'si ortamınıza göre ayarlanır. |
-| Bağlantı ayarlarını siz yönetmiyorsunuz | Basis/ağ sorumlusuna “SAP uygulama sunucusundan www.tcmb.gov.tr:443 için HTTPS erişimi ve sertifika güveni gerekiyor” bilgisini iletin. |
-| SAP internet erişimine kapalı | Aşağıdaki [dosyadan okuma](#dosyadan-okuma) yolunu kullanın. |
-
-Sertifika hatasında gerçek sertifika zincirini ve doğru PSE'yi kontrol edin. Bilgisayardaki tarayıcıyla erişim testi tek başına yeterli değildir.
-
-**Bu bölümün sonucu:** profil ve iki para birimi kayıtlı; seçtiğiniz kaynak SAP'den erişilebilir olmalı.
-
-## 3. Önce deneyin, sonra kaydedin
-
-### 3.1. Yazmadan ilk kontrol
-
-1. **SE38 → `ZCHE_TCMB_LOAD` → Execute (F8)** ile seçim ekranını açın.
-2. **Rate profile / `P_PROF`** alanına `DEMO` girin.
-3. **Test the connection to TCMB** düğmesine basın. Yakın tarihteki bir bülteni alıp okuyabilmesi kaynak bağlantısını doğrular; SAP'ye kur yazmaz. Bu test son yedi gün içinde bülten arar ve seçtiğiniz tarih aralığını kullanmaz.
-4. **Bulletin date(s) / `S_DATE`** alanına bülteni yayımlanmış geçmiş bir hafta içi günü girin. İlk denemede tek gün seçin. Varsayılan bugün, henüz yayımlanmamış bir bülten olabilir.
-5. **Date rule / `P_RULE`** boş kalsın; profilin kuralı kullanılır. **Test run, write nothing / `P_TEST` işaretli kalsın.**
-6. F8 ile çalıştırın. Sonuçtaki bülten tarihi, `VALID_FROM`, USD/JPY, kur tipi, oranlar ve açıklamaları kontrol edin. Bülten değeriyle SAP kurunu birim/oran etkisini dikkate alarak karşılaştırın.
-
-| Sonuç | Nasıl okuyacaksınız? |
-|---|---|
-| `NEW` | Testte: yeni kayıt oluşturulacak. Gerçek çalıştırmada: yazma ve commit başarılıysa yeni kayıt oluştu. |
-| `UPDATED` | Testte: mevcut kayıt değiştirilecek. Gerçek çalıştırmada: yazma ve commit başarılıysa güncellendi. |
+| `NEW` | Gerçek kayıt yapılırsa yeni kur oluşturulacak. |
+| `UPDATED` | Gerçek kayıt yapılırsa mevcut kur değiştirilecek. |
 | `UNCHANGED` | Aynı anahtar/tarihte eşit kur zaten var. |
-| `SKIPPED` | Satır atlandı; nedenini mesajda okuyun. Mevcut kaydı koruma veya eksik kaynak alanı olabilir. |
-| `NO_BULLETIN` | Seçilen hafta içi gün için bülten alınamadı; örneğin tatil veya henüz yayınlanmama. Profil politikası hata da üretebilir. |
-| `ERROR` | Sorun var; mesajı inceleyip çözün. |
+| `SKIPPED` | Satır atlandı; nedenini mesajda okuyun. |
+| `NO_BULLETIN` | O hafta içi gün için bülten alınamadı; tatil veya henüz yayımlanmamış gün olabilir. Profil bunu hata da sayabilir. |
+| `ERROR` | Bir sorun var; mesajdaki nedeni çözün. |
 
-**Testte `NEW` görmeniz OB08'e kayıt yapıldığı anlamına gelmez.** Bu mod yazma yetkisini veya gerçek kaydın başarısını da doğrulamaz. Kendi exit sınıfınızı eklerseniz testte de çalışır; [test kurallarına](TECHNICAL.tr.md#mimari-ve-genişletme) uymalıdır.
+**Kontrol noktası:** sonuçları görebiliyorsunuz; **testte `NEW` görseniz bile OB08'e kayıt yapılmadı.** Bu deneme gerçek yazma yetkisini veya commit başarısını doğrulamaz. Özel exit kullanıyorsanız [test kuralları](TECHNICAL.tr.md#mimari-ve-genişletme) da geçerlidir.
 
-### 3.2. Deneme sisteminde gerçek kayıt
+<a id="ilk-kayit"></a>
 
-1. Beklenmeyen hata/atlamaları çözün. Kur tipi, geçerlilik tarihi ve beklenen çevrim tutarını doğrulayın.
-2. Aynı sınırlı seçimle, **yalnızca kayıt yapmak istediğinizde** Test run işaretini kaldırıp çalıştırın.
-3. **OB08**'de aynı kur tipi, para çifti ve geçerlilik tarihiyle kaydı bulun. SAP para çevrimiyle beklenen tutarı da kontrol edin.
-4. Aynı günü tekrar çalıştırın: kaydedilmiş eşit kurların `UNCHANGED` olması beklenir.
+## 4. Deneme sisteminde ilk gerçek kaydı yapın
 
-### 3.3. Günlük çalışmayı planlayın
+1. Beklenmeyen hata/atlamaları çözün. Kur tipi, geçerlilik tarihi ve beklenen para çevrimi tutarını doğrulayın.
+2. Aynı tek gün ve az sayıda para birimiyle devam edin. **Kaydetmek istediğinizde Test run işaretini kaldırıp F8'e basın.**
+3. Sonuç mesajlarını kontrol edin. Gerçek çalıştırmada `NEW` / `UPDATED`, yazma ve commit başarılıysa kaydın oluştuğunu/değiştiğini bildirir.
+4. **OB08**'de aynı kur tipi, para çifti ve geçerlilik tarihindeki kaydı bulun. SAP para çevrimiyle beklenen tutarı da doğrulayın.
+5. Aynı günü yeniden çalıştırın: eşit kayıtların `UNCHANGED` olması beklenir.
 
-Kurulum ve gerçek yazma kabulü tamamlandıktan sonra nesneleri ve profil verilerini normal transport sürecinizle taşıyın. Her hedef sistemde istemci, bağlantı, yetki ve FI ayarlarını ayrıca doğrulayın.
+**Kontrol noktası:** SAP'deki kur kaydı ve çevrim sonucu beklentinizle uyuşuyor. Yalnız başarılı ön izlemeye dayanarak günlük kullanıma geçmeyin.
 
-**SM36**'da `ZCHE_TCMB_LOAD` için onayladığınız seçimlerle bir varyant ve job hazırlayın. Günlük bülten için tarih alanını sabit bir gün olarak kaydetmeyin; **güncel tarih seçim değişkeni** kullanın. Yazması gereken varyantta Test run işaretini ayrıca kontrol edin. Önce test kullanıcısıyla arka plan çalışmasını doğrulayın; ardından yetkileri uygun çalışma kullanıcısını seçin.
+<a id="gunluk-kullanim"></a>
 
-TCMB, gösterge kurlarını iş günlerinde saat 15.30'da ilan eder; job'ı yayın sonrası uygun bir saate planlayın ve SAP/job saat dilimini doğrulayın. [TCMB açıklaması](https://tcmb.gov.tr/wps/wcm/connect/TR/TCMB%2BTR/Main%2BMenu/Banka%2BHakkinda/Sikca%2BSorulan%2BSorular/Doviz%2BKuru%2BPolitikasi%2Bve%2BRezerv%2BYonetimi/).
+## 5. Doğruladıktan sonra günlük kullanımı planlayın
 
-Program cumartesi/pazarı atlar. Tatil veya yayınlanmamış günün davranışı profil ayarına bağlıdır. **SM37**, job log'u ve spool üzerinden sonuçları izleyin; hatalı job önceki başarılı kayıtları geri almaz.
+1. Nesneleri ve profil ayarlarını normal transport sürecinizle taşıyın. **Installer'ı her hedef sistemde yeniden çalıştırmayın.** Hedefte bağlantı, istemci, yetki ve FI ayarlarını doğrulayın.
+2. `ZCHE_TCMB_LOAD` için onayladığınız seçimlerle bir **varyant** kaydedin. Günlük kullanımda sabit geçmiş tarih yerine **güncel tarih seçim değişkeni** kullanın. Gerçek kayıt yapacak varyantta Test run işaretini ayrıca kontrol edin.
+3. **SM36**'da bu varyantla arka plan işi oluşturun. Bültenin yayımlanmasından sonraya planlayın; SAP/job saat dilimini doğrulayın.
+4. Önce deneme kullanıcısıyla arka plan çalışmasını sınayın; sonra yetkileri uygun çalışma kullanıcısını seçin. **SM37**, job log'u ve spool üzerinden sonuçları izleyin.
+
+Program cumartesi/pazarı atlar. Diğer yayımlanmayan günlerde profilin bülten yok kuralı uygulanır. Bir job'ın hata vermesi, daha önce başarılı kaydedilen kurları geri almaz.
+
+<details>
+<summary>Alternatif kurulum: zaten abapGit kullanıyorsanız</summary>
+
+`https://github.com/Cheditte/abap-tcmb-rates` deposunu müşteri paketinize alıp Pull/aktivasyon yapabilirsiniz. Çevrimdışı aktarım için New Offline → Import zip → Pull zip yolu vardır. Aynı nesneleri iki yöntemle üst üste kurmayın. Ayarlar yine `ZCHE_TCMB_CONFIG` ile girilebilir; SM30 ileri bakım için isteğe bağlıdır. [abapGit kurulum rehberi](https://docs.abapgit.org/user-guide/getting-started/install.html).
+
+</details>
 
 ## Dosyadan okuma
 
-Bu bölüm yalnız SAP'nin TCMB'ye HTTPS erişimi yoksa gerekir. Program bilgisayarınızdaki İndirilenler klasörünü değil, **SAP uygulama sunucusunun okuyabildiği klasörü** kullanır. Otomatik indirici bu projeye dahil değildir.
+Bu alternatif yalnız SAP'nin TCMB'ye HTTPS erişimi yoksa gerekir. Okunan yer **SAP uygulama sunucusunun erişebildiği klasördür**; kendi bilgisayarınızın İndirilenler klasörü değildir. Projeye otomatik indirici dahil değildir.
 
-1. Yetkiniz varsa sunucuya kurumunuzun izin verdiği yöntemle (Windows'ta RDP, Linux'ta SSH veya yönetilen dosya aktarımı) erişin; yoksa sunucu sorumlusuyla klasör ve dosya hazırlığını yapın.
-2. Tam TCMB günlük XML'ini bu klasöre `GGAAYYYY.xml` adıyla koyun. Örneğin **30.10.2026 için** `30102026.xml`; kendi seçtiğiniz tarihe göre dosya adı değişir. XML içindeki bülten tarihi de aynı olmalıdır. Dosya tamamlandıktan sonra okunacak klasöre alın.
-3. Profilde `SOURCE_CLASS = ZCL_CHE_TCMB_SOURCE_FILE` yapın. `FILE_FOLDER` alanına **sizin sisteminizdeki gerçek sunucu klasörünü** girin. Birden fazla uygulama sunucusu varsa çalıştırmanın/job'ın aynı dosyalara erişebildiğini doğrulayın.
-4. SAP çalışma kullanıcısının dosya yetkisini ve sunucudaki okuma iznini kontrol edin. Tek günlük test çalıştırmasını seçtiğiniz dosyanın tarihiyle yapın.
+<details>
+<summary>İnternete çıkamayan SAP için dosya hazırlama adımları</summary>
 
-Bağlantı düğmesi dosya kaynağında da son yedi güne bakar. Sadece daha eski bir dosya hazırladıysanız düğme yerine o tarihte test çalıştırması yapın. Eksik/okunamayan dosya `ERROR` olur; program bunu “TCMB o gün yayın yapmadı” diye kabul etmez ve başka kaynağa otomatik geçmez.
+1. Yetkiniz varsa kurumunuzun izin verdiği yöntemle sunucuya erişin: Windows'ta RDP, Linux'ta SSH veya yönetilen dosya aktarımı. Yetkiniz yoksa sunucu sorumlusuyla klasör ve dosyaları hazırlayın.
+2. Tam TCMB günlük XML'ini `GGAAYYYY.xml` adıyla klasöre koyun. **30.10.2026 yalnız örnek tarihtir:** o gün için ad `30102026.xml` olur. Kendi seçtiğiniz tarihe göre adı değiştirin; XML içindeki bülten tarihi de eşleşmeli. Yalnız tamamlanmış dosyaları okunan klasöre alın.
+3. Basit ayar ekranında **Read from server files** seçeneğini işaretleyin; **Server folder** alanına kendi gerçek sunucu klasörünüzü girin ve profili kaydedin. Teknik karşılıkları `SOURCE_CLASS = ZCL_CHE_TCMB_SOURCE_FILE` ve `FILE_FOLDER`'dır.
+4. SAP çalışma kullanıcısının dosya yetkisini ve işletim sistemi okuma iznini kontrol edin. Birden fazla uygulama sunucusunda, çalıştırmanın/job'ın aynı dosyalara ulaşabildiğini doğrulayın.
+5. Yükleme programını dosyanın tarihiyle **test modunda** çalıştırın. Bağlantı düğmesi son yedi güne bakar; yalnız eski bir dosya hazırladıysanız o tarihte doğrudan test yapın.
 
-## Bir şey ters giderse
+Eksik/okunamayan dosya `ERROR` olur. Program bunu tatil saymaz veya başka kaynağa otomatik geçmez. [Teknik ayrıntılar](TECHNICAL.tr.md#dosya-kaynağı-ve-sorun-giderme).
 
-| Belirti | İlk kontrol |
+</details>
+
+## Bir adımda takılırsanız
+
+| Nerede takıldınız? | İlk bakacağınız yer |
 |---|---|
-| Profil bulunamıyor | Doğru istemci, profil adı ve üç ayar tablosu. |
-| Ayar kaydı engelleniyor | S_TABU_NAM yetkileri, SCC4 istemci ayarı, kendi transport task’ınız ve mevcut profili önce yükleme. |
-| SSL / bağlantı hatası | SAP sunucusunun erişimi, STRUST/SM59, ağ ve proxy. |
-| Oran / TCURF hatası | OBBS'de doğru para çifti, kur tipi ve geçerlilik tarihindeki oranlar. |
-| Beklediğiniz kur atlandı | Satır mesajı, para birimi listesi, kaynak alanı ve mevcut kayıt politikası. |
-| Job hata verdi | SM37 log/spool ve OB08. Daha önce yazılmış kayıtlar kalmış olabilir. |
+| Kurulum mevcut nesne nedeniyle durdu | Aynı isimli aktif/pasif nesneler, log ve aktivasyon durumu. Installer güncelleme aracı değildir. |
+| Profil kaydedilemiyor | Kendi alt göreviniz, istemci kuralı, tablo yetkileri; mevcut profili önce yüklediğinizden emin olun. |
+| Profil bulunamıyor | Aynı istemcide misiniz, profil adı doğru mu, kayıt başarılı mı? |
+| TCMB bağlantısı çalışmıyor | SAP sunucusunun erişimi, STRUST/SM59, ağ ve proxy. |
+| Oran / TCURF hatası var | OBBS'de para çifti, kur tipi ve ilgili tarihte geçerli dönüşüm oranları. |
+| Beklenen kur atlandı | Satır mesajı, para birimi listesi, TCMB alanı ve mevcut kaydı koruma seçimi. |
+| Gerçek kayıt veya job hata verdi | Sonuç, OB08 ve SM37 log/spool. Daha önce başarılı yazılan kayıtlar kalmış olabilir. |
 
-**Hata alan çalıştırmayı körlemesine tekrarlamayın.** Başarılı önceki günler ve satırlar kaydedilmiş olabilir. Önce sonuçları ve OB08'i inceleyin; nedeni giderip etkilenen aralığı test modunda tekrar değerlendirin. Commit hatasında yeniden denemeden önce SM13'teki başarısız/bekleyen güncellemeleri yetkili kişiyle kontrol edin. [Kısmi yazma ve kurtarma ayrıntıları](TECHNICAL.tr.md#hatalar-kısmi-yazma-ve-yeniden-çalıştırma).
+Hata alan çalıştırmayı doğrudan tekrarlamayın. Önce sonuçları ve OB08'i inceleyin, nedeni giderip ilgili aralığı test modunda değerlendirin. Commit hatasında yeniden denemeden önce SM13'teki başarısız/bekleyen güncellemeleri yetkili kişiyle kontrol edin. [Kısmi yazma ve kurtarma](TECHNICAL.tr.md#hatalar-kısmi-yazma-ve-yeniden-çalıştırma).

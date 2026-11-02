@@ -2,53 +2,53 @@
 
 > [English](README.md) | **Türkçe**
 
-Türkiye Cumhuriyet Merkez Bankasının (TCMB) yayımladığı günlük döviz kurlarını SAP'ye almak istiyorsanız bu projeyi kullanabilirsiniz. Hangi para birimlerinin alınacağını, alış veya satış kurunun kullanılacağını ve kurların hangi tarihten itibaren geçerli olacağını siz belirlersiniz.
+Türkiye Cumhuriyet Merkez Bankasının (TCMB) yayımladığı günlük döviz kurlarını SAP'ye almak istiyorsanız bu projeyi kullanabilirsiniz. Hangi para birimlerinin alınacağını, alış veya satış kurunun kullanılacağını ve kurların hangi tarihten itibaren geçerli olacağını siz seçersiniz.
 
-Önce sonucu **SAP'ye kaydetmeden** inceleyebilir, kontrol ettikten sonra aktarım yapabilir ve günlük çalışmayı SAP job'ı olarak planlayabilirsiniz.
+**Akış basit:** SAP, TCMB'nin günlük bültenini okur. Seçimlerinize göre hazırladığı sonucu önce kaydetmeden gösterir. Kontrol ettikten sonra kayıt yaparsınız; oluşan döviz kurlarını SAP'de **OB08** işleminden doğrularsınız.
 
-![TCMB bülteninden ön kontrole, ardından SAP'deki kur kayıtlarına uzanan kullanım akışı](docs/images/overview-tr.svg)
+![TCMB günlük bülteni ve profil seçimlerinden ön izlemeye, ardından kullanıcının kararıyla OB08 kaydına giden akış](docs/images/overview-tr.svg)
 
-## Başlamak için
+## Başlamak için ne gerekiyor?
 
-**[Adım adım kurulum ve kullanım rehberini açın →](WALKTHROUGH.tr.md)**
+Kurulumu yapacak kişinin SE38'de program oluşturup çalıştırabilen bir **ABAP geliştiricisi** olduğunu varsayıyoruz. Aşağıdaki hazırlıklardan hepsini, yetkiniz ve erişiminiz varsa kendiniz tamamlayabilirsiniz. Gerektiğinde FI veya Basis/ağ sorumlusuyla ilerleyebilirsiniz.
 
-Bu rehber, SAP'de SE38 üzerinden program çalıştırabilen ve geliştirme nesnelerini yönetebilen bir ABAP geliştiricisi içindir. FI bilgisi gereken kararları ve bağlantı yetkisi gerektiren işlemleri ayrıca açıklar. Bu yetkiler sizdeyse işlemleri kendiniz yapabilirsiniz; değilse ilgili ekiple tamamlayabilirsiniz.
+![Başlamak için üç hazırlık: SAP geliştirme erişimi, hangi kurların alınacağına ilişkin kararlar ve SAP'den TCMB'ye HTTPS bağlantısı](docs/images/prepare-tr.svg)
 
-**[SE38 kurulum dosyasını açın / kaydedin](https://raw.githubusercontent.com/Cheditte/abap-tcmb-rates/main/installer/zche_tcmb_install.prog.abap)** — SE38'de program adı `ZCHE_TCMB_INSTALL` olmalı. Dosyayı yüklemek için rehberi izleyin. Ayarlar için `ZCHE_TCMB_CONFIG`, günlük kullanım için `ZCHE_TCMB_LOAD` çalıştırılır.
+Normal HTTPS kullanımında SAP sunucusuna yardımcı uygulama kurmanız gerekmez. **TCMB hesabı, şifre veya API anahtarı da gerekmez.** SAP uygulama sunucusunun `www.tcmb.gov.tr:443` adresine erişimi ve sertifika güveni gerekir. Bilgisayarınızdan siteyi açabilmeniz, SAP'nin de erişebildiğini göstermez.
 
-**Tek dosyalı kurulum SAP deneme sisteminde ayrı test adlarıyla tamamlandı.** Kendi DEV ortamınızda da doğrulayın; mevcut nesneler varsa installer durur. [Test kapsamı](docs/validation-2026-11-02.md).
+## Kurulumdan ilk kullanıma
 
-## Kurulumu üç adımda düşünün
+abapGit kullanmadan, **tek bir dosyayı SE38'e yükleyerek** başlayabilirsiniz. Üç programın görevi farklıdır:
 
-| Adım | Ne yapacaksınız? | Sonunda ne hazır olacak? |
+| Sıra | SE38'de açacağınız program | Yapacağınız işlem |
 |---|---|---|
-| **1. SAP'ye kurun** | Tek dosyalı kurulum programını SE38’de çalıştırıp kendi paketinizi seçin. | Çalıştırılabilir program ve ayar tabloları. |
-| **2. Kurallarınızı belirleyin** | Para birimlerini, kur tipini ve geçerlilik tarihini bir profile kaydedin. SAP'nin TCMB'ye erişebildiğini kontrol edin. | Hangi kurların nasıl alınacağını belirleyen ayarlar. |
-| **3. Deneyin ve kullanın** | Tek gün ve az sayıda para birimiyle yazmadan deneyin. Sonucu doğrulayıp kayıt yapın; ardından isterseniz job planlayın. | OB08 üzerinden kontrol edebileceğiniz SAP kur kayıtları. |
+| 1 · Kurun | `ZCHE_TCMB_INSTALL` | İndirdiğiniz tek dosyayla SAP nesnelerini kendi paketinize oluşturun. |
+| 2 · Ayarlayın | `ZCHE_TCMB_CONFIG` | Para birimi, kur tipi ve tarih seçimlerinizi bir profile kaydedin. |
+| 3 · Kullanın | `ZCHE_TCMB_LOAD` | Profili ve bülten tarihini seçin; önce test edin, sonra isterseniz kaydedin. |
 
-**Profil**, her çalıştırmada yeniden girmemek için kaydettiğiniz ayar grubudur. Programın adı **`ZCHE_TCMB_LOAD`**; SE38'den çalıştırırsınız. **OB08**, SAP'de döviz kuru kayıtlarını görüntüleyip bakımını yaptığınız işlem kodudur.
+**Profil**, her seferinde yeniden girmemek için kaydettiğiniz ayar grubudur. İlk profilinizi kendiniz oluşturursunuz; hazır profil gelmez. Kurulum ve profil kaydı, döviz kuru kaydetmez. Kurlar üçüncü programdan, test işaretini kaldırdığınızda yazılır.
 
-## Neye ihtiyacınız var?
+**[Ekran görüntüleriyle adım adım kurulum ve kullanım →](WALKTHROUGH.tr.md)**
 
-- Geliştirme/deneme SAP sistemi ve nesne oluşturma yetkisi. **abapGit zorunlu değildir**; tek dosyalı SE38 kurulumu sunulur.
-- SAP'de kullanılacak para birimleri, kur tipleri ve dönüşüm oranları. Seçimleri kendi FI/muhasebe sürecinize göre doğrulayın.
-- SAP uygulama sunucusundan **`www.tcmb.gov.tr:443`** adresine HTTPS erişimi. Bilgisayarınızın siteyi açabilmesi SAP'nin de erişebildiğini göstermez.
+[Tek dosyalı kurulum dosyasını açın / kaydedin](https://raw.githubusercontent.com/Cheditte/abap-tcmb-rates/main/installer/zche_tcmb_install.prog.abap). SE38'de oluşturacağınız programın adı `ZCHE_TCMB_INSTALL` olmalı; dosyayı yüklemek ve ilk kontrolleri yapmak için rehberi izleyin.
 
-**Normal HTTPS kullanımında SAP sunucusuna ayrıca bir yardımcı uygulama kurmanız gerekmez.** Bağlantı için ağ ve sertifika ayarı gerekebilir. İnternete çıkamayan SAP sistemlerinde, önceden sunucu klasörüne konulan XML dosyalarını okuyan [alternatif yol](WALKTHROUGH.tr.md#dosyadan-okuma) vardır; dosyaları hazırlama işlemi projeye dahil değildir.
+İlk denemeyi DEV/deneme sisteminde, **tek gün ve az sayıda para birimiyle** yapın. Sonucu doğruladıktan sonra günlük kullanımı bir SAP arka plan işi olarak planlayabilirsiniz.
 
-## Kapsamı bilin
+## Kapsam ve mevcut durum
 
-- Kurların karşılığı **TRY**'dir; proje farklı para birimleri arasında çapraz kur üretmez.
-- Muhasebe belgesi oluşturmaz. SAP'nin standart döviz kuru kayıtlarını BAPI ile yükler.
-- Test seçeneği varsayılan olarak açıktır. Testteki `NEW` / `UPDATED`, kayıt yapılırsa oluşacak sonucu gösterir.
-- **Ön sürüm: v0.1.** Kurulum ve çalışma denemelerinin kapsamı [test kaydında](docs/validation-2026-11-02.md) açıklanır. 7.40 SP08 ve 7.58 için statik kontroller, eski SAP sürümlerinde çalışma garantisi değildir.
+- Kurların karşılığı **TRY**'dir. Farklı para birimleri arasında çapraz kur üretmez; muhasebe belgesi oluşturmaz. SAP'nin standart döviz kuru kayıtlarını BAPI ile yükler.
+- Test modu varsayılan olarak açıktır. Testte `NEW` / `UPDATED` görmek, kayıt yapıldığı anlamına gelmez.
+- Installer **temiz ilk kurulum** içindir. Aynı isimli nesne varsa durur; üzerine yazmaz veya güncelleme yapmaz. Sonraki sistemlere normal transport süreciyle taşıyın.
+- **Ön sürüm: v0.1.** Ayrı test adlarıyla SAP kurulumu tamamlandı; son ayar kaydı, transport ve uçtan uca kabul kontrolleri bekliyor. 7.40 SP08 ve 7.58 statik kontrolleri, bu sürümlerde çalışma garantisi değildir. [Test kapsamı ve açık kontroller](docs/validation-2026-11-02.md).
+
+SAP'nin internet erişimi yoksa, önceden SAP sunucusundaki klasöre konulan XML dosyalarını okuyan [alternatif yol](WALKTHROUGH.tr.md#dosyadan-okuma) vardır. Dosyaları indirme/hazırlama işlemi projeye dahil değildir.
 
 ## Hangi belgeyi okuyayım?
 
 | İhtiyacınız | Belge |
 |---|---|
-| Kurmak, ilk profili oluşturmak ve kullanmak | [Kurulum ve kullanım](WALKTHROUGH.tr.md) |
-| Bütün ayarlar, sınıfları kendi kodunuzdan çağırma, genişletme ve hata davranışı | [Teknik başvuru](TECHNICAL.tr.md) |
+| Kurmak, ayarlamak ve ilk çalıştırmayı yapmak | [Kurulum ve kullanım rehberi](WALKTHROUGH.tr.md) |
+| Bütün alanlar, kendi ABAP kodunuzdan çağırma ve genişletme | [Teknik başvuru](TECHNICAL.tr.md) |
 | Test çalıştırmak veya katkı vermek | [CONTRIBUTING.md](CONTRIBUTING.md) — İngilizce |
 | Değişiklikleri görmek | [CHANGELOG.md](CHANGELOG.md) — İngilizce |
 

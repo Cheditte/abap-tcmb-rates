@@ -6,6 +6,7 @@ This revision is pre-release. The current changes have local static and JavaScri
 
 ### Changed
 
+- Rework the bilingual README and walkthrough from the overall flow and prerequisites to numbered actions and checkpoints, with clearer diagrams and maintainer-supplied SAP screenshots beside the relevant steps.
 - Respect blank/1/2/3 client controls, including local-only clients. Restore DDIC field metadata and selection-text prefixes, and activate report source/text objects correctly.
 - Remove the truncated `NEXT_WORKD` domain fixed value. Keep CHAR12 date rules and provide full-name F4 choices in the settings report, with application validation.
 

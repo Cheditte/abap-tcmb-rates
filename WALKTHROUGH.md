@@ -1,190 +1,224 @@
-# Installation and usage guide
+# From installation to your first exchange-rate record
 
 > **English** | [Türkçe](WALKTHROUGH.tr.md) · [Project overview](README.md) · [Technical reference](TECHNICAL.md)
 
-By the end of this guide, you will be able to run `ZCHE_TCMB_LOAD`, preview one day's TCMB rates without saving them, then perform a controlled load in a sandbox and check the records in OB08.
+## Start with the big picture
 
-**Starting point:** you are an ABAP developer with development access. Start in DEV/a sandbox. This is a pre-release; the completed isolated installation and remaining checks are explained in the [validation record](docs/validation-2026-11-02.md).
+Here is what we will do: **SAP will read TCMB's daily exchange-rate bulletin and preview your selected rates without saving them.** After reviewing the results, you can load the rates into SAP. You will verify the records in OB08, SAP's exchange-rate maintenance transaction.
 
-![Setup map: install SAP objects, prepare a profile and connectivity, then preview and save](docs/images/setup-en.svg)
+First we will install the project, then save our rate choices. After that, each rate run uses only the load report:
 
-## Separate the preparations first
+![SE38 path: ZCHE_TCMB_INSTALL for initial setup, ZCHE_TCMB_CONFIG for settings, and ZCHE_TCMB_LOAD for each rate run](docs/images/setup-en.svg)
 
-| Preparation | Where | Why |
-|---|---|---|
-| Single-file installation | SAP development system | Run the installer and settings report. You do this. |
-| Choose currencies, rate types, ratios and dates | SAP FI configuration and your accounting process | Store the right rates under the right keys and dates. Consult the FI owner if needed. |
-| Enable TCMB access | SAP application-server network and SSL configuration | Allow SAP to retrieve the bulletin. Do it yourself if authorized, otherwise involve Basis/network support. |
+**Who is this guide for?** An ABAP developer who can create and run reports in SE38. Perform the first installation and real-write trial in DEV/a sandbox. This is a pre-release: isolated installation completed; final settings-save and end-to-end acceptance checks remain pending. [Validation record](docs/validation-2026-11-02.md).
 
-The normal HTTPS route does not require RDP/SSH access to install extra software. SAP GUI connectivity/certificate configuration and network permissions may be sufficient. Host access is only needed where your environment requires it, such as for the alternative file route.
+Follow this order: [0 · Prepare](#prepare) → [1 · Install](#install) → [2 · Profile](#profile) → [3 · Connection and preview](#preview) → [4 · First write](#first-write) → [5 · Daily use](#daily-use).
 
-## 1. Install the SAP objects from one file
+<a id="prepare"></a>
 
-This route does not require abapGit, manually creating each class, or generating settings screens in SE54. The installer creates the objects; a separate SE38 report maintains simple settings. The single-file installation completed in an SAP sandbox using isolated test names. Run preflight and acceptance checks in your own DEV environment too.
+## 0. What should you prepare first?
 
-### 1.1. Prepare a package and task
+![Three preparations: SAP development access, rate choices, and connectivity from the SAP server to TCMB](docs/images/prepare-en.svg)
 
-1. Create/select a transportable customer package in SE80. `ZCHE_TCMB` is an example; substitute your own **Z/Y package**.
-2. In SE09, prepare **your own modifiable development task** beneath a Workbench request. Supply the child task number to the installer, rather than its parent request. Select the real number from your system.
+**SAP access:** you need object-creation and transport permissions in your development system. We will prepare a customer package and your own transport task in the installation step.
 
-For a local-only sandbox trial, `$TMP` is allowed with an empty task. Use a customer package to transport between systems. Object-creation/change and CTS permissions are required.
+**Rate choices:** decide which currencies, buying or selling rates, and valid-from dates you need. The SAP **rate type** groups rates by their purpose. **OBBS translation ratios** determine the units SAP uses for a quote; TCMB may publish JPY per 100 units. Verify the currencies/rate type and ratios effective on the relevant date; do not enter arbitrary `1:1` ratios. Consult the FI owner if you do not manage these choices yourself.
 
-### 1.2. Upload the single file in SE38
+**Connectivity:** the SAP application server needs HTTPS access to `www.tcmb.gov.tr:443` and certificate trust. The standard route does not require RDP/SSH access or extra server software. It needs no TCMB username, password or API key. Configure connectivity yourself if authorized, or involve the Basis/network owner. We will test it from SAP in step 3.
 
-1. [Open and save the installer file](https://raw.githubusercontent.com/Cheditte/abap-tcmb-rates/main/installer/zche_tcmb_install.prog.abap). Use the **complete** `zche_tcmb_install.prog.abap` file, not one source class or a GitHub HTML page.
-2. Create executable report **`ZCHE_TCMB_INSTALL`** in SE38. Assign the same customer package/appropriate task.
-3. In the source editor, upload through **Utilities → More Utilities → Upload/Download → Upload**, or paste the entire source. Menu wording varies with SAP language. Check syntax and activate. This report needs no pre-existing TCMB project objects to activate.
-4. Execute with F8. Set **Existing target package / P_PACK** and **Your Workbench task / P_TASK** to your package and child task.
-5. Keep **Check only - create nothing / P_TEST selected** and execute. Review `READY` lines and `Preflight passed`. This check creates no objects, profiles or rates, and does not establish that actual installation will succeed.
-6. After a successful preflight, return to the selection screen. Clear Check only **when you intend to install**, then execute. Check for `Installation completed`. Run package ABAP Unit and appropriate ATC checks.
+<a id="install"></a>
 
-**The installer is for a clean first installation.** Existing active/inactive objects stop the run without replacement; this is not an updater or automatic repair tool. If it stops partway through, earlier objects may exist. Review the log, SE11/SE24/SE38 activation state and transport list. Do not delete objects or remove guards to retry. An authorized developer must reconcile partial state and recover after fixing the cause. Installation is not one reversible transaction.
+## 1. Install the project in SAP
 
-**Ready to continue when:** `ZCHE_TCMB_CONFIG` and `ZCHE_TCMB_LOAD` are active. Installation does not write profiles or rates. Transport the objects normally to other systems rather than rerunning the installer in each target.
+Complete this step in your **SAP development system, using SE80/SE09 and SE38**. The settings and load reports will be ready afterwards, without any profiles or exchange rates yet. You do not need abapGit or to create each class manually.
 
-### What does it look like?
+### 1.1. Select your package and child task
 
-**Upload the file:** open this menu in the SE38 source editor, then select the downloaded `.abap` file.
+1. In **SE80**, create or select a transportable customer package. `ZCHE_TCMB` is only an example; use your own **Z/Y package**.
+2. In **SE09**, prepare/select **your own task under a modifiable Workbench request**. The task is the child entry beneath the parent request. The installer needs that child task number.
 
-![SE38 Utilities, More Utilities, Upload/Download and Upload menus](docs/images/sap-upload.png)
+For a local-only sandbox trial, you may choose `$TMP` with an empty task; those objects cannot be transported. Use a customer package if you intend to move between systems. Use your own package and task, rather than copying examples from screenshots.
 
-**Preflight:** run with Check only selected first. Enter your own package; the example package name is not mandatory. The task is your child task in SE09. Leave it empty only for a `$TMP` sandbox installation.
+### 1.2. Download the single file and upload it in SE38
 
-![Installer package, Workbench task and selected Check only fields](docs/images/sap-installer.png)
+1. **[Open the installer and save it to your computer](https://raw.githubusercontent.com/Cheditte/abap-tcmb-rates/main/installer/zche_tcmb_install.prog.abap).** The filename should be `zche_tcmb_install.prog.abap`. Use this complete file, rather than a GitHub HTML page or one class from the source folder.
+2. In **SE38**, create **executable report** `ZCHE_TCMB_INSTALL`. Assign your package and appropriate Workbench task.
+3. In the source editor, choose **Utilities → More Utilities → Upload/Download → Upload** and select the file. Menu wording can vary; you can also paste the complete source.
 
-**At the end of a successful installation:** look for `Installation completed`. No profiles or exchange rates are created at this stage.
+![Upload menu in the SE38 source editor for loading the downloaded installer](docs/images/sap-upload.png)
 
-![Actual SAP installation result showing Installation completed after creating 44 objects](docs/images/sap-install-complete.png)
+4. Save the source, check syntax and activate the report. The installer can activate before the other project objects exist.
 
-These are actual SAP GUI captures; your theme and menu language may differ. The completion capture uses `ZTS8` names to preserve the existing project during testing. Follow this guide's `ZCHE_TCMB_INSTALL`, `ZCHE_TCMB_CONFIG` and `ZCHE_TCMB_LOAD` names for your installation.
+### 1.3. Run the installation preflight first
 
-### Alternative: abapGit
+1. Open `ZCHE_TCMB_INSTALL` with **F8**.
+2. Set **Existing target package (`P_PACK`)** to the package selected in 1.1.
+3. Set **Your Workbench task (`P_TASK`)** to your Workbench child task. Leave it empty only for a `$TMP` trial.
+4. Keep **Check only - create nothing (`P_TEST`) selected**. Execute with F8.
 
-If preferred, import `https://github.com/Cheditte/abap-tcmb-rates` into a customer package with abapGit, Pull and activate. Offline import uses New Offline → Import zip → Pull zip. Do not install the same objects twice using both routes. This route also includes `ZCHE_TCMB_CONFIG`; SM30 is optional advanced maintenance. See the [abapGit installation guide](https://docs.abapgit.org/user-guide/getting-started/install.html).
+![Installation preflight with package, Workbench child task and Check only selected](docs/images/sap-installer.png)
 
-## 2. Prepare a first profile and connectivity
+**Checkpoint:** look for `READY` lines and `Preflight passed`. No objects, profiles or rates have been created. This does not mean the actual installation has completed.
 
-### 2.1. Decide which rates to load
+### 1.4. Create the objects
 
-**`DEMO` is an example profile you create**, not preinstalled data. The example previews forex buying rates for USD and JPY, valid on the bulletin date. **`M`, `FX_BUY` and `SAME_DAY` are example choices**, subject to your FI/accounting process.
+1. After successful preflight, return to the selection screen.
+2. **Clear Check only and press F8 to begin installation.**
+3. Look for **`Installation completed`**. Verify that `ZCHE_TCMB_CONFIG` and `ZCHE_TCMB_LOAD` are active; run package ABAP Unit and appropriate ATC checks.
 
-- **Rate type:** a grouping of exchange rates used for a particular purpose in SAP. The example uses `M`; it must exist and be appropriate in your system.
-- **TCMB field:** forex buying/selling, banknote buying/selling, or a mean. The example uses `FX_BUY` for forex buying. See [all choices](TECHNICAL.md#tcmb-fields).
-- **Valid-from date:** the bulletin date, the next calendar day, or the next working day in a factory calendar. The example uses `SAME_DAY`.
-- **Translation ratio:** how many currency units SAP uses for a quote. TCMB may quote JPY per 100 units. Verify OBBS ratios for the pair/rate type, including their effective date. Do not enter arbitrary `1:1` ratios.
+![Actual isolated SAP installation displaying Installation completed](docs/images/sap-install-complete.png)
 
-### 2.2. Save the profile in the simple settings screen
+The **`ZTS8` names in this real SAP capture belong to an isolated test copy**. Continue with this guide's `ZCHE_TCMB_*` names. Your SAP theme and menu language may differ.
 
-1. Open **SE38 → `ZCHE_TCMB_CONFIG` → F8**. `DEMO` is not preinstalled; you will create it now.
-2. Enter the sample below, adjusted to your FI decisions.
+**Existing objects or a partial installation:** the installer is for a clean first installation. It does not replace active/inactive objects, update them or automatically repair partial state. If it stops partway through, earlier objects may remain. Review the log, activation state and transport list; do not delete objects or remove guards to retry. See [installation behavior and recovery](TECHNICAL.md#standalone-installer-and-settings-report).
 
-| Screen field | First trial |
+<a id="profile"></a>
+
+## 2. Save your rate choices in a profile
+
+Save your choices in **SE38 → `ZCHE_TCMB_CONFIG`**. A **profile** is this saved set of settings, so you do not need to enter them again for each run. This step saves configuration, not exchange rates.
+
+### 2.1. Fill in the settings screen
+
+1. Open **SE38 → `ZCHE_TCMB_CONFIG` → F8**.
+2. Enter the fields below. `DEMO` is an example name for the profile you will create; it is not preinstalled. `M`, `FX_BUY` and `SAME_DAY` are also example choices; verify them against your FI process.
+
+| Screen field | What to enter |
 |---|---|
-| Profile name (`P_PROF`) | `DEMO` |
-| Description (`P_DESC`) | Your description |
-| Valid-from date rule (`P_RULE`) | `SAME_DAY` |
-| SAP rate type (`P_TYPE`) | Example `M`; use your appropriate rate type |
-| TCMB rate field (`P_SRC`) | Example `FX_BUY` |
-| Currency codes (`S_CURR`) | Individual `USD` and `JPY` entries through multiple selection; no ranges/exclusions |
-| Existing: S keep/U update (`P_KEEP`) | `S`: preserve different existing rates |
-| No bulletin (I/W/E) (`P_NONE`) | `I`: report in results |
-| Your transport task (`P_TASK`) | Your modifiable Customizing or Workbench child task from SE09/SE10 |
+| Profile name (`P_PROF`) | For example `DEMO`: the name you will select in the load report. |
+| Description (`P_DESC`) | Your description of the profile's purpose. |
+| Valid-from date rule (`P_RULE`) | Example `SAME_DAY`: the rate is valid from the bulletin date. |
+| SAP rate type (`P_TYPE`) | Example `M`; use a defined rate type appropriate for your process. |
+| TCMB rate field (`P_SRC`) | Example `FX_BUY`: TCMB forex buying rate. |
+| Currency codes (`S_CURR`) | Example `USD` and `JPY`; we will enter them on separate rows next. |
+| Existing: S keep/U update (`P_KEEP`) | `S`: preserve a different existing rate for the same date/key. `U` permits updates. |
+| No bulletin (I/W/E) (`P_NONE`) | Example `I`: report a missing bulletin as information. `W` means warning, `E` error. |
 
-3. For the first HTTPS trial, leave factory calendar, inverse/file flags, SM59 destination, custom URL, folder and exit blank/unselected. If you need SM59, enter your actual destination as described below. The quote currency is saved as `TRY`.
-4. Select **Save settings when executing (`P_SAVE`)**, then F8. Verify `Settings saved` and the recorded transport keys. This saves configuration only, not exchange rates.
+3. For the first HTTPS trial, leave factory calendar, inverse/file flags, SM59 destination, custom URL, server folder and exit blank/unselected. If your organization requires SM59, follow [the option in 3.1](#connectivity). The quote currency is `TRY`. [Other date rules](TECHNICAL.md#date-rules) · [Other TCMB fields](TECHNICAL.md#tcmb-fields).
 
-To edit an existing profile, first enter its name and click **Load existing profile into this screen**. Saving over an existing profile requires loading it first. If another user changed it while you were editing, reload before saving. Multiple mappings, exclusions and renamed SAP currency codes require [advanced maintenance](TECHNICAL.md#advanced-profile-maintenance); the simple screen refuses to replace those settings.
+This capture shows **settings entered before saving**. Do not copy its transport number; you will select your own task in 2.3. Long labels were shortened after this capture; fields and choices are unchanged.
 
-**Permissions and transport:** `S_TABU_NAM` activities 03 (display) / 02 (change) are required for all three settings tables. Saving in a closed client is rejected. Only in a sandbox client allowing changes without automatic recording, select **Local settings, no transport (P_LOCAL)** with an empty task if needed. This does not transport settings; use the normal customer-package/transport process for shared use.
+![Settings screen filled with the example DEMO choices; it does not establish a successful save](docs/images/sap-settings.png)
 
-An explicit currency list is mandatory here. An empty advanced currency table can instead consider all non-excluded bulletin currencies. Keep the first trial limited.
+### 2.2. Enter currencies on separate rows
 
-### Follow the example on screen
-
-Enter a profile name and your settings. Use the **multiple-selection** button beside currencies to add USD and JPY on separate rows. Use **Select Single Values**, without ranges or exclusions.
+1. Click the **multiple-selection** button to the right of **Currency codes**.
+2. Under **Select Single Values**, enter `USD` and `JPY` on separate rows. Do not use ranges or exclusions for the first trial.
+3. Transfer the selections back to the main screen.
 
 ![USD and JPY entered on separate rows under Select Single Values](docs/images/sap-currencies.png)
 
-The next capture shows **settings entered before saving**; it is not evidence of a successful save. Do not copy the pictured transport number. Choose your own task, or select Local settings with an empty task where your client only permits local changes.
+### 2.3. Save the settings
 
-![Settings screen prepared with DEMO, currency choices and Save settings selected](docs/images/sap-settings.png)
+1. Enter **your own modifiable Customizing or Workbench child task** from SE09/SE10 in **Your transport task (`P_TASK`)**. Do not enter the parent request. This transports settings data; it need not be the Workbench task used for installation.
+2. Select **Save settings when executing (`P_SAVE`)**, then press F8.
+3. Look for **`Settings saved`**; check that the configuration keys were recorded in your task.
 
-`S` keeps different existing rates; `U` allows updates. For a missing bulletin, `I` means information, `W` warning and `E` error. Long labels were shortened after this capture to fit the screen; parameter names and choices are unchanged.
+For a sandbox client permitting local changes, you may select **Local settings, no transport (`P_LOCAL`)** with an empty task. Those settings are not transported. Display/change `S_TABU_NAM` permissions are required for all three configuration tables. Saving is rejected in a closed client or one that disallows the chosen save mode; do not change SCC4 to bypass client policy. [Client and transport rules](TECHNICAL.md#standalone-installer-and-settings-report).
 
-### 2.3. Let SAP retrieve the bulletin
+**Checkpoint:** your profile is saved; no rates have been written to OB08. To reopen an existing profile, enter its name and click **Load existing profile into this screen** first. Reload if another user changed it. Multiple mappings, exclusions or renamed SAP currency codes require [advanced maintenance](TECHNICAL.md#advanced-profile-maintenance).
 
-The default source is `https://www.tcmb.gov.tr/kurlar`; you do not replace it with a personal address. This route does not ask for a TCMB username, password or API key.
+<a id="preview"></a>
 
-| Situation | What to do |
+## 3. Test connectivity and preview the first results
+
+<a id="connectivity"></a>
+
+### 3.1. Open the load report and test the connection
+
+1. Open **SE38 → `ZCHE_TCMB_LOAD` → F8**.
+2. Enter your saved profile in **Rate profile (`P_PROF`)**; `DEMO` in our example.
+3. Click **Test the connection to TCMB**.
+
+The report should retrieve and read a recent bulletin. This button checks the **last seven days**, independently of your date selection, and does not save exchange rates.
+
+The default source is **`https://www.tcmb.gov.tr/kurlar`**. This is the actual source address; do not replace it with a personal address. If direct access works, the profile's connection fields may stay blank.
+
+<details>
+<summary>If the connection fails: direct HTTPS, SM59, or SAP without internet access</summary>
+
+- **Direct HTTPS:** verify outbound access from the SAP application server and trust in the actual certificate chain in STRUST's SSL client **Anonymous** PSE. A browser test on your own computer alone is insufficient.
+- **SM59/proxy required:** create a type-**G** HTTP destination; host `www.tcmb.gov.tr`, port `443`, SSL active, path prefix empty. Configure the proxy and destination SSL PSE for your environment. Enter **the name of your destination** in the settings report's SM59 field; its technical field is `RFC_DESTINATION`. Save the profile again and retest.
+- **You lack access:** ask the Basis/network owner for outbound HTTPS from the SAP application server to www.tcmb.gov.tr:443 and corresponding certificate trust.
+- **SAP cannot access the internet:** use [the server-file option](#read-from-files).
+
+</details>
+
+### 3.2. Preview a single day
+
+1. In **Bulletin date(s) (`S_DATE`)**, choose **one past weekday with a published bulletin**. Use only one day for the first trial. Today's bulletin may not be available yet.
+2. Leave **Date rule (`P_RULE`)** blank to use the profile rule.
+3. Keep **Test run, write nothing (`P_TEST`) selected**. Execute with F8.
+4. Check currencies, rate type, bulletin date, **`VALID_FROM` date**, ratios and messages. Account for quote units and translation ratios when comparing TCMB values with SAP rates.
+
+| Result | Meaning in a test run |
 |---|---|
-| SAP can access the internet directly | Connection fields may stay blank. Verify SAP HTTPS access and trust. The direct route uses STRUST's SSL client **Anonymous** PSE. |
-| Your organization uses SM59/a proxy | Prepare a type-G HTTP destination with host `www.tcmb.gov.tr`, port `443`, SSL active and no path prefix. Enter **the name of your destination** in `RFC_DESTINATION`. Configure the destination's SSL PSE and proxy for your environment. |
-| You do not manage connectivity | Ask the Basis/network owner for outbound HTTPS access from the SAP application server to www.tcmb.gov.tr:443 and the corresponding certificate trust. |
-| SAP has no outbound access | Use [the file route](#read-from-files) below. |
-
-For certificate errors, verify the actual trust chain and correct PSE. A successful browser test on your computer alone is insufficient.
-
-**Ready to continue when:** the profile and two currency rows exist, and the selected source is accessible from SAP.
-
-## 3. Preview, then save
-
-### 3.1. First run without saving
-
-1. Open **SE38 → `ZCHE_TCMB_LOAD` → Execute (F8)**.
-2. Enter `DEMO` in **Rate profile / `P_PROF`**.
-3. Click **Test the connection to TCMB**. Retrieving and parsing a recent bulletin confirms source access without writing rates. This button checks the last seven days, independently of the selected date range.
-4. In **Bulletin date(s) / `S_DATE`**, choose one past weekday with a published bulletin. The default is today, whose bulletin might not yet be available.
-5. Leave **Date rule / `P_RULE`** blank to use the profile rule. Keep **Test run, write nothing / `P_TEST` selected**.
-6. Execute with F8. Check the bulletin date, `VALID_FROM`, USD/JPY, rate type, factors and messages. Account for quote units and SAP ratios when comparing the XML value to the calculated rate.
-
-| Result | How to read it |
-|---|---|
-| `NEW` | Preview: a new record would be created. Real load: created if writing and commit succeeded. |
-| `UPDATED` | Preview: an existing record would change. Real load: updated if writing and commit succeeded. |
+| `NEW` | A real run would create a new rate. |
+| `UPDATED` | A real run would change an existing rate. |
 | `UNCHANGED` | An equal rate already exists for the same key/date. |
-| `SKIPPED` | The row was skipped; read its message. It may reflect an existing-rate policy or a missing source field. |
-| `NO_BULLETIN` | No bulletin was retrieved for that weekday, for example a holiday or before publication. The profile policy can instead make this an error. |
-| `ERROR` | Read and resolve the reported problem. |
+| `SKIPPED` | The row was skipped; read its message. |
+| `NO_BULLETIN` | No bulletin was retrieved for that weekday; it may be a holiday or not yet published. The profile can instead treat this as an error. |
+| `ERROR` | Resolve the cause described in the message. |
 
-**`NEW` in a test run does not mean anything was saved in OB08.** A preview also does not establish write authorization or commit success. Custom exit classes run in test mode too and must follow the [test-mode contract](TECHNICAL.md#architecture-and-extensions).
+**Checkpoint:** you can see the results; **even `NEW` in a preview means no OB08 record was written.** This does not establish real-write authorization or commit success. Custom exits must also follow the [test-mode contract](TECHNICAL.md#architecture-and-extensions).
 
-### 3.2. Perform a controlled write in the sandbox
+<a id="first-write"></a>
 
-1. Resolve unexpected errors/skips. Verify rate type, valid-from date and expected conversion amounts.
-2. Keep the same limited selection. Clear Test run **only when you intend to save**, then execute.
-3. Find the rate in **OB08**, using the same rate type, currency pair and valid-from date. Also verify the expected amount through SAP currency conversion.
-4. Repeat the same day: equal stored rates should return `UNCHANGED`.
+## 4. Perform the first real write in the sandbox
 
-### 3.3. Schedule daily use
+1. Resolve unexpected errors/skips. Verify the rate type, valid-from date and expected currency-conversion amount.
+2. Keep the same single day and small currency selection. **Clear Test run and press F8 when you intend to save.**
+3. Check the messages. In a real run, `NEW` / `UPDATED` report creation/change if writing and commit succeeded.
+4. In **OB08**, find the record for the same rate type, currency pair and valid-from date. Verify the expected amount through SAP currency conversion too.
+5. Repeat the same day: equal records should return `UNCHANGED`.
 
-After installation and real-write acceptance, transport the objects and settings through your normal landscape. Recheck the client, connectivity, permissions and FI configuration in each target system.
+**Checkpoint:** the SAP rate and conversion result match your expectations. A successful preview alone is insufficient for daily operation.
 
-In **SM36**, prepare an approved variant/job for `ZCHE_TCMB_LOAD`. For daily bulletins, use a **current-date selection variable**, rather than saving a fixed date. Explicitly check the Test run flag in a variant intended to save rates. Validate background execution with a test user before choosing an appropriately authorized runtime user.
+<a id="daily-use"></a>
 
-TCMB announces indicative rates at 15:30 on business days. Schedule after publication and verify the SAP/job time zone. See [TCMB's explanation](https://tcmb.gov.tr/wps/wcm/connect/TR/TCMB%2BTR/Main%2BMenu/Banka%2BHakkinda/Sikca%2BSorulan%2BSorular/Doviz%2BKuru%2BPolitikasi%2Bve%2BRezerv%2BYonetimi/).
+## 5. Schedule daily use after verification
 
-The program skips Saturdays/Sundays. The profile controls missing-bulletin handling on other days. Monitor **SM37**, job log and spool; a failed job does not undo earlier successful writes.
+1. Transport objects and profile settings through your normal landscape. **Do not rerun the installer in every target system.** Verify connectivity, client policy, permissions and FI settings in each target.
+2. Save an approved **variant** for `ZCHE_TCMB_LOAD`. For daily use, select a **current-date selection variable**, rather than a fixed past date. Explicitly check the Test run flag for a variant intended to save rates.
+3. In **SM36**, create a background job using that variant. Schedule after bulletin publication; verify the SAP/job time zone.
+4. Test background execution with a test user first, then select an appropriately authorized runtime user. Monitor **SM37**, job log and spool.
+
+The program skips Saturdays/Sundays. The profile's missing-bulletin policy applies to other unpublished days. A failed job does not undo earlier successful writes.
+
+<details>
+<summary>Alternative installation: if you already use abapGit</summary>
+
+Import `https://github.com/Cheditte/abap-tcmb-rates` into a customer package, Pull and activate. Offline import uses New Offline → Import zip → Pull zip. Do not install the same objects twice through both routes. Use `ZCHE_TCMB_CONFIG` for settings; SM30 is optional advanced maintenance. [abapGit installation guide](https://docs.abapgit.org/user-guide/getting-started/install.html).
+
+</details>
 
 ## Read from files
 
-Use this route only when SAP cannot retrieve TCMB bulletins over HTTPS. The program reads a folder accessible to the **SAP application server**, not your laptop's Downloads folder. This project does not install a downloader.
+Use this alternative only when SAP cannot retrieve TCMB bulletins over HTTPS. The source is a folder accessible to the **SAP application server**, rather than your computer's Downloads folder. No automatic downloader is included.
 
-1. If authorized, use your organization's host-access method (RDP for Windows, SSH for Linux, or managed file transfer). Otherwise arrange folder/file preparation with the server owner.
-2. Stage each complete daily XML as `DDMMYYYY.xml`. For **30 October 2026**, the name is `30102026.xml`; change it to match the date you actually select. The XML bulletin date must match too. Move files into the readable folder only after they are complete.
-3. Set `SOURCE_CLASS = ZCL_CHE_TCMB_SOURCE_FILE` and enter **your actual server folder** in `FILE_FOLDER`. With multiple application servers, ensure the foreground run/job can access the same files.
-4. Verify SAP runtime file authorization and OS read access. Preview one day matching a staged file.
+<details>
+<summary>File preparation steps for SAP without outbound internet access</summary>
 
-The connection button still checks recent dates. If you only staged an older file, preview its date directly instead. Missing/unreadable files produce `ERROR`; the program does not infer a TCMB holiday or automatically switch sources.
+1. If authorized, use your organization's server-access method: RDP for Windows, SSH for Linux, or managed file transfer. Otherwise arrange folder/file preparation with the server owner.
+2. Stage the complete daily TCMB XML as `DDMMYYYY.xml`. **30 October 2026 is only an example:** its filename would be `30102026.xml`. Change the name to match your selected date; the XML bulletin date must match too. Place only complete files in the readable folder.
+3. In the simple settings screen, select **Read from server files**, enter **your actual server folder** in **Server folder**, and save the profile. The technical fields are `SOURCE_CLASS = ZCL_CHE_TCMB_SOURCE_FILE` and `FILE_FOLDER`.
+4. Verify SAP runtime file authorization and OS read access. With multiple application servers, ensure the foreground run/job can access the same files.
+5. Run the load report in **test mode** for the file's date. The connection button checks the last seven days; if you only staged an older file, preview that date directly.
 
-## If something goes wrong
+Missing/unreadable files produce `ERROR`. The report does not infer a holiday or automatically switch sources. [Technical details](TECHNICAL.md#file-source-and-troubleshooting).
 
-| Symptom | First check |
+</details>
+
+## If you get stuck
+
+| Where did it stop? | First check |
 |---|---|
-| Profile not found | Client, profile name and the three configuration tables. |
-| Settings save rejected | S_TABU_NAM permissions, SCC4 client setting, your transport task and loading an existing profile first. |
-| SSL / connection failure | SAP-server connectivity, STRUST/SM59, network and proxy. |
-| Ratio / TCURF error | OBBS currency pair, rate type and factors effective on the valid-from date. |
-| Expected rate skipped | Row message, currency list, source field and existing-rate policy. |
-| Failed job | SM37 log/spool and OB08; earlier successful writes may remain. |
+| Installation rejected existing objects | Active/inactive target objects, log and activation state. The installer is not an updater. |
+| Profile cannot be saved | Your child task, client policy, table permissions, and loading an existing profile first. |
+| Profile not found | Correct client, profile name and successful settings save. |
+| TCMB connection failed | SAP-server connectivity, STRUST/SM59, network and proxy. |
+| Ratio / TCURF error | OBBS currency pair, rate type and ratios effective on the relevant date. |
+| Expected rate skipped | Row message, currency list, TCMB field and existing-rate policy. |
+| Real load or job failed | Results, OB08 and SM37 log/spool. Earlier successful writes may remain. |
 
-**Do not retry blindly.** Earlier successful days and rows may already be committed. Review results and OB08, resolve the cause and preview the affected range again. After a commit error, have an authorized person inspect failed/pending updates in SM13 before retrying. See [partial-write recovery](TECHNICAL.md#errors-partial-writes-and-reruns).
+Do not retry immediately after an error. Review results and OB08, resolve the cause, then preview the affected range. After a commit error, have an authorized person inspect failed/pending updates in SM13 before retrying. See [partial-write recovery](TECHNICAL.md#errors-partial-writes-and-reruns).

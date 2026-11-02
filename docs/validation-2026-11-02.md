@@ -1,6 +1,6 @@
 # Validation record — 2 November 2026
 
-This record distinguishes local checks from actual SAP execution. The SAP GUI screenshots are real captures, cropped to the relevant area. SAP's clock showed 1 November 2026 during the session; the workstation date was 2 November 2026.
+This record distinguishes local checks from actual SAP execution. The illustrations are based on SAP GUI captures cropped to the relevant area. The upload menu, installation result, settings and currency-selection illustrations use cursor-cleaned versions supplied by the maintainer. This visual cleanup does not change the recorded test results. SAP's clock showed 1 November 2026 during the session; the workstation date was 2 November 2026.
 
 ## Actual SAP scope
 
