@@ -67,10 +67,26 @@ The operator supplied this screenshot after receiving the language-enabled repor
 - Visible: one row for bulletin date and valid-from date 2026-10-27, USD, FX_BUY, rate type M, USD to TRY, rate 49.69970, factors 1:1, blank indirect-quotation flag, Turkish status description "Aynı kayıt mevcut" and technical status UNCHANGED. Several column headings are shortened by their display width.
 - Interpretation: the result reports that the calculated rate already matches the SAP record. Turkish result headings and the localized unchanged-status description are now evidenced in a real result list.
 - Limits: the selection screen/test flag and data-source selection are not visible. This is not evidence of a current BAPI write or an independent OB08 readback. It uses 27 October, whereas the walkthrough's initial-entry example uses 30 October; they must not be presented as the same run. Complete source identity and the 48 native tests remain unverified by this screenshot.
-- Next screen evidence: completed Turkish selections with test mode visible; multiple-currency selection if used; preview of a proposed new record; SAP Unit results; controlled write and matching OB08 record; saved variant and scheduled job results. These are not represented by mock screenshots.
+The operator later supplied three further images, described below. They extend the evidence but do not close all acceptance checks.
+
+### Range selections, partial-write result and OB08 evidence
+
+All three PNGs were copied byte-for-byte from the operator's attachments. They are real screens, not edited or generated SAP captures.
+
+| Image | Visible evidence | Limit |
+|---|---|---|
+| [Range selection](images/sap-tr-range-test-settings.png) | 2026-07-01 through 2026-08-01; Turkish; Test checked; FX buying to M; SAME_DAY; USD visible; TRY; Update selected; HTTPS. | Multiple-selection values are not visible; a green multiple-selection indicator does not establish every selected code. Test checked is incompatible with claiming this image directly proves the later write run's selection state. |
+| [Mixed result](images/sap-tr-range-write-locks.png) | July USD/EUR rows, Turkish Yeni kayıt/NEW entries, ERROR rows with E_TABLE locked by DEVELOPER, and NO_BULLETIN for 15 July. | NEW's actual-write description plus SAP BAPI error messages are consistent with the report's write path. The exact real-run selection state/source hash is not pictured. Many rate cells are truncated. The run must not be reported as entirely successful. |
+| [OB08](images/sap-ob08-eur-july.png) | Change View; M/EUR/TRY, 1:1, visible July records including 53.08900 on 1 July and 54.48410 on 31 July. | Establishes visible OB08 EUR records, not complete USD coverage, independent conversion readback or recovery of failed keys. An additional October row and unrelated existing rates are also visible. |
+
+The mixed result visibly flags at least 1 July USD, 6 July USD/EUR and 7 July USD with locks. Reconcile these exact keys before retry; do not infer that all other keys or the full range are accepted solely from the image.
+
+The open OB08 Change View is a plausible lock source, not a proven diagnosis from lock management. Guides now explicitly require exiting maintenance after inspection and before writes. Resolve the owning transaction normally; inspect actual object/owner via SM12 if needed rather than deleting active locks as a generic workaround. See [SAP's lock-management guidance](https://learning.sap.com/courses/technical-implementation-and-operation-i-of-sap-s-4hana-and-sap-business-suite/describing-as-abap).
+
+Still needed: exact current source identity; native 48-test results; unambiguous real-write selection state; complete rate/factor and conversion readback; restricted-user and older-release checks; saved variants/jobs; and confirmation that affected lock-error keys were recovered.
 
 ## Outstanding SAP acceptance
 
 Run the [acceptance checklist](../CONTRIBUTING.md#sap-acceptance-checklist) against the integrated source hash: clean paste/upload and fixed-point arithmetic; actual GUI labels/listbox/connection button; all 48 tests; HTTPS/dry run; controlled write plus OB08/conversion readback; file errors/path spaces; failure recovery/commit and concurrency; saved variants/dynamic-date SM36 jobs; restricted user; SM59; optional abapGit; custom exits; actual older releases.
 
-Old settings/installer screenshots are historical evidence for the earlier architecture and are not used as current single-report screens. The new Turkish connection and result images above were supplied by the operator and illustrate only their visible states; the outstanding acceptance checks remain pending.
+Old settings/installer screenshots are historical evidence for the earlier architecture and are not used as current single-report screens. The new connection, selection, result and OB08 images above were supplied by the operator and illustrate only their visible states; the outstanding acceptance checks remain pending.

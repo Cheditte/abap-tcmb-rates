@@ -90,6 +90,8 @@ A range is not atomic. Writes and commits are checked per row. A BAPI failure ma
 
 When a later day has a fatal source/parse failure, earlier days' results and an error row are retained, then processing stops. A failed/cancelled job does not undo prior commits. Reconcile results/spool and OB08 before retrying; have an authorized owner inspect SM13 after commit errors. Do not delete rates as a generic recovery procedure.
 
+Exit OB08 maintenance after checking records: leaving maintenance open in another session can block report writes. Supplied results contain both `NEW` and `E_TABLE ... locked by user DEVELOPER`. The visible OB08 **Change View** is a plausible source; inspect the actual lock object and owner in SM12 when needed. Do not automatically delete active locks. [Illustrated partial-write recovery](WALKTHROUGH.md#locks-and-partial-writes).
+
 Test mode skips the write BAPI and commit, but does not establish real permissions, locking or persistence success. In background the summary goes to the job log, results to spool; `ERROR` cancels the job.
 
 ## Migration from the old edition

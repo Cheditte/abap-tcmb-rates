@@ -96,6 +96,8 @@ Tarih aralığı tek atomik işlem değildir. Yazma ve commit satır bazında ko
 
 Sonraki gün kaynak/ayrıştırma hatası verirse önceki günlerin sonuçları ve hata satırı listede tutulur, sonraki günlere geçilmez. Başarısız veya Cancelled job önceki commit'leri geri almaz. Yeniden denemeden önce sonuç/spool ve OB08'i kontrol edin; commit sorunu varsa yetkili kişiyle SM13'ü inceleyin. Genel kurtarma yöntemi olarak kur silmeyin.
 
+OB08'i kontrol için açtıktan sonra bakım işleminden çıkın; başka oturumda açık bırakılan bakım kilidi gerçek yazmayı engelleyebilir. Kullanıcının paylaştığı sonuçta bazı satırlar `E_TABLE ... locked by user DEVELOPER` hatası, diğerleri `NEW` gösteriyor. Açık OB08 **Change View** ekranı olası nedendir; kilidin kesin sahibi/nesnesi gerektiğinde SM12'den incelenmelidir. Aktif kilidi otomatik veya genel çözüm olarak silmeyin. [Ekranlarla kısmi kayıt ve kurtarma yolu](WALKTHROUGH.tr.md#kilit-ve-kismi-kayit).
+
 Test modu yazma BAPI'sini ve commit'i çağırmaz. Gerçek yetki, kilit ve kayıt başarısını kanıtlamaz. Arka planda özet job log'una, sonuç listesi spool'a gider; `ERROR` job'ı iptal eder.
 
 <a id="eski-surumden-gecis"></a>

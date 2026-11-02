@@ -1,39 +1,34 @@
-# TCMB kurlarını tek bir SAP programıyla alın
+# TCMB kurlarını SAP'de görün, kontrol edin ve kaydedin
 
 > [English](README.md) | **Türkçe**
 
-Türkiye Cumhuriyet Merkez Bankasının (TCMB) günlük döviz kurlarını SAP'ye almak istiyorsanız bu projeyi kullanabilirsiniz. Hangi para birimlerini alacağınızı, alış veya satış kurunu ve geçerlilik tarihini siz seçersiniz.
+TCMB'nin günlük döviz kurlarını SAP'de görmek veya standart kur kayıtlarını beslemek istiyorsanız bu projeyi kullanabilirsiniz. **Tek programla önce sonucu kaydetmeden inceleyebilir, ardından eksik kurları ekleyebilir veya mevcut farklı kurları güncelleyebilirsiniz.** Kayıtları OB08'de kontrol edersiniz.
 
-**Tek dosyayı SE38'e yapıştırın, etkinleştirin ve çalıştırın.** Bütün ayarlar aynı programın seçim ekranındadır. Tekrar kullanacağınız seçimleri SAP'nin standart **varyant** özelliğiyle saklarsınız.
+![Hedefinize göre üç yol: deneme, OB08 kaydı, günlük otomatik çalışma](docs/images/goals-tr.svg)
 
-**İngilizce SAP oturumunda da Türkçe kullanabilirsiniz.** Programdaki **Dil / Language (`P_LANG`)** alanından **Türkçe** seçin; oturumdan çıkmanız gerekmez. Dil seçimi varyantla birlikte saklanır. Varsayılan **Otomatik / Logon language**, Türkçe oturumda Türkçe, diğer oturumlarda İngilizce kullanır.
+## Ne yapmak istiyorsunuz?
 
-![TCMB bülteninden seçim ekranına, kaydetmeden ön izlemeye ve kontrollü OB08 kaydına giden kullanım akışı](docs/images/overview-tr.svg)
+| Hedef | Başlangıç |
+|---|---|
+| Henüz kurmadım | [SE38'de tek dosyalı kurulum](WALKTHROUGH.tr.md#kurulum) |
+| Önce veriyi görmek istiyorum | [Yol A: kaydetmeden deneme](WALKTHROUGH.tr.md#onizleme) |
+| OB08'e eksik kurları eklemek istiyorum | [Yol B: Olduğu gibi bırak ile ekleme](WALKTHROUGH.tr.md#ilk-kayit) |
+| Mevcut kurları TCMB değeriyle güncellemek istiyorum | [Yol B: Güncelle seçimi ve OB08 kontrolü](WALKTHROUGH.tr.md#ilk-kayit) |
+| Her gün otomatik çalışsın istiyorum | [Yol C: varyant ve günlük iş](WALKTHROUGH.tr.md#gunluk-kullanim) |
+| Bir alanı veya sonucu anlamadım | [Ekran rehberi](EKRAN_REHBERI.tr.md) |
+| Bazı satırlar kilit hatası aldı | [Kısmi kayıt ve yeniden deneme](WALKTHROUGH.tr.md#kilit-ve-kismi-kayit) |
 
-## Başlamak için gerekenler
-
-Kurulumu yapacak kişinin SE38'de program oluşturup çalıştırabilen bir **ABAP geliştiricisi** olduğunu varsayıyoruz. FI ve bağlantı işlemlerini yetkiniz varsa kendiniz, gerektiğinde ilgili sorumluyla tamamlayabilirsiniz.
+## Başlamak için üç şey gerekir
 
 ![SAP geliştirme erişimi, kur seçimleri ve SAP sunucusundan TCMB bağlantısı](docs/images/prepare-tr.svg)
 
-SAP uygulama sunucusundan **`www.tcmb.gov.tr:443`** adresine HTTPS erişimi ve güncel sertifika zincirine güven gerekir. Kendi bilgisayarınızdan siteyi açmanız yeterli değildir. Normal HTTPS yolunda sunucuya ek yazılım kurulmaz; TCMB hesabı, şifre veya API anahtarı gerekmez.
+1. **SAP erişimi:** SE38'de program oluşturup etkinleştirebilen bir ABAP geliştiricisi olun. [Tek kaynak dosyayı](src/zche_tcmb_load.prog.abap) `ZCHE_TCMB_LOAD` olarak yükleyin. Ayrı installer veya abapGit zorunluluğu yoktur.
+2. **Kur seçimleri:** hangi dövizler, hangi SAP kur tipi ve hangi geçerlilik tarihi? FI ayarları ve dönüşüm oranlarını sisteminize göre doğrulayın.
+3. **Bağlantı:** SAP uygulama sunucusundan `www.tcmb.gov.tr:443` HTTPS erişimi ve sertifika güveni. Ek sunucu yazılımı, TCMB hesabı veya parola gerekmez. Kendi bilgisayarınızdan siteyi açabilmeniz tek başına yeterli değildir.
 
-## Kurulumdan ilk kullanıma
+**Dil / Language → Türkçe** ile İngilizce SAP oturumunda da programı Türkçe kullanabilirsiniz. SAP'nin standart ekranları kendi oturum dilinde kalabilir.
 
-| Adım | Yapacağınız işlem | Sonuç |
-|---|---|---|
-| 1 · Kurun | Tek kaynak dosyayı SE38'de `ZCHE_TCMB_LOAD` programına yükleyip etkinleştirin. | Tek çalıştırılabilir program. |
-| 2 · Seçin | Aynı ekranda para birimlerini, kur tipini ve tarih kuralını belirleyin; isterseniz varyant kaydedin. | Tekrar kullanılabilen seçimler. |
-| 3 · Deneyin | Tek gün ve birkaç para birimiyle test modunda çalıştırın. | Kaydetmeden görebileceğiniz sonuç listesi. |
-| 4 · Doğrulayın | Kontrol ettikten sonra test işaretini kaldırın; kaydı OB08'de doğrulayın. | SAP'nin standart döviz kuru kayıtları. |
-
-**[Ekran görüntüsü ve diyagramlarla adım adım rehber →](WALKTHROUGH.tr.md)**
-
-Programı açtıysanız **[ilk deneme seçimleri ve ekrandaki bütün alanların açıklaması](WALKTHROUGH.tr.md#ilk-onizleme-secimleri)** ile başlayın.
-
-**[Tek programın kaynak dosyasını açın / kaydedin](src/zche_tcmb_load.prog.abap)**
-
-**Varyant**, seçim ekranındaki değerleri saklar; günlük iş için de kullanılabilir. **OB08**, SAP'de döviz kurlarını görüntüleyip bakımını yaptığınız işlemdir. Varyant kaydetmek döviz kuru yazmaz.
+**Varyant**, aynı seçimleri tekrar kullanmak için sakladığınız ayarlardır. **OB08**, SAP'nin kur bakım ekranıdır; program kaydı yapar, siz burada kontrol edersiniz. İlk denemeyi DEV/deneme sisteminde yapın.
 
 ## Kapsam ve doğrulama durumu
 
@@ -41,7 +36,7 @@ Programı açtıysanız **[ilk deneme seçimleri ve ekrandaki bütün alanların
 - Test modu varsayılan olarak açıktır. `NEW` / `UPDATED`, testte yapılması planlanan işlemi gösterir.
 - Yeni kurulum için özel tablo, domain, data element, global sınıf veya ayrı installer gerekmez. abapGit isteğe bağlıdır.
 - **v0.3.0 birleşim adayıdır.** Kodun sözdizimi hedefi ABAP 7.00'dır. Gerçek 7.00/7.01/7.02 sistemlerde çalışması henüz doğrulanmadı.
-- Devir notunda A4H deneme sisteminde 34 test ve sınırlı gerçek kur yazma sonuçları bildirildi. Birleştirme ve dil değişiklikleriyle 48 teste ulaşan güncel sürüm SAP'de tekrar doğrulanmayı bekliyor. Kullanıcının paylaştığı ekran Türkçe alanları ve başarılı TCMB bağlantı mesajını gösteriyor; güncel sürümde ön izleme, gerçek kayıt/OB08, dil varyantları ve arka plan kontrolleri henüz tamamlanmadı. [Doğrulama kaydı](docs/validation-v0.3.0.md).
+- Devir notunda A4H deneme sisteminde 34 test ve sınırlı gerçek kur yazma sonuçları bildirildi. Birleştirme ve dil değişiklikleriyle 48 teste ulaşan güncel sürüm SAP'de tekrar doğrulanmayı bekliyor. Paylaşılan ekranlarda Türkçe seçim/sonuçlar, bağlantı başarısı, kısmen başarılı bir kayıt çalışması ve OB08 EUR kayıtları görülüyor. Bazı satırlar kilit hatası almış; tam mutabakat, 48 test sonucu ve arka plan kabulü henüz tamamlanmadı. [Doğrulama kaydı](docs/validation-v0.3.0.md).
 
 Türkçe seçimi programın ekran etiketleri, tarih listesi, kendi mesajları ve sonuç listesi başlıklarını kapsar. `NEW` / `ERROR` gibi teknik durum kodları korunur; yanlarında seçilen dilde açıklama gösterilir. SAP GUI menüleri ve SAP/BAPI/işletim sisteminden gelen özgün teknik mesajlar kendi sistem/oturum dilinde kalabilir.
 
@@ -54,7 +49,8 @@ SAP'nin internet erişimi yoksa [sunucu klasöründeki XML dosyalarını okuma](
 | İhtiyacınız | Belge |
 |---|---|
 | Kurulum, ilk kullanım, varyant ve günlük iş | [Adım adım rehber](WALKTHROUGH.tr.md) |
-| Alanlar, yerel sınıflar, genişletme ve hata davranışı | [Teknik başvuru](TECHNICAL.tr.md) |
+| Ekrandaki her alan ve sonuç sütunu | [Ekran rehberi](EKRAN_REHBERI.tr.md) |
+| Yerel sınıflar, genişletme ve hata davranışı | [Teknik başvuru](TECHNICAL.tr.md) |
 | Kontroller ve SAP kabul testleri | [CONTRIBUTING.md](CONTRIBUTING.md) — İngilizce |
 | Değişiklikler | [CHANGELOG.md](CHANGELOG.md) — İngilizce |
 

@@ -12,9 +12,12 @@
 - Expand the Turkish walkthrough with every selection-screen field, a one-currency first preview and an operator-supplied Turkish connection-success screenshot; distinguish connection evidence from rate preview/write acceptance.
 - Add `P_LANG`: automatic/logon language, Türkçe or English independently of the SAP session. Variants retain the choice; selection labels, date choices, project messages, run summaries and ALV headings use it. Technical status codes remain stable with localized descriptions. SAP GUI menus and raw SAP/BAPI/OS diagnostics retain their underlying language.
 
+- Organize README and walkthroughs around preview, add/update OB08 rates and daily scheduling. Add six bilingual goal/path diagrams, a separate Turkish screen-field guide and three original operator-supplied screenshots.
+- Clarify Keep versus Update and require leaving OB08 maintenance before writes. Explain lock recovery and partial success without presenting separate test-selection and actual-write images as a single run.
+
 ### Validation
 
-- Handoff reports 34 SAP tests and limited actual writes on the prior single-report edition. Ten integration regressions and four localization tests bring the embedded suite to 48; these additions have not been executed in SAP here. The operator supplied a Turkish selection/connection-success screenshot; rate preview/write, language variants and background localization acceptance remain pending.
+- Handoff reports 34 SAP tests and limited actual writes on the prior single-report edition. Ten integration regressions and four localization tests bring the embedded suite to 48; these additions have not been executed in SAP here. The operator supplied Turkish selection/connection/result screenshots and OB08 EUR records. A write list reports NEW rows mixed with lock errors; full affected-row reconciliation, native suite results, language variants and background acceptance remain pending.
 - Old installer build/check and multi-object transpilation commands removed. A whole-report transpilation attempt could not resolve SAP UI/legacy test dependencies; CI runs static/source checks only.
 - [Exact source provenance, local checks and SAP limitations](docs/validation-v0.3.0.md).
 
