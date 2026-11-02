@@ -1,8 +1,24 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 — integration candidate, unreleased
 
-This revision is pre-release. The current changes have local static and JavaScript-transpiled logic validation. An isolated single-file installation completed in SAP; final settings acceptance is partial. See the [validation record](docs/validation-2026-11-02.md). SAP acceptance is tracked in [CONTRIBUTING.md](CONTRIBUTING.md#sap-acceptance-checklist).
+### Changed
+
+- One executable ZCHE_TCMB_LOAD with local classes and embedded tests; copy/paste or upload directly in SE38. No installer, custom profile tables, DDIC objects or global-class dependencies.
+- Selection-screen settings and standard variants replace custom profiles. Six TCMB rate mappings, date-rule list, code filters/renaming and optional server files remain configurable.
+- Classic ABAP 7.00 syntax target, committed checker stand-ins and a pinned v700 lint command. Older SAP runtime support remains unverified.
+- Preserve validation, file-error, path-space, partial-result and BAPI/commit checks while integrating the handoff. Keep policy also disables BAPI updates.
+- Bilingual README, walkthrough, technical reference and workflow diagrams updated for one report. Old installer/settings captures are not presented as current screens.
+
+### Validation
+
+- Handoff reports 34 SAP tests and limited actual writes on the prior single-report edition. Ten new regression tests bring the embedded suite to 44; integrated SAP acceptance remains pending.
+- Old installer build/check and multi-object transpilation commands removed. A whole-report transpilation attempt could not resolve SAP UI/legacy test dependencies; CI runs static/source checks only.
+- [Exact source provenance, local checks and SAP limitations](docs/validation-v0.3.0.md).
+
+## Earlier multi-object edition — historical pre-release
+
+The entries below describe the previous architecture and its historical validation, not the current one-report installation.
 
 ### Changed
 

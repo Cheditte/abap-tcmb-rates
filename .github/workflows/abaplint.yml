@@ -24,9 +24,7 @@ jobs:
           cache: npm
       - name: Install pinned tooling
         run: npm ci --ignore-scripts
-      - name: Check ABAP 7.40 SP08 and 7.58 syntax
+      - name: Check ABAP 7.00 syntax target
         run: npm run lint
-      - name: Verify standalone installer payload and source completeness
-        run: npm run check:installer
-      - name: Run transpiled logic tests
-        run: npm run test:logic
+      - name: Check single-report package and classic syntax restrictions
+        run: npm run check:source
