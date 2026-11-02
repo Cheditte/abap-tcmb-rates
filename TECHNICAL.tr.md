@@ -6,7 +6,7 @@
 
 `src/zche_tcmb_load.prog.abap` tek çalıştırılabilir rapordur. Türler, iş mantığı, seçim ekranı, yerel sınıflar ve SAP Unit testleri aynı dosyadadır. Özel DDIC nesnesi veya global sınıf oluşturmaz. `src/package.devc.xml` ve rapor XML'i yalnız isteğe bağlı abapGit aktarımı için metaveridir.
 
-Sözdizimi hedefi **ABAP 7.00**'dır. Açık bildirimler, `CREATE OBJECT`, klasik Open SQL, `CONCATENATE`, packed sayılar ve `CL_AUNIT_ASSERT` kullanılır. `RISK LEVEL`/`DURATION` ekleri yerine `"#AU` yorumları vardır. Gerçek 7.00/7.01/7.02 sistemde API ve çalışma zamanı uyumluluğu henüz doğrulanmadı; 7.58'de etkinleşmesi bunu kanıtlamaz. [Doğrulama kaydı](docs/validation.md).
+Sözdizimi hedefi **ABAP 7.00**'dır. Açık bildirimler, `CREATE OBJECT`, klasik Open SQL, `CONCATENATE`, packed sayılar ve `CL_AUNIT_ASSERT` kullanılır. `RISK LEVEL`/`DURATION` ekleri yerine `"#AU` yorumları vardır. Gerçek 7.00/7.01/7.02 sistemde API ve çalışma zamanı uyumluluğu henüz doğrulanmadı; SAP_BASIS 816'da etkinleşmesi bunu kanıtlamaz. [Doğrulama kaydı](docs/validation.md).
 
 Manuel kurulumda program özelliklerindeki **Fixed point arithmetic** açık olmalıdır. Satırları 72 karaktere zorlamayın; bütün kaynak ve testleri birlikte yükleyin. Seçim metinleri `SELECTION_TEXTS_MODIFY` ile, tarih listesi `VRM_SET_VALUES` ile hazırlanır. Metin tablosu tam olarak `STANDARD TABLE OF rsseltexts WITH DEFAULT KEY` olmalıdır. Bu arayüzler hedef eski sistemde ayrıca denenmelidir.
 
@@ -57,7 +57,7 @@ Fabrika takvimi indirilecek günleri değil geçerlilik tarihini etkiler. Başla
 
 Doğrudan kur: `TCMB değeri × FFACT / (Unit × TFACT)`. İlgili tarih için TCURF'tan en yeni geçerli oran alınır; Unit ve iki oran da pozitif olmalıdır. Ara hesap `TYPE p LENGTH 16 DECIMALS 10`, çıktı TCURR'ın beş ondalıklı alanıdır. Taşma veya sıfıra yuvarlama `ERROR` olur. Oranlar muhasebe/FI kararına göre hazırlanır; örnek oranı otomatik uygulamayın.
 
-`P_INV` yalnız S/4HANA 2023 deneme ortamında görüldü. Ters kotasyonda aynı doğrudan çiftin oranları kullanılır, yön değiştirilirken faktörler terslenir. TCURR ters kotasyonu negatif işaretle saklar; hesaplanan büyüklük pozitiftir. Bu yönü ve çevrim tutarını hedef SAP'de `CONVERT_TO_LOCAL_CURRENCY` gibi standart geri okumayla doğrulayın. Denemelerin kapsamı [doğrulama tablosunda](docs/validation.md) bulunur.
+`P_INV` yalnız ABAP Cloud Developer Trial 2025 deneme sisteminde görüldü. Ters kotasyonda aynı doğrudan çiftin oranları kullanılır, yön değiştirilirken faktörler terslenir. TCURR ters kotasyonu negatif işaretle saklar; hesaplanan büyüklük pozitiftir. Bu yönü ve çevrim tutarını hedef SAP'de `CONVERT_TO_LOCAL_CURRENCY` gibi standart geri okumayla doğrulayın. Denemelerin kapsamı [doğrulama tablosunda](docs/validation.md) bulunur.
 
 ## Kaynaklar
 
