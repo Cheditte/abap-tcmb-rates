@@ -6,13 +6,13 @@
 
 `src/zche_tcmb_load.prog.abap` is one executable report containing types, business logic, selection screen, local classes and SAP Unit tests. It creates no custom DDIC objects or global classes. `src/package.devc.xml` and report XML are metadata for optional abapGit import.
 
-The syntax target is **ABAP 7.00**: explicit declarations, `CREATE OBJECT`, classic Open SQL, `CONCATENATE`, packed numbers and `CL_AUNIT_ASSERT`. Tests use `"#AU` comments rather than `RISK LEVEL`/`DURATION` additions. API/runtime compatibility on actual 7.00/7.01/7.02 systems remains unverified; activation on 7.58 does not establish it. [Validation record](docs/validation-v0.3.0.md).
+The syntax target is **ABAP 7.00**: explicit declarations, `CREATE OBJECT`, classic Open SQL, `CONCATENATE`, packed numbers and `CL_AUNIT_ASSERT`. Tests use `"#AU` comments rather than `RISK LEVEL`/`DURATION` additions. API/runtime compatibility on actual 7.00/7.01/7.02 systems remains unverified; activation on 7.58 does not establish it. [Validation record](docs/validation.md).
 
 For manual creation, enable **Fixed point arithmetic** in report attributes. Do not force 72-character lines; import the complete source including tests. `SELECTION_TEXTS_MODIFY` creates labels; `VRM_SET_VALUES` fills the date-rule list. The text table must be exactly `STANDARD TABLE OF rsseltexts WITH DEFAULT KEY`. Verify these interfaces on the target older release.
 
 **Dil / Language (`P_LANG`)** selects the report's language without changing the SAP session. `A` = **Otomatik / Logon language**: Turkish when `sy-langu = 'T'`, otherwise English. `T` = **Türkçe**, `E` = **English**. Default `A` preserves the previous behavior. An explicit choice is stored in the variant and also applies in background execution.
 
-The choice covers selection labels, date-rule choices, project-authored connection/error/row/summary messages and all ALV headings. Technical status codes remain stable; an additional status description uses the selected language. SAP GUI menus and raw SAP/BAPI/OS diagnostic text may retain the underlying system/logon language. Language refresh, variant and job behavior still need SAP acceptance for this revision.
+The choice covers selection labels, date-rule choices, project-authored connection/error/row/summary messages and all ALV headings. Technical status codes remain stable; an additional status description uses the selected language. SAP GUI menus and raw SAP/BAPI/OS diagnostic text may retain the underlying system/logon language.
 
 ## Selection fields
 
@@ -33,14 +33,13 @@ Variants store these standard selections. No custom profile table is used.
 | `P_CAL` | Actual SCAL factory calendar for `NEXT_WORKDAY`. |
 | `S_CURR` | Include/exclude TCMB codes. Empty evaluates all codes. |
 | `P_MAP` | Example code mappings `USD=USD2; XAU=GLD`. TCMB codes have three letters, SAP codes up to five characters. |
-| `P_TARG` | Only blank/`TRY`; another target would require cross-rate calculation. |
 | `P_INV` | Add TRY → foreign currency as an indirect quotation. |
 | `R_UPD` / `R_KEEP` | Update/preserve different existing rates. Default Update; choose Keep initially. Equal records always return `UNCHANGED`. |
 | `R_NBLOG` / `R_NBWRN` / `R_NBERR` | List/warn/error for missing weekday HTTP bulletins. Default list. |
 | `R_HTTP` | Default HTTPS source. |
 | `P_DEST` | Actual optional SM59 type-G destination name; host www.tcmb.gov.tr, 443, SSL, empty path prefix. |
-| `P_URL` | Custom root without an SM59 destination. Normally blank; default https://www.tcmb.gov.tr/kurlar. |
-| `R_FILE` / `P_DIR` | Application-server file source and actual folder. |
+| `P_URL` | Normally blank. Direct HTTPS is restricted to www.tcmb.gov.tr and paths under it, case-insensitive host; spaces, @, backslash, query/fragment and other hosts are rejected. Trailing slashes are removed. |
+| `R_FILE` / `P_DIR` | Application-server folder; `..` is rejected. S_DATASET read authorization is checked before OPEN DATASET; internal spaces are preserved. |
 
 At least one mapping is required. Assigning one rate type to two TCMB fields is rejected. Currency renaming changes the SAP identifier, not the currency value. Unknown SAP currencies are `SKIPPED`. Missing TCMB fields are skipped; supplied zero/negative/malformed values are parse errors.
 
@@ -56,7 +55,7 @@ The factory calendar changes validity, not which days are downloaded. Start/end 
 
 Direct rate: `TCMB value × FFACT / (Unit × TFACT)`. The newest TCURF ratio effective on the valid-from date is used; Unit and both factors must be positive. Intermediate values use `TYPE p LENGTH 16 DECIMALS 10`; TCURR has five decimals. Overflow or rounding to zero produces `ERROR`. Ratios follow FI decisions rather than an automatically applied example.
 
-Inverse quotation uses the same direct-pair ratio, reversing the output factors. TCURR stores an indirect quote with a negative sign; its calculated magnitude is positive. Verify direction and amounts through standard SAP readback such as `CONVERT_TO_LOCAL_CURRENCY`. Historical readback evidence does not validate current corrections.
+`P_INV` has only been exercised on the S/4HANA 2023 test environment. Inverse quotation uses the same direct-pair ratio, reversing the output factors. TCURR stores an indirect quote with a negative sign; its calculated magnitude is positive. Verify direction and amounts through standard SAP readback such as `CONVERT_TO_LOCAL_CURRENCY`. The exercised environment and limits are recorded in [verification](docs/validation.md).
 
 ## Sources
 
@@ -82,7 +81,7 @@ The connection button checks the last seven days, independently of `S_DATE`, wit
 
 Local classes cannot be called as global classes from another report. Edit **`LCL_EXIT`** within this report or use standard report/variant execution. The old `ZCL_CHE_TCMB_LOADER` API is not provided by this edition.
 
-`BEFORE_WRITE` may change lines before comparison; it has no test flag and must not persist data or trigger external effects. `AFTER_WRITE` receives `iv_test` and must suppress writes/notifications in test mode. Both are empty initially. Preserve and reapply custom code when upgrading. Since the flow commits, do not embed it in a LUW that expects unrelated business records to complete atomically.
+`BEFORE_WRITE` may change lines before comparison; it has no test flag and must not persist data or trigger external effects. `AFTER_WRITE` receives `iv_test` and must suppress writes/notifications in test mode. Both are empty initially. **Every source update replaces LCL_EXIT; preserve custom rules separately and reapply them.** Since the flow commits, do not embed it in a LUW that expects unrelated business records to complete atomically.
 
 ## Errors and reruns
 
@@ -90,7 +89,7 @@ A range is not atomic. Writes and commits are checked per row. A BAPI failure ma
 
 When a later day has a fatal source/parse failure, earlier days' results and an error row are retained, then processing stops. A failed/cancelled job does not undo prior commits. Reconcile results/spool and OB08 before retrying; have an authorized owner inspect SM13 after commit errors. Do not delete rates as a generic recovery procedure.
 
-Exit OB08 maintenance after checking records: leaving maintenance open in another session can block report writes. Supplied results contain both `NEW` and `E_TABLE ... locked by user DEVELOPER`. The visible OB08 **Change View** is a plausible source; inspect the actual lock object and owner in SM12 when needed. Do not automatically delete active locks. [Illustrated partial-write recovery](WALKTHROUGH.md#locks-and-partial-writes).
+Exit OB08 maintenance before writing; leaving it open in another session can hold a lock. If needed, have an authorized owner inspect SM12. [Recovery steps](WALKTHROUGH.md#locks-and-partial-writes).
 
 Test mode skips the write BAPI and commit, but does not establish real permissions, locking or persistence success. In background the summary goes to the job log, results to spool; `ERROR` cancels the job.
 
@@ -115,4 +114,16 @@ npm run check:source
 
 abaplint **2.120.92** uses `v700` with three small standard class/interface stand-ins committed to the repository. Standard type/API coverage is incomplete; lint proves neither activation nor older-release support. A supplemental scan checks selected syntax restrictions and the single-report package.
 
-The former `test:logic` harness was attempted with this report but could not resolve selection-screen, ALV and `CL_AUNIT_ASSERT` dependencies. It was removed rather than reporting old tests as current. **Run the 48 embedded tests in SAP.** Localization tests must not leak language state between cases; verify explicit English/Turkish choices and automatic behavior independently. [Contribution and acceptance checklist](CONTRIBUTING.md) · [Changes](CHANGELOG.md).
+Run the 55 embedded tests in SAP. Test counts discovered locally are not execution results. [Contributing](CONTRIBUTING.md) · [Verification](docs/validation.md).
+
+## Authorization boundaries
+
+`LCL_LOADER->RUN` validates settings, then calls the small `CHECK_WRITE_AUTHORITY` method only when Test is false, before processing days. It uses `VIEW_AUTHORITY_CHECK` for `V_TCURR`, action U. The BAPI retains its own authorization check; this adds an early, understandable failure rather than claiming that previous BAPI writes lacked protection. The applicable group is resolved by SAP (typically FB32), not hardcoded. No additional S_EXCHRATE check is introduced.
+
+`AUTHORITY_CHECK_DATASET`, activity READ, runs on the resolved filename before OPEN DATASET. Permission failure is a file error. These native authorization checks require runtime tests with appropriate users; pure Unit tests cover settings without changing roles. [Permissions](WALKTHROUGH.md#authorizations).
+
+For direct HTTPS, the normalized host remains www.tcmb.gov.tr. Different hosts belong in a Basis-managed SM59 destination; the request path is /kurlar/YYYYMM/DDMMYYYY.xml. The destination is an administrator-controlled trust boundary.
+
+Expected LCX_TCMB exceptions retain their diagnostic. Unexpected CX_ROOT exceptions include their runtime class and text; they are retained as an error row so earlier per-row commits/results remain visible.
+
+On non-Unicode systems without a Turkish code page, choose English if Turkish text is displayed incorrectly.

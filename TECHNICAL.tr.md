@@ -6,13 +6,13 @@
 
 `src/zche_tcmb_load.prog.abap` tek çalıştırılabilir rapordur. Türler, iş mantığı, seçim ekranı, yerel sınıflar ve SAP Unit testleri aynı dosyadadır. Özel DDIC nesnesi veya global sınıf oluşturmaz. `src/package.devc.xml` ve rapor XML'i yalnız isteğe bağlı abapGit aktarımı için metaveridir.
 
-Sözdizimi hedefi **ABAP 7.00**'dır. Açık bildirimler, `CREATE OBJECT`, klasik Open SQL, `CONCATENATE`, packed sayılar ve `CL_AUNIT_ASSERT` kullanılır. `RISK LEVEL`/`DURATION` ekleri yerine `"#AU` yorumları vardır. Gerçek 7.00/7.01/7.02 sistemde API ve çalışma zamanı uyumluluğu henüz doğrulanmadı; 7.58'de etkinleşmesi bunu kanıtlamaz. [Doğrulama kaydı](docs/validation-v0.3.0.md).
+Sözdizimi hedefi **ABAP 7.00**'dır. Açık bildirimler, `CREATE OBJECT`, klasik Open SQL, `CONCATENATE`, packed sayılar ve `CL_AUNIT_ASSERT` kullanılır. `RISK LEVEL`/`DURATION` ekleri yerine `"#AU` yorumları vardır. Gerçek 7.00/7.01/7.02 sistemde API ve çalışma zamanı uyumluluğu henüz doğrulanmadı; 7.58'de etkinleşmesi bunu kanıtlamaz. [Doğrulama kaydı](docs/validation.md).
 
 Manuel kurulumda program özelliklerindeki **Fixed point arithmetic** açık olmalıdır. Satırları 72 karaktere zorlamayın; bütün kaynak ve testleri birlikte yükleyin. Seçim metinleri `SELECTION_TEXTS_MODIFY` ile, tarih listesi `VRM_SET_VALUES` ile hazırlanır. Metin tablosu tam olarak `STANDARD TABLE OF rsseltexts WITH DEFAULT KEY` olmalıdır. Bu arayüzler hedef eski sistemde ayrıca denenmelidir.
 
 **Dil / Language (`P_LANG`)**, SAP oturumunu değiştirmeden programın dilini seçer. `A` = **Otomatik / Logon language**: `sy-langu = 'T'` için Türkçe, diğer oturumlarda İngilizce. `T` = **Türkçe**, `E` = **English**. Varsayılan `A` önceki davranışı korur. Açık dil seçimi varyantla saklanır ve arka planda da uygulanır.
 
-Seçim etiketleri, tarih listesi, projeye ait bağlantı/hata/satır/özet mesajları ve bütün ALV başlıkları bu seçimi kullanır. Teknik durum kodları korunur; ek durum açıklaması seçilen dilde gösterilir. SAP GUI menüleri ve SAP/BAPI/işletim sisteminden gelen özgün tanılama metinleri alttaki sistem/oturum dilinde kalabilir. Dil yenileme, varyant ve job davranışı güncel sürüm için SAP kabul testi bekler.
+Seçim etiketleri, tarih listesi, projeye ait bağlantı/hata/satır/özet mesajları ve bütün ALV başlıkları bu seçimi kullanır. Teknik durum kodları korunur; ek durum açıklaması seçilen dilde gösterilir. SAP GUI menüleri ve SAP/BAPI/işletim sisteminden gelen özgün tanılama metinleri alttaki sistem/oturum dilinde kalabilir.
 
 <a id="secim-alanlari"></a>
 
@@ -35,14 +35,13 @@ Varyantlar bu standart seçimleri saklar. Özel profil tablosu yoktur.
 | `P_CAL` | `NEXT_WORKDAY` için gerçek SCAL fabrika takvimi. |
 | `S_CURR` | TCMB kodları için dahil etme/dışlama. Boş = bütün kodları değerlendir. |
 | `P_MAP` | `USD=USD2; XAU=GLD` biçiminde kod eşlemesi. TCMB kodu üç harf, SAP kodu en çok beş karakter. Değerler örnektir. |
-| `P_TARG` | Yalnız boş veya `TRY` geçerli; başka hedef için çapraz kur hesabı yoktur. |
 | `P_INV` | TRY → döviz yönünü ters kotasyonla ekler. |
 | `R_UPD` / `R_KEEP` | Farklı mevcut kuru güncelle / koru. Varsayılan Güncelle; ilk denemede korumayı seçin. Eşit kur her durumda `UNCHANGED`. |
 | `R_NBLOG` / `R_NBWRN` / `R_NBERR` | Eksik hafta içi HTTP bültenini listede göster / uyar / hata say. Varsayılan liste. |
 | `R_HTTP` | Varsayılan HTTPS kaynağı. |
 | `P_DEST` | İsteğe bağlı SM59 tip G HTTP hedefinin gerçek adı. Host `www.tcmb.gov.tr`, 443, SSL, boş path prefix. |
-| `P_URL` | SM59 hedefi yokken özel kök adres. Normalde boş; varsayılan `https://www.tcmb.gov.tr/kurlar`. |
-| `R_FILE` / `P_DIR` | Uygulama sunucusundaki klasörden okuma ve gerçek klasör yolu. |
+| `P_URL` | Normalde boş. Yalnız TCMB HTTPS adresi ve alt yolları; sunucu adı büyük/küçük harfe duyarsızdır. Boşluk, @, ters eğik çizgi, sorgu/fragment ve başka sunucu reddedilir; sondaki / temizlenir. |
+| `R_FILE` / `P_DIR` | SAP sunucusu klasörü. `..` reddedilir; dosya açılmadan S_DATASET READ kontrol edilir. Klasör içindeki boşluklar korunur. |
 
 En az bir TCMB alanına kur tipi girilmelidir. Bir kur tipini iki farklı TCMB alanına vermek reddedilir. Para birimi kod eşlemesi dövizi başka bir dövize dönüştürmez. SAP'de tanımlı olmayan kod `SKIPPED` olur. Eksik TCMB alış/satış alanı da atlanır; sağlanmış ama sıfır/negatif/geçersiz sayı ise ayrıştırma hatasıdır.
 
@@ -58,7 +57,7 @@ Fabrika takvimi indirilecek günleri değil geçerlilik tarihini etkiler. Başla
 
 Doğrudan kur: `TCMB değeri × FFACT / (Unit × TFACT)`. İlgili tarih için TCURF'tan en yeni geçerli oran alınır; Unit ve iki oran da pozitif olmalıdır. Ara hesap `TYPE p LENGTH 16 DECIMALS 10`, çıktı TCURR'ın beş ondalıklı alanıdır. Taşma veya sıfıra yuvarlama `ERROR` olur. Oranlar muhasebe/FI kararına göre hazırlanır; örnek oranı otomatik uygulamayın.
 
-Ters kotasyonda aynı doğrudan çiftin oranları kullanılır, yön değiştirilirken faktörler terslenir. TCURR ters kotasyonu negatif işaretle saklar; hesaplanan büyüklük pozitiftir. Bu yönü ve çevrim tutarını hedef SAP'de `CONVERT_TO_LOCAL_CURRENCY` gibi standart geri okumayla doğrulayın. Eski sürümün geri okuma kanıtı güncel düzeltmeleri doğrulamaz.
+`P_INV` yalnız S/4HANA 2023 deneme ortamında görüldü. Ters kotasyonda aynı doğrudan çiftin oranları kullanılır, yön değiştirilirken faktörler terslenir. TCURR ters kotasyonu negatif işaretle saklar; hesaplanan büyüklük pozitiftir. Bu yönü ve çevrim tutarını hedef SAP'de `CONVERT_TO_LOCAL_CURRENCY` gibi standart geri okumayla doğrulayın. Denemelerin kapsamı [doğrulama tablosunda](docs/validation.md) bulunur.
 
 ## Kaynaklar
 
@@ -86,7 +85,7 @@ Bağlantı düğmesi son yedi güne bakar, `S_DATE` seçimini kullanmaz ve yazma
 
 Yerel sınıflar başka bir rapordan global sınıf gibi çağrılamaz. Aynı rapor içindeki **`LCL_EXIT`** bölümünü değiştirin veya standart rapor/varyant çalıştırma yolunu kullanın. Eski global `ZCL_CHE_TCMB_LOADER` çağrıları bu sürümün API'si değildir.
 
-`BEFORE_WRITE`, satırları karşılaştırmadan önce değiştirebilir; test bayrağı almaz, kalıcı kayıt veya dış yan etki üretmemelidir. `AFTER_WRITE`, `iv_test` alır; testte yazmayı/bildirim gibi dış etkileri engellemelidir. Başlangıçta ikisi de boştur. Yeni kaynak yüklerken özel kodunuzu koruyup yeniden uygulayın; test edin. Alt akış commit yaptığı için başka iş kayıtlarıyla tek atomik LUW beklenen bir çağrı içine gömmeyin.
+`BEFORE_WRITE`, satırları karşılaştırmadan önce değiştirebilir; test bayrağı almaz, kalıcı kayıt veya dış yan etki üretmemelidir. `AFTER_WRITE`, `iv_test` alır; testte yazmayı/bildirim gibi dış etkileri engellemelidir. Başlangıçta ikisi de boştur. **Her kaynak güncellemesi LCL_EXIT kodunu ezer; özel kuralları ayrı saklayıp yeniden uygulayın ve test edin.** Alt akış commit yaptığı için başka iş kayıtlarıyla tek atomik LUW beklenen bir çağrı içine gömmeyin.
 
 <a id="hatalar-ve-yeniden-deneme"></a>
 
@@ -96,7 +95,7 @@ Tarih aralığı tek atomik işlem değildir. Yazma ve commit satır bazında ko
 
 Sonraki gün kaynak/ayrıştırma hatası verirse önceki günlerin sonuçları ve hata satırı listede tutulur, sonraki günlere geçilmez. Başarısız veya Cancelled job önceki commit'leri geri almaz. Yeniden denemeden önce sonuç/spool ve OB08'i kontrol edin; commit sorunu varsa yetkili kişiyle SM13'ü inceleyin. Genel kurtarma yöntemi olarak kur silmeyin.
 
-OB08'i kontrol için açtıktan sonra bakım işleminden çıkın; başka oturumda açık bırakılan bakım kilidi gerçek yazmayı engelleyebilir. Kullanıcının paylaştığı sonuçta bazı satırlar `E_TABLE ... locked by user DEVELOPER` hatası, diğerleri `NEW` gösteriyor. Açık OB08 **Change View** ekranı olası nedendir; kilidin kesin sahibi/nesnesi gerektiğinde SM12'den incelenmelidir. Aktif kilidi otomatik veya genel çözüm olarak silmeyin. [Ekranlarla kısmi kayıt ve kurtarma yolu](WALKTHROUGH.tr.md#kilit-ve-kismi-kayit).
+Gerçek yazmadan önce OB08 bakım işleminden çıkın; başka oturumda açık bırakmak kilidi kaldırmaz. Gerekirse yetkili kişi SM12’de kilit sahibini/nesnesini incelesin. [Kurtarma adımları](WALKTHROUGH.tr.md#kilit-ve-kismi-kayit).
 
 Test modu yazma BAPI'sini ve commit'i çağırmaz. Gerçek yetki, kilit ve kayıt başarısını kanıtlamaz. Arka planda özet job log'una, sonuç listesi spool'a gider; `ERROR` job'ı iptal eder.
 
@@ -123,4 +122,16 @@ npm run check:source
 
 abaplint **2.120.92**, `v700` ayarı ve depodaki üç küçük standart sınıf/arayüz yer tutucusuyla çalışır. Standart SAP tür/API kapsamı eksiktir; lint aktivasyon veya eski sürüm desteği kanıtı değildir. Ek kaynak taraması bazı yeni sözdizimi yapılarını ve tek rapor paketini kontrol eder.
 
-Eski `test:logic` yeni raporla denendi; seçim ekranı, ALV ve `CL_AUNIT_ASSERT` gibi bağımlılıklar çözülemedi. Eski testleri çalışmış gibi göstermemek için bu adım kaldırıldı. **48 gömülü test SAP'de çalıştırılmalıdır.** Dil testleri değişen dili birbirine taşımamalı; açık İngilizce/Türkçe seçimi ve varsayılan davranış birbirinden bağımsız doğrulanmalıdır. [Katkı ve kabul kontrol listesi](CONTRIBUTING.md) · [Değişiklikler](CHANGELOG.md).
+55 gömülü testi SAP’de çalıştırın; yerel taramada bulunan sayı test sonucu değildir. [Katkı](CONTRIBUTING.md) · [Doğrulama](docs/validation.md).
+
+## Yetki sınırları
+
+`LCL_LOADER->RUN`, ayar kontrolünden sonra yalnız gerçek yazmada küçük `CHECK_WRITE_AUTHORITY` metodunu çağırır; gün döngüsü başlamadan `VIEW_AUTHORITY_CHECK`, `V_TCURR`, U işlemi kontrol edilir. BAPI’nin kendi yetki kontrolü devam eder. Önceden BAPI koruması olmadığı söylenmez; yeni kontrol aynı hatanın her satırda tekrarlanmasını önler. Grup SAP tarafından belirlenir (genellikle FB32), kodda sabitlenmez. Ek S_EXCHRATE kontrolü eklenmez.
+
+`AUTHORITY_CHECK_DATASET`, READ işlemi ve oluşturulan dosya adıyla OPEN DATASET öncesinde çağrılır. Yetkisizlik dosya hatasıdır. Bu yerel SAP kontrolleri uygun kullanıcılarla çalışma testi gerektirir; Unit testler rol değiştirmeden ayarları sınar. [Yetki tablosu](WALKTHROUGH.tr.md#yetkiler).
+
+Doğrudan HTTPS adresinin sunucusu www.tcmb.gov.tr ile sınırlıdır. Farklı sunucu, Basis yönetimindeki SM59 hedefinde tanımlanır; istek yolu /kurlar/YYYYMM/GGAAYYYY.xml olur. Hedef, yöneticinin kontrolündeki güven sınırıdır.
+
+Beklenen LCX_TCMB hatası kendi açıklamasıyla kalır. Beklenmeyen CX_ROOT hatasında çalışma zamanı sınıfı ve metin gösterilir; önceki satır commit’leri ve sonuçları kaybolmasın diye hata satırı korunur.
+
+Türkçe kod sayfası olmayan Unicode dışı sistemlerde metin bozulursa English seçin.

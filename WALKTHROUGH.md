@@ -1,218 +1,228 @@
-# TCMB rates: choose your goal
+# From installation to daily use
 
 > **English** | [Türkçe](WALKTHROUGH.tr.md) · [Overview](README.md) · [Technical reference](TECHNICAL.md)
 
-## Start with the outcome you need
+## Choose your goal
 
-One report reads TCMB bulletins, calculates your selected rates and compares them with SAP records. **Test run selected: inspect without saving. Test run cleared: the report can write rates.** OB08 is where you verify the resulting records.
+The report reads TCMB bulletins and compares selected rates with SAP records. **Test run checked: preview only. Clear it: the report can write exchange rates.** OB08 is where you verify the resulting records.
 
-![Three paths: preview rates, add or update OB08 records, and schedule daily use](docs/images/goals-en.svg)
+![Preview, write and daily scheduling](docs/images/goals-en.svg)
 
-| Your goal | Follow | Completion check |
+| Goal | Path | Completion check |
 |---|---|---|
-| See rates without saving | [Path A — Preview](#preview) | Results inspected with Test run selected. |
-| Add missing rates or update existing ones | [Path B — Write and verify](#first-write) | Results match the same key/date in OB08. |
-| Run automatically each day | [Path C — Schedule](#daily-use) | Dynamic-date variant and monitored SM36/SM37 job. |
-| Understand a field | [Selection-field reference](TECHNICAL.md#selection-fields) | Meaning, format and behavior. |
-| Recover from locks or partial writes | [Recovery path](#locks-and-partial-writes) | Existing successes reconciled; affected rows retried. |
+| Install | [Setup](#install) | Active report; selection screen opens. |
+| Inspect without saving | [Path A](#preview) | Test checked; values/statuses listed. |
+| Add or update records | [Path B](#first-write) | Result matches the same OB08 key/date. |
+| Run daily | [Path C](#daily-use) | Dynamic-date variant, monitored job and spool. |
 
-If not installed, start with preparation and SE38 below. Otherwise jump to your goal. Use DEV/a sandbox for initial writes. [Current acceptance evidence and limits](docs/validation-v0.3.0.md).
+[Verified environments and pending checks](docs/validation.md). Perform first installation/write trials in DEV/test.
 
-<a id="prepare"></a>
+## Prepare three things
 
-## 0. Complete three preparations
+![SAP access, rate choices and connectivity](docs/images/prepare-en.svg)
 
-![SAP development access, rate choices and connectivity from SAP to TCMB](docs/images/prepare-en.svg)
+1. **SAP development access:** create/activate a report in SE38. Use your customer Z/Y package and Workbench task for transport. `$TMP` is for local trials and cannot be transported.
+2. **FI choices:** decide currencies, SAP rate types and valid-from dates. Verify OBBS factors. The example `M` rate type is not a recommendation for every company.
+3. **Connectivity:** outbound HTTPS from the SAP application server to `www.tcmb.gov.tr:443` and certificate trust in the SSL client PSE. Browser access on your laptop is insufficient; no helper software is installed on the server.
 
-- **SAP access:** permission to create/activate a report. Use your Z/Y package and appropriate Workbench child task for a transportable installation. `$TMP` is available for a local-only trial; that object cannot be transported.
-- **Rate choices:** decide currencies, buying/selling fields and valid-from dates. Choose the SAP rate type for your process; example `M` is not an accounting recommendation. Currencies and rate types must exist. Verify the pair/rate type and effective **OBBS** translation ratios. TCMB may quote JPY per 100 units; do not enter arbitrary `1:1` ratios.
-- **Connectivity:** HTTPS from the SAP application server to `www.tcmb.gov.tr:443`, with certificate trust. No TCMB account/password or server helper software is needed. Configure it yourself if authorized, otherwise involve Basis/network support. A browser test on your computer alone is insufficient.
+Prepare connectivity yourself if authorized; otherwise give Basis/network staff the SAP-host HTTPS requirement. For an internal mirror/proxy, use [SM59](#sources).
 
 <a id="install"></a>
+## Install once
 
-## 1. Load the single file in SE38
+1. Open the [single source file](src/zche_tcmb_load.prog.abap). Use **Copy raw file** or **Download raw file**; do not upload GitHub HTML.
+2. Create `ZCHE_TCMB_LOAD` in **SE38**, type **Executable program**, in your package and Workbench task.
+3. Replace all generated starter code with the complete source. Alternatively use **Utilities → More Utilities → Upload/Download → Upload**.
+4. Enable **Fixed point arithmetic** in program attributes. Check syntax and activate with **Ctrl+F3**.
+5. Run **Program → Execute → Unit Tests**, including all **55 embedded tests**. Resolve failures before write testing.
+6. Execute with F8. Choose **Türkçe** or **English**; SAP standard menus retain their session language.
 
-1. Open [`src/zche_tcmb_load.prog.abap`](src/zche_tcmb_load.prog.abap). Use **Copy raw file** to copy the complete source, or **Download raw file** to save the `.abap` file. Do not upload the GitHub HTML page.
-2. In **SE38**, create **`ZCHE_TCMB_LOAD`**, type **Executable program**. A suitable title is `TCMB exchange rates`. Assign your customer package and Workbench task, or Local Object / `$TMP` for a local trial.
-3. Replace the entire initial source with this file. Alternatively use **Utilities → More Utilities → Upload/Download → Upload** to load the `.abap` file.
-
-![SE38 Upload menu; the file to load in this edition is zche_tcmb_load.prog.abap](docs/images/sap-upload.png)
-
-4. Check syntax and activate with **Ctrl+F3**. Enable **Fixed point arithmetic** in report attributes; calculations require it. The abapGit alternative imports this attribute from metadata.
-5. Run the embedded suite through **Program → Execute → Unit Tests**. The current source contains **48 tests**; this count does not mean they have passed in SAP. Resolve failures before a real-write trial.
-
-**Long-line error:** the source contains lines longer than 72 characters. Check **Downwards-compatible line length (72)** in editor settings and **Force Line Length 72** under Upload/Download. Disable the 72-character restriction and reload; do not truncate source. Menu wording varies by SAP GUI release/language.
-
-**Checkpoint:** `ZCHE_TCMB_LOAD` is active and F8 opens its selection screen. No separate installer, settings report or SE11/SE54/SM30 work is needed. Default **Otomatik / Logon language** uses Turkish for a Turkish logon and English otherwise; change it in **Dil / Language**. No manual text-element entry is required. Record the complete message if initialization fails.
-
-If an older report already exists, preserve its source, custom changes and variants before replacement; follow [the migration note](TECHNICAL.md#migration-from-the-old-edition). An [operator-supplied Turkish screenshot](WALKTHROUGH.tr.md#turkce-ekran) now shows selection labels and a successful connection message. A fixed-date Turkish variant and one-off preview job are now evidenced below. Full clean installation, the language-switch interaction, dynamic dates and broader background acceptance remain pending. The capture above illustrates only the general SE38 upload menu.
+For long-line errors, disable **Downwards-compatible line length (72)** / **Force Line Length 72**, then reload the complete source. Do not truncate lines. For an existing installation, [preserve custom code and migrate variants](TECHNICAL.md#migration-from-the-old-edition). Optional abapGit import into a customer package is an alternative to manual SE38 upload.
 
 <a id="preview"></a>
+## Path A — Preview without saving
 
-## Path A — I want to inspect rates without saving
+![Preview path](docs/images/preview-path-en.svg)
 
-![Preview path: small selection, Test run selected, F8, inspect results](docs/images/preview-path-en.svg)
+### A1. Select one day and one currency
 
-<a id="settings"></a>
+Open the report through SE38/F8. Use an available bulletin day; the date below is an example.
 
-### A1. Start with one day and one currency
-
-Open `ZCHE_TCMB_LOAD` through SE38/F8. Example date **30 October 2026** was available in the supplied connection test; use an available bulletin date in your environment. `M` is an example rate type which must exist and be appropriate in your system.
-
-| Field | What to do for the first trial |
+| Field | First trial |
 |---|---|
-| Dil / Language (`P_LANG`) | **Türkçe (`T`)** for Turkish or **English (`E`)** for English. Default **Otomatik / Logon language (`A`)** follows the logon language. |
-| Bulletin date(s) (`S_DATE`) | One past weekday with a published bulletin. |
-| Test run (`P_TEST`) | **Keep selected.** |
-| Forex buying (`P_FXBUY`) | Example `M`; use an appropriate defined SAP rate type. |
-| Other five rate fields | Leave blank initially. Do not assign one rate type to two TCMB fields. |
-| Date rule (`P_RULE`) | Select **Same day as the bulletin**. A choice is required; there is no default. |
-| Factory calendar (`P_CAL`) | Required only for **Next working day**; use your actual SCAL calendar. `TR` is not present in every system. |
-| TCMB currency codes (`S_CURR`) | Limit the trial to `USD` initially; add other codes as individual rows in multiple selection later. |
-| Other SAP code (`P_MAP`) | Blank if codes match. `USD=USD2` applies only if that is your actual SAP code. |
-| Currency of TCMB rates (`P_TARG`) | `TRY`; no conversion to another target is performed. |
-| Also write reverse direction (`P_INV`) | Unselected initially. |
-| Existing different rate | Select **Keep it (`R_KEEP`)** for the first trial. The program defaults to Update; check this explicitly. |
-| Working day without a bulletin | **Only show it in the list (`R_NBLOG`)**. |
-| Source | **From TCMB over HTTPS (`R_HTTP`)**. Leave destination/custom address blank unless your environment needs them. |
+| Language | English or Türkçe |
+| Bulletin date | `30.10.2026`; end date blank |
+| Test run | **Checked** |
+| Forex buying | A suitable existing SAP rate type; example `M` |
+| Other five rate fields | Blank |
+| Date rule | SAME_DAY; calendar blank |
+| TCMB codes | `USD` |
+| Code mapping / inverse | Blank / unchecked |
+| Existing different rate | **Keep it** |
+| Missing weekday bulletin | Only show it in the list |
+| Source | HTTPS; destination/base URL/folder blank |
 
-**An empty currency selection means all**, not none: every bulletin code is evaluated; currencies unknown to SAP are skipped. Exclusions and code renaming are supported. Use an explicit inclusion list initially. [All fields and date rules](TECHNICAL.md#selection-fields).
+Rate mapping fields take **SAP rate types, not amounts**. The report gets amounts from TCMB; quotes are always against TRY. [Field reference](TECHNICAL.md#selection-fields).
 
-### A2. Check connectivity, then preview
+![Selection-screen field groups (Turkish)](docs/images/sap-selection-tr.png)
 
-1. Click **Test the connection to TCMB**; read and dismiss the message. It searches the last seven days, ignores the selected date and writes nothing.
-2. Keep **Test run selected** and press **F8** for your chosen date.
-3. Inspect rate type, currency pair, valid-from date, value and factors. `NEW`/`UPDATED` describe planned operations; `UNCHANGED` means equal existing value; `SKIPPED` requires reading the reason; `NO_BULLETIN` is a missing bulletin; resolve `ERROR` before writing.
+### A2. Check connectivity
 
-![Real Turkish result list with an unchanged USD TRY record](docs/images/sap-tr-result-unchanged.png)
+Choose **Test the connection to TCMB**. Read and acknowledge the message. This searches the last seven days, independently of your selected date. The currency count is not a count of saved records.
 
-This separate example is for **27 October**, with M, USD → TRY, 49.69970 and factors 1:1. It reports `UNCHANGED`. The selection/test flag is not visible, so this image alone neither establishes preview mode nor proves a new write. The project's language choice changes report labels, not SAP standard screens.
+![Successful connection test (Turkish)](docs/images/sap-tr-connection-success.png)
 
-After one-day verification, extend the date range or add currencies via multiple selection. Saturdays/Sundays are skipped. [A real Turkish range-selection example and all field explanations](EKRAN_REHBERI.tr.md).
+### A3. Execute and inspect
 
-**You can stop here.** For inspection only, keep Test run selected. It does not verify write authorization or commit success. Custom exits must honor the [test-mode side-effect rules](TECHNICAL.md#local-classes-and-extensions).
+Keep **Test run checked**, press F8 and inspect rate type, pair, valid-from date, rate and factors.
+
+![Example: 27 October preview, Turkish output, matching record already exists](docs/images/result-preview.png)
+
+This result image is a separate example for 2026-10-27. Your list shows the day you selected.
+
+| Status | Meaning in preview |
+|---|---|
+| NEW | A missing record is planned for insertion. |
+| UPDATED | An existing different value is planned for replacement. |
+| UNCHANGED | An equal record exists. |
+| SKIPPED | Read the reason in Message. |
+| NO_BULLETIN | No bulletin found for that day. |
+| ERROR | Resolve before writing. |
+
+After the small trial, add dates/currencies. Use the multiple-selection **Select Single Values** tab for individual codes; an empty currency filter evaluates every code. Saturdays/Sundays are skipped; both range endpoints are included.
 
 <a id="first-write"></a>
+## Path B — Write and verify OB08
 
-## Path B — I want to add or update OB08 rates
+![Write path](docs/images/write-path-en.svg)
 
-![Write path: choose policy, preview, exit OB08 maintenance, clear Test run and execute, verify OB08](docs/images/write-path-en.svg)
+### B1. Choose existing-record behavior
 
-### B1. Choose the intended effect
+| Intention | Choice |
+|---|---|
+| Add missing records and preserve different existing rates | **Keep it** |
+| Add missing records and replace different existing rates | **Update it** |
 
-| Intention | Existing-rate policy | Behavior |
-|---|---|---|
-| Add missing records; preserve different existing values | **Keep it** | Inserts missing records, skips different existing values. Use for the first trial. |
-| Replace different existing values with TCMB values; also add missing records | **Update it** | Updates differences and inserts missing records. Review the preview first. |
+Equal values return UNCHANGED either way. Keep does not disable all writes; **Test run** does.
 
-Equal records remain `UNCHANGED` in both modes. Keep it does **not** disable all writes; Test run does.
+### B2. Check first, then write
 
-### B2. Reconcile and preview first
+1. Complete Path A without unexplained errors/values. Note the rate type, currency pair and valid-from date.
+2. Inspect that key in OB08, then **exit OB08 maintenance**. Leaving it open in another session does not release its lock.
+3. Return to the report, check selections and **clear Test run**.
+4. Press F8; actual writing begins without a separate Save/confirmation step.
+5. Inspect results. NEW/UPDATED now report successful row writes. Failed rows do not undo earlier successful commits.
 
-1. Use the authorized sandbox, run the **48 embedded SAP tests** and resolve failures. Complete Path A without unexplained errors or values.
-2. Note the result key: **rate type, from currency, to currency, valid-from date**. Example: M / USD / TRY / 2026-10-30.
-3. Open `/oOB08` to inspect that key in another session; if a new session is unavailable, note your choices and use `/nOB08`. Do not edit records there.
-4. **Exit OB08 maintenance after inspection**, including your other open maintenance sessions. Merely switching windows does not release a maintenance lock. Do not delete another user's active lock.
-5. A new-record preview should show `NEW`. An existing equal record needs no rewrite. Do not delete a rate just to manufacture a new-record test.
+### B3. Verify independently
 
-### B3. Execute the write
+After the report finishes, open OB08 in the same system/client. Find **rate type + source currency + target currency + valid-from date**; use **Position** if needed. Compare rate, quotation and factors. No additional OB08 Save is needed.
 
-1. Return to the report selection screen, preserving the checked date, mappings, currencies and policy.
-2. **Clear Test run** and capture the selection screen with this flag visible.
-3. Press **F8**. No separate Save or confirmation is required; the report calls the SAP write and commit operations.
-4. Inspect and capture results. `NEW` reports an insertion; `UPDATED` reports an update. Mixed `NEW` and `ERROR` means a partially successful run; successes are not automatically rolled back. Use [recovery](#locks-and-partial-writes).
+![Example EUR TRY records in OB08](docs/images/sap-ob08-eur-july.png)
 
-### B4. Verify in OB08, then exit maintenance
-
-Reopen OB08 after execution in the same system/client. Use **Position** or the available selection controls to find the exact key and valid-from date. Compare rate, quotation and factors, expanding shortened columns if necessary.
-
-![Actual OB08 screen showing M EUR TRY records for July 2026](docs/images/sap-ob08-eur-july.png)
-
-The supplied OB08 image shows **M / EUR / TRY**, factors 1:1, including **53.08900 for 1 July** and **54.48410 for 31 July 2026**. These are date-specific examples. It does not establish all USD records or resolution of the failed rows. No manual OB08 save is needed. **Exit maintenance before another report run.** Also verify the expected amount with SAP currency conversion; see [calculation and readback](TECHNICAL.md#dates-and-ratios).
-
-### B5. Repeat without writing
-
-Select Test run again and execute the same choices. Equal records should report `UNCHANGED`. Retain the selection, actual result, OB08 and repeat-preview evidence together.
-
-Writes affect standard **TCURR**; a different Z report name does not isolate records. Commits are per row, not atomic for the range.
+Exit maintenance, then rerun the report with **Test checked** and identical selections; equal rows should be UNCHANGED. Also verify standard SAP currency conversion for JPY/inverse quotation. [Calculation details](TECHNICAL.md#dates-and-ratios).
 
 <a id="daily-use"></a>
+## Path C — Run automatically each day
 
-## Path C — I want a daily automatic run
+**Flow:** selections → variant → SM36 job → SM37 log/spool. A variant stores settings; a job runs the report with those settings. First rehearse without writing.
 
-Start after Path B acceptance. A variant stores selections; it does not itself save exchange rates.
+### C1. Save a preview variant
 
-1. Save a separate variant, for example `TCMB_DAILY`, including the desired output language.
-2. Set `S_DATE` to **D / Dynamic date → Current date** in variant attributes. Do not carry over a fixed historical range/end date from testing.
-3. Clear Test run for a write variant and deliberately choose Keep or Update. Reload the variant to check saved values.
-4. Schedule `ZCHE_TCMB_LOAD` and this variant in **SM36** after bulletin publication; verify system/job time zones.
-5. Monitor the first runs through **SM37**, log/spool and OB08. A cancelled job does not undo earlier successful rows.
-6. Transport through the normal customer-package process; verify target connectivity, FI settings, variants and runtime-user permissions separately.
+Set language, mappings and currencies with **Test checked**. Use **Ctrl+S / Save as variant**, choose a new name such as `TCMB_PUB_TEST`, enter a description and save. Avoid overwriting an existing variant.
 
-### First rehearse with a one-off preview job
+![Variant attributes](docs/images/sap-live-05-variant-attributes.png)
 
-The [illustrated Turkish job guide](WALKTHROUGH.tr.md#gunluk-kullanim) follows every screen from variant creation to job log and spool. The screenshots are real A4H/001 captures from 2 November 2026; SAP standard menus are English and the report output is Turkish.
+### C2. Make the date dynamic
 
-1. Keep **Test run checked**, choose **Keep**, select your dates/currencies and explicitly choose Turkish. Save a new variant with Ctrl+S; the captured example is `TCMB_DOC_TEST`, with the fixed range 1 July–1 August 2026, USD/EUR, FX buying → M, SAME_DAY and TRY. Reload to inspect selections. Use your own test date and unique names.
-2. In **SM36**, enter a new job name; the example is `ZTCMB_DOC_TEST_20261102`, class C. Choose **Step**, ABAP program `ZCHE_TCMB_LOAD`, and your test variant. Save the step and return with F3. Use an appropriately authorized execution user.
+1. In **Variant Attributes → Fields of Selection Screen**, locate the bulletin-date row. Choose **Technical name** if needed to identify `S_DATE`.
+2. In that row's **Type of Variable** column, enter/select **D — Dynamic date calculation**.
+3. Use F4 in the variable-name/options cell on the same row and select **Current date**.
+4. Save and reload the variant. It should resolve to today's single date, with no fixed historical end date and Test still checked.
 
-![SM36 program and preview variant](docs/images/sap-live-08-sm36-step.png)
+![Choose dynamic date type D](docs/images/sap-dynamic-type.png)
 
-3. Choose **Start condition → Immediate**, leave **Periodic Job unchecked**, save the condition, then save the main job. Check the Released confirmation.
-4. In **SM37**, filter by your job name/user and execution date. Include Released/Ready/Active/Finished/Canceled, execute and refresh. Include Scheduled too if diagnosing a missing/unreleased job.
+![Choose Current Date](docs/images/sap-dynamic-current-date.png)
 
-![One-off preview job finished in SM37](docs/images/sap-live-14-sm37-finished.png)
+![Reloaded variant with current date and Test selected](docs/images/sap-dynamic-loaded.png)
 
-5. Select the job row and choose **Job log**. This run finished in 74 seconds and explicitly reports a no-write test: 4 planned new, 0 updated, 40 unchanged, 0 skipped, 1 no-bulletin day, 0 errors.
+`DEFAULT sy-datum` alone does not make a saved variant dynamic; a fixed date can be stored. Dynamic date calculation is evaluated each run. Menu/column labels vary by SAP release/language.
 
-![Turkish no-write summary in the job log](docs/images/sap-live-15-sm37-job-log.png)
+### C3. Define the step in SM36
 
-6. Return to the job list; choose **Spool**, then the document icon in the Type column. Inspect the rows; printing is unnecessary. The step language was EN, while the explicit Turkish variant produced Turkish report messages and spool statuses.
+1. Open **/nSM36**, enter a distinct job name such as `ZTCMB_PUB_DYNAMIC_TEST`, normally class **C**. Follow any local server/class policy.
+2. Choose **Step → ABAP program**, report `ZCHE_TCMB_LOAD`, and your saved variant.
+3. Check the execution user's permissions. Store an explicit report language in the variant if required.
+4. Save the step and return with F3; verify **1 Step(s) defined**.
 
-![Turkish spool rows with four planned new records](docs/images/sap-live-17-spool-results.png)
+![Program and variant in the step](docs/images/sap-live-08-sm36-step.png)
 
-**Finished does not prove a write.** The four missing keys (1 July USD, 6 July USD/EUR, 7 July USD) were only planned and remain missing. Daily operation needs a separate dynamic-date variant and, after Path B acceptance, deliberate write settings. For daily scheduling use Date/Time, Periodic Job and Period values → Daily, then save both the condition and main job. Dynamic dates, recurring actual writes and restricted-user execution remain pending acceptance.
+### C4. Rehearse once
+
+Choose **Start condition → Immediate**, leave **Periodic Job unchecked**, save the condition, then save the main job. Check the **Released** confirmation.
+
+![One-off immediate start](docs/images/sap-live-10-sm36-immediate.png)
+
+### C5. Monitor through SM37
+
+1. Open **/nSM37**; filter by your job name, relevant user and execution day. Include Released/Ready/Active/Finished/Canceled, then execute. Include Scheduled when diagnosing an unreleased job.
+2. Refresh. When Finished, select the row and open **Job log**; inspect the test summary and error count.
+3. Return and open **Spool**. Select its row and choose **Display contents** to inspect result rows. Printing is unnecessary.
+
+![Finished job](docs/images/sap-live-14-sm37-finished.png)
+
+![Turkish job summary](docs/images/sap-live-15-sm37-job-log.png)
+
+![Dynamic-date preview spool: current-day USD/TRY row (Turkish)](docs/images/sap-dynamic-spool.png)
+
+Finished alone does not prove that rates were written. A preview job only compares values; verify actual writes through OB08.
+
+### C6. Enable daily writes after Path B acceptance
+
+Create a separate daily variant, retain the dynamic current date, deliberately clear Test and select Keep/Update. Define another job in SM36:
+
+1. **Start condition → Date/Time:** first execution date/time.
+2. **Periodic Job → Period values → Daily:** daily recurrence.
+3. Save the condition and main job; check Released in SM37.
+
+Schedule after bulletin publication and verify the **SAP/job time zone**. Prepare the target system's variant, connectivity and execution user separately. Monitor the first daily runs through log/spool and OB08.
+
+<a id="authorizations"></a>
+## Who needs which permissions?
+
+| Task | Requirement |
+|---|---|
+| Installation | SE38 development/activation, package and transport access. |
+| Preview | Report execution, reading standard rate/configuration data and source access. No write preflight in Test mode. |
+| Writing | Change authorization for `V_TCURR`, typically `S_TABU_DIS` group `FB32`, `ACTVT=02`; verify TDDAT and your role design. |
+| Server files | `S_DATASET` READ for the program/actual file path, plus OS read access. |
+| Background job | Appropriate `S_BTCH_JOB`; `S_BTCH_NAM` when scheduling under another user. Execution user also needs source/write access. |
+
+Give Basis/authorization staff the report name, actual folder, required V_TCURR change operation and job execution user. Do not request unrestricted SAP_ALL. The report checks once before real processing. **The BAPI already performs its own authorization checks**; the preflight avoids repeated row-level authorization errors.
+
+<a id="sources"></a>
+## Direct HTTPS, SM59 or server files
+
+Normally leave SM59 destination and TCMB base URL blank; the default is `https://www.tcmb.gov.tr/kurlar`. A supplied base URL must use `https://www.tcmb.gov.tr` or a path under that host. Spaces, `@`, query/fragment and other hosts are rejected; trailing slashes are removed.
+
+For another host/internal mirror or a managed proxy, use a **Basis-managed SM59 type-G destination** with HTTPS/certificate/proxy settings. The report requests `/kurlar/YYYYMM/DDMMYYYY.xml`; a mirror must provide that path and complete TCMB XML. Enter the **destination name**, not its URL, in P_DEST.
+
+<a id="read-from-files"></a>
+### Read staged XML on the SAP server
+
+1. If authorized, access the SAP application server through your approved RDP/SSH/file-transfer process; otherwise work with the server owner.
+2. Stage complete daily XML as `DDMMYYYY.xml`: for example 30 October 2026 → `30102026.xml`, with the matching XML date.
+3. Choose the server-folder source and enter the actual folder. This is not your laptop Downloads directory. `..` is rejected; repeated internal spaces are preserved.
+4. Verify OS/SAP read permissions, test with the staged date and ensure every relevant job/application server can reach the folder.
+
+Downloading/staging is outside this project. Missing/unreadable files are ERROR, not assumed holidays. There is no automatic source fallback.
 
 <a id="locks-and-partial-writes"></a>
+## Recover from partial errors
 
-## Recovery — Some rows succeeded and others failed
+1. Preserve the result/spool and exact messages. Commits are per row, so earlier successes remain.
+2. Reconcile affected keys in OB08, then exit maintenance; open maintenance screens may hold locks.
+3. If a lock persists, have its owner/administrator inspect the actual object/owner in SM12. Do not delete active locks as a generic fix.
+4. After resolving the cause, preview affected dates/currencies with **Test + Keep**, then add missing entries through Path B.
+5. Reconcile OB08 and SM13 before retrying a commit error.
 
-![Turkish result list with successful writes, E_TABLE lock errors and a missing bulletin](docs/images/sap-tr-range-write-locks.png)
-
-The supplied list contains `NEW`, `ERROR` with `E_TABLE ... locked by user DEVELOPER`, and `NO_BULLETIN` for 15 July. The **Yeni kayıt** descriptions and BAPI lock errors are consistent with a write run. The separately supplied selection image has **Test run checked**; the two images cannot be represented as one proven before/after run.
-
-1. Preserve results and failed keys; do not immediately rerun the whole month with Update.
-2. Reconcile successful and failed keys in OB08, then **exit OB08 maintenance**. The supplied **Change View** screen is a plausible lock source, not proof of its cause.
-3. Exit your own other maintenance sessions. If the lock persists, ask the owner/administrator to inspect its object and owner in **SM12**. Do not use deletion of an active lock as a generic fix. [SAP lock-management guidance](https://learning.sap.com/courses/technical-implementation-and-operation-i-of-sap-s-4hana-and-sap-business-suite/describing-as-abap).
-4. After the cause is resolved, preview only the affected dates/currencies with **Test run selected and Keep it**. Existing equal records remain unchanged, different ones are preserved and missing ones can be identified.
-5. Complete missing records through Path B and verify again. Handle deliberately requested updates separately. A missing bulletin is not a lock error and should not be filled with another day's rate automatically.
-
-For commit errors reconcile OB08 and SM13 before retrying. [Technical recovery rules](TECHNICAL.md#errors-and-reruns).
-
-## Read from files
-
-Use only if SAP cannot retrieve TCMB over HTTPS. The source is a folder readable by the **SAP application server**, not your computer's Downloads folder. An automatic downloader is not included.
-
-<details>
-<summary>Prepare server files</summary>
-
-1. If authorized, access the server through approved RDP (Windows), SSH (Linux) or managed transfer; otherwise involve the server owner.
-2. Stage complete XML files as `DDMMYYYY.xml`. **30 October 2026 is an example:** its file is `30102026.xml`. Use your chosen date and matching bulletin date inside the XML. Place only complete files in the readable folder.
-3. Select **From a folder on the server (`R_FILE`)** and enter your real folder in **Folder of the XML files (`P_DIR`)**. Do not copy a fixed example path.
-4. Verify OS/SAP read permissions and shared access across application servers/job hosts.
-5. Preview the staged file's date. The connection button searches the last seven days; preview an older file by selecting its date directly.
-
-**Missing/unreadable files are `ERROR`.** They do not prove a holiday. No automatic download or source fallback occurs.
-
-</details>
-
-## Other problems
-
-Check the full error, complete source and line-length settings for installation; SAP host HTTPS/STRUST/SM59 for connectivity; OBBS keys and effective factors for rate errors; and the actual server path, filename and permissions for files. [Technical reference](TECHNICAL.md).
-
-<details>
-<summary>Optional: install with abapGit</summary>
-
-Import into your customer package, Pull and activate; offline ZIP import is also possible. abapGit imports attributes/text elements but is not required for daily operation. Do not load the same program twice using both methods. Review the [migration notes](TECHNICAL.md#migration-from-the-old-edition) for existing installations.
-
-</details>
+For SSL issues check STRUST and server networking; for factors check OBBS; for configuration use the [field reference](TECHNICAL.md#selection-fields). [Error behavior](TECHNICAL.md#errors-and-reruns).

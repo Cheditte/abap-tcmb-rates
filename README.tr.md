@@ -1,58 +1,58 @@
-# TCMB kurlarını SAP'de görün, kontrol edin ve kaydedin
+# TCMB döviz kurları → SAP
 
 > [English](README.md) | **Türkçe**
 
-TCMB'nin günlük döviz kurlarını SAP'de görmek veya standart kur kayıtlarını beslemek istiyorsanız bu projeyi kullanabilirsiniz. **Tek programla önce sonucu kaydetmeden inceleyebilir, ardından eksik kurları ekleyebilir veya mevcut farklı kurları güncelleyebilirsiniz.** Kayıtları OB08'de kontrol edersiniz.
+`ZCHE_TCMB_LOAD`, TCMB'nin günlük döviz kurlarını **SAP'ye (OB08 / TCURR)** `BAPI_EXCHANGERATE_CREATE` üzerinden aktaran tek ABAP programıdır. Bir dosyayı SE38'e kopyalayın, önce kurları inceleyin, ardından kaydedin.
 
-![Hedefinize göre üç yol: deneme, OB08 kaydı, günlük otomatik çalışma](docs/images/goals-tr.svg)
+![SAP'de TCMB kur ön izlemesi](docs/images/result-preview.png)
+
+[![ABAP kontrolleri](https://github.com/Cheditte/abap-tcmb-rates/actions/workflows/abaplint.yml/badge.svg)](https://github.com/Cheditte/abap-tcmb-rates/actions/workflows/abaplint.yml)
 
 ## Ne yapmak istiyorsunuz?
 
-| Hedef | Başlangıç |
+| Hedefiniz | İzlenecek yol |
 |---|---|
-| Henüz kurmadım | [SE38'de tek dosyalı kurulum](WALKTHROUGH.tr.md#kurulum) |
-| Önce veriyi görmek istiyorum | [Yol A: kaydetmeden deneme](WALKTHROUGH.tr.md#onizleme) |
-| OB08'e eksik kurları eklemek istiyorum | [Yol B: Olduğu gibi bırak ile ekleme](WALKTHROUGH.tr.md#ilk-kayit) |
-| Mevcut kurları TCMB değeriyle güncellemek istiyorum | [Yol B: Güncelle seçimi ve OB08 kontrolü](WALKTHROUGH.tr.md#ilk-kayit) |
-| Her gün otomatik çalışsın istiyorum | [Yol C: varyant ve günlük iş](WALKTHROUGH.tr.md#gunluk-kullanim) |
-| Bir alanı veya sonucu anlamadım | [Ekran rehberi](EKRAN_REHBERI.tr.md) |
-| Bazı satırlar kilit hatası aldı | [Kısmi kayıt ve yeniden deneme](WALKTHROUGH.tr.md#kilit-ve-kismi-kayit) |
+| Programı kurmak | [Tek dosyalı SE38 kurulumu](WALKTHROUGH.tr.md#kurulum) |
+| Kaydetmeden denemek | [Kur ön izlemesi](WALKTHROUGH.tr.md#onizleme) |
+| OB08'e kur eklemek veya güncellemek | [Kayıt ve kontrol](WALKTHROUGH.tr.md#ilk-kayit) |
+| Her gün otomatik çalıştırmak | [Dinamik tarihli varyant ve job](WALKTHROUGH.tr.md#gunluk-kullanim) |
+| Alanları veya kodu anlamak | [Ekran rehberi](SCREENS.tr.md) · [Teknik başvuru](TECHNICAL.tr.md) |
 
-## Başlamak için üç şey gerekir
+## Üç hazırlık gerekiyor
 
-![SAP geliştirme erişimi, kur seçimleri ve SAP sunucusundan TCMB bağlantısı](docs/images/prepare-tr.svg)
+![SAP erişimi, kur kararları ve bağlantı](docs/images/prepare-tr.svg)
 
-1. **SAP erişimi:** SE38'de program oluşturup etkinleştirebilen bir ABAP geliştiricisi olun. [Tek kaynak dosyayı](src/zche_tcmb_load.prog.abap) `ZCHE_TCMB_LOAD` olarak yükleyin. Ayrı installer veya abapGit zorunluluğu yoktur.
-2. **Kur seçimleri:** hangi dövizler, hangi SAP kur tipi ve hangi geçerlilik tarihi? FI ayarları ve dönüşüm oranlarını sisteminize göre doğrulayın.
-3. **Bağlantı:** SAP uygulama sunucusundan `www.tcmb.gov.tr:443` HTTPS erişimi ve sertifika güveni. Ek sunucu yazılımı, TCMB hesabı veya parola gerekmez. Kendi bilgisayarınızdan siteyi açabilmeniz tek başına yeterli değildir.
+1. **SAP erişimi:** [Kaynak dosyayı](src/zche_tcmb_load.prog.abap) SE38'de `ZCHE_TCMB_LOAD` olarak oluşturup etkinleştirebilmelisiniz. Ayrı installer veya özel tablo gerekmez; abapGit isteğe bağlıdır.
+2. **Kur kararları:** hangi dövizler, hangi SAP kur tipi, hangi geçerlilik tarihi? OBBS dönüşüm oranlarını kontrol edin; özellikle 100 birim üzerinden yayımlanan kurlara dikkat edin.
+3. **Bağlantı:** SAP uygulama sunucusu `www.tcmb.gov.tr:443` adresine HTTPS ile erişmeli ve sertifikasına güvenmelidir. TCMB hesabı, parola veya ek sunucu yazılımı gerekmez.
 
-**Dil / Language → Türkçe** ile İngilizce SAP oturumunda da programı Türkçe kullanabilirsiniz. SAP'nin standart ekranları kendi oturum dilinde kalabilir.
+Programdan **Türkçe** veya **English** seçebilirsiniz. Tekrar kullanacağınız ayarları SAP varyantına kaydedin. İlk açılışta Deneme işaretlidir; DEV/test ortamında tek gün ve tek dövizle başlayın.
 
-**Varyant**, aynı seçimleri tekrar kullanmak için sakladığınız ayarlardır. **OB08**, SAP'nin kur bakım ekranıdır; program kaydı yapar, siz burada kontrol edersiniz. İlk denemeyi DEV/deneme sisteminde yapın.
+## Uyumluluk ve doğrulama
 
-## Kapsam ve doğrulama durumu
-
-- Kurların karşılığı **TRY**'dir; çapraz kur veya muhasebe belgesi oluşturulmaz.
-- Test modu varsayılan olarak açıktır. `NEW` / `UPDATED`, testte yapılması planlanan işlemi gösterir.
-- Yeni kurulum için özel tablo, domain, data element, global sınıf veya ayrı installer gerekmez. abapGit isteğe bağlıdır.
-- **v0.3.0 birleşim adayıdır.** Kodun sözdizimi hedefi ABAP 7.00'dır. Gerçek 7.00/7.01/7.02 sistemlerde çalışması henüz doğrulanmadı.
-- **A4H üzerinde görüldü:** TCMB bağlantısı, Türkçe sonuçlar, OB08’de bazı kur kayıtları ve Türkçe varyantla tamamlanan tek seferlik deneme job’ı. [Ekranlarla job kurulumu](WALKTHROUGH.tr.md#gunluk-kullanim).
-- **Doğrulaması sürenler:** güncel 48 SAP Unit testi, eski SAP sürümleri, günlük dinamik tarih ve gerçek yazma job’ı. Önceki kilit hatalı dört kayıt hâlâ eksik; son deneme bunları yazmadı. [Doğrulama kaydı](docs/validation-v0.3.0.md).
-
-Türkçe seçimi programın ekran etiketleri, tarih listesi, kendi mesajları ve sonuç listesi başlıklarını kapsar. `NEW` / `ERROR` gibi teknik durum kodları korunur; yanlarında seçilen dilde açıklama gösterilir. SAP GUI menüleri ve SAP/BAPI/işletim sisteminden gelen özgün teknik mesajlar kendi sistem/oturum dilinde kalabilir.
-
-SAP'nin internet erişimi yoksa [sunucu klasöründeki XML dosyalarını okuma](WALKTHROUGH.tr.md#dosyadan-okuma) seçeneği vardır. Dosyaları indirme/hazırlama işlemi projeye dahil değildir.
-
-Önceki çok nesneli sürüm kuruluysa [geçiş notunu](TECHNICAL.tr.md#eski-surumden-gecis) okuyun. SAP'deki eski nesneler otomatik silinmez; eski profil tabloları bu program tarafından kullanılmaz.
-
-## Belgeler
-
-| İhtiyacınız | Belge |
+| Ortam / kontrol | Durum |
 |---|---|
-| Kurulum, ilk kullanım, varyant ve günlük iş | [Adım adım rehber](WALKTHROUGH.tr.md) |
-| Ekrandaki her alan ve sonuç sütunu | [Ekran rehberi](EKRAN_REHBERI.tr.md) |
-| Yerel sınıflar, genişletme ve hata davranışı | [Teknik başvuru](TECHNICAL.tr.md) |
-| Kontroller ve SAP kabul testleri | [CONTRIBUTING.md](CONTRIBUTING.md) — İngilizce |
-| Değişiklikler | [CHANGELOG.md](CHANGELOG.md) — İngilizce |
+| SAP ABAP Platform 2023 / SAP_BASIS 7.58 | Güncel rapor uyarısız etkinleşti; 55/55 SAP testi, HTTPS ön izleme ve dinamik tarihli deneme job'ı geçti. |
+| Güncel yayın adayı | v700 lint/kaynak kontrolü geçti; geçersiz adres ve klasör reddedildi. Önceki revizyonda sınırlı kayıt OB08 ile doğrulandı. |
+| ECC 6.0 / SAP_BASIS 7.00–7.02 | 7.00 sözdizimi hedefleniyor; bu sistemlerde henüz çalıştırılmadı. Geri bildirime açık. |
 
-MIT lisanslıdır. [Lisans](LICENSE) · [Hata bildirimi](https://github.com/Cheditte/abap-tcmb-rates/issues)
+[Doğrulama tablosu ve bilinen sınırlar](docs/validation.md). [Eski kurulumdan geçiş](TECHNICAL.tr.md#eski-surumden-gecis).
+
+## Sık sorulan sorular
+
+### SAP'de TCMB kurları nasıl otomatik çekilir?
+Programı kurup ön izleme ve kontrollü gerçek kaydı doğrulayın. Ardından **dinamik güncel tarihli** varyantla SM36'da günlük iş oluşturun. [Job rehberi](WALKTHROUGH.tr.md#gunluk-kullanim).
+
+### ECC 6.0'da çalışır mı?
+Kod ABAP 7.00 sözdizimini hedefliyor. Gerçek ECC 6.0 sisteminde çalışma doğrulaması henüz yapılmadı; yukarıdaki tabloyu inceleyin.
+
+### Resmî tatillerde ne olur?
+Cumartesi ve pazar atlanır. İstenen hafta içi gün için HTTP 404 alınırsa `NO_BULLETIN` gösterilir; bilgi, uyarı veya job hatası davranışını seçebilirsiniz. Başka günün kuru otomatik alınmaz.
+
+### JPY neden 100 birim üzerinden hesaplanır?
+TCMB XML'indeki `Unit`, kurun kaç birim için yayımlandığını belirtir. Program bunu TCURF/OBBS oranlarıyla birlikte kullanır; her döviz için 1:1 varsaymayın. [Hesaplama](TECHNICAL.tr.md#tarih-ve-oran-hesabı).
+
+### Hangi yetkiler gerekiyor?
+Kayıt için `V_TCURR` değiştirme yetkisi gerekir (genellikle `S_TABU_DIS`, `FB32` grubu; sisteminizde doğrulayın). Dosyadan okumada `S_DATASET`, job için ilgili arka plan yetkileri gerekir. [Kim hangi yetkiye ihtiyaç duyar?](WALKTHROUGH.tr.md#yetkiler).
+
+MIT lisanslı · [Lisans](LICENSE) · [Değişiklikler](CHANGELOG.md) · [Katkı](CONTRIBUTING.md) · [Sorun bildir](https://github.com/Cheditte/abap-tcmb-rates/issues)

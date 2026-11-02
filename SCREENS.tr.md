@@ -4,11 +4,7 @@
 
 İlk kez çalıştırıyorsanız önce [kaydetmeden deneme yolunu](WALKTHROUGH.tr.md#onizleme) izleyin. Bu belge, bir alanın anlamını veya başka bir seçeneği öğrenmek istediğinizde başvuracağınız açıklamadır.
 
-## Seçim ekranının tamamı
-
-![Türkçe seçim ekranında tarih aralığı, M kur tipi, aynı gün kuralı ve işaretli Deneme kutusu](docs/images/sap-live-02-preview-settings.png)
-
-Bu gerçek örnekte tarih aralığı **01.07.2026–01.08.2026**, Döviz alış **M**, tarih kuralı **Bülten ile aynı gün**, para birimi **TRY** ve **Deneme işaretli**. Döviz alanında USD görünüyor; [çoklu seçim görüntüsü](docs/images/sap-live-03-multiple-currencies.png) USD ve EUR seçildiğini gösteriyor. **Olduğu gibi bırak seçili** ve Deneme işaretli olduğundan standart kur yazma işlemi yapılmaz. İlk kullanımda tek gün ve tek dövizle başlayın.
+![Türkçe seçim ekranı](docs/images/sap-selection-tr.png)
 
 ## Çalıştırma: dil, tarih ve deneme
 
@@ -21,7 +17,7 @@ Bu gerçek örnekte tarih aralığı **01.07.2026–01.08.2026**, Döviz alış 
 
 ## Hangi TCMB kuru hangi SAP kur tipine yazılır?
 
-**Bu altı kutuya `34,50` gibi bir kur tutarı yazmayın.** Tutarı program TCMB'den alır. Siz, o tutarın SAP'de kullanılacağı **kur tipini** yazarsınız. Kur tipi, SAP'nin farklı amaçlarla kullanılan kurları ayırdığı anahtardır.
+**Kurların karşılığı TRY olarak sabittir. Bu altı kutuya `34,50` gibi bir kur tutarı yazmayın.** Tutarı program TCMB'den alır. Siz, o tutarın SAP'de kullanılacağı **kur tipini** yazarsınız. Kur tipi, SAP'nin farklı amaçlarla kullanılan kurları ayırdığı anahtardır.
 
 Örneğin **Döviz alış** yanına `M` yazmak, “TCMB'nin döviz alış değerini SAP'de M kur tipine al” demektir. Bu seçim `M` tipinin her kurumda döviz alış için kullanıldığı anlamına gelmez. Kendi sisteminizdeki FI kullanımını esas alın.
 
@@ -54,7 +50,6 @@ Bu gerçek örnekte tarih aralığı **01.07.2026–01.08.2026**, Döviz alış 
 |---|---|---|
 | **TCMB döviz kodları** | Bültendeki hangi dövizlerin işleneceğini seçer. | İlk denemede `USD`. Birkaç kod için sağdaki **çoklu seçim** düğmesini açın; tekil değerler bölümüne `USD` ve `JPY` gibi kodları ayrı satırlarda yazıp onaylayın. Aralık bölümüne yazmayın. |
 | **Farklı SAP kodu (USD=USD2)** | TCMB kodu ile SAP'deki kod farklıysa eşleştirir. | Normalde **boş**. Yalnız SAP'de gerçekten bu kod tanımlıysa `USD=USD2` gibi eşleme girin. Birden fazla eşlemeyi `;` ile ayırın. Bu işlem döviz dönüşümü yapmaz. |
-| **TCMB kurlarının para birimi** | Alınan kurların karşılığının Türk lirası olduğunu belirtir. | `TRY` bırakın. EUR gibi başka hedef girerek çapraz kur hesaplatamazsınız. |
 | **Ters yönü de yaz (TRY→döviz)** | Döviz → TRY yönüne ek olarak TRY → döviz yönünü ters kotasyonla hazırlar. | İlk denemede **işaretsiz**. İki yönü de kullanmanız gerekiyorsa oranları ve SAP çevrim sonucunu ayrıca doğrulayın. |
 
 **Döviz kodlarını boş bırakmak “hiçbir dövizi alma” değildir:** bültendeki bütün kodlar değerlendirilir. Çoklu seçimde hariç tutma da desteklenir. SAP'de tanımlı olmayan kodlar atlanır. İlk denemede kapsamı `USD` ile sınırlayın; daha sonra `JPY` eklediğinizde bültendeki 100 birim bilgisi ile OBBS oranlarını da inceleyin.
@@ -84,13 +79,13 @@ Bu seçim ağ, sertifika, geçersiz XML veya okunamayan sunucu dosyası hatalar�
 
 ## Bülten nereden alınır?
 
-**Normal kullanımda TCMB'den HTTPS ile seçili olsun; altındaki üç metin alanını boş bırakın.** Program TCMB adresini zaten bilir. Ekrandaki başarılı bağlantı mesajı sizin bu yolu kullanabildiğinizi gösterir.
+**Normal kullanımda TCMB'den HTTPS ile seçili olsun; altındaki üç metin alanını boş bırakın.** Program TCMB adresini zaten bilir. Bağlantı düğmesiyle SAP sunucusundan erişimi sınayın.
 
 | Alan / seçenek | Ne işe yarar? | Ne zaman doldurulur? |
 |---|---|---|
 | **TCMB'den HTTPS ile** | SAP uygulama sunucusu bülteni doğrudan internetten okur. | İlk denemede seçili bırakın. TCMB hesabı veya parola gerekmez. |
 | **SM59 hedefi (isteğe bağlı)** | SAP'de önceden hazırlanmış HTTP bağlantısının ayarlarını kullanır. | Kurumunuz bu yolu kullanıyorsa gerçek SM59 hedef **adını** yazın. Buraya internet adresi yazılmaz. Normal doğrudan bağlantıda boş bırakın. |
-| **Farklı adres (isteğe bağlı)** | SM59 hedefi kullanılmadığında varsayılan bülten kök adresini değiştirir. | Normalde boş. Özel bir kaynak kullanıyorsanız beklenen günlük XML yapısını sunan kök adres gerekir. Klasör yolu veya tek güne ait XML bağlantısı girmeyin. |
+| **TCMB temel adresi (normalde boş)** | Doğrudan TCMB HTTPS kök yolunu seçer. | Normalde boş. Yalnız https://www.tcmb.gov.tr ve alt yolları kabul edilir. Başka sunucu/iç ayna için Basis yönetimindeki SM59 hedefini kullanın. |
 | **Sunucudaki bir klasörden** | İnternetten almak yerine önceden hazırlanmış XML dosyalarını okur. | HTTPS yerine dosya yolunu kullanacaksanız seçin; otomatik bir yedek kaynak değildir. |
 | **XML dosyalarının klasörü** | Dosya kaynağının bulunduğu SAP uygulama sunucusu klasörüdür. | Yalnız klasörden okumada gerçek sunucu yolunu girin. Kendi bilgisayarınızın İndirilenler klasörü değildir. [Dosya hazırlama adımları](WALKTHROUGH.tr.md#dosyadan-okuma). |
 
@@ -98,7 +93,7 @@ Bu seçim ağ, sertifika, geçersiz XML veya okunamayan sunucu dosyası hatalar�
 
 ![Türkçe sonuç listesi: USD TRY için mevcut kayıtla eşleşen kur](docs/images/sap-tr-result-unchanged.png)
 
-Bu örnek 27.10.2026 gününe aittir. Seçim ekranı görünmediği için çalışma modu bu görüntüden doğrulanamaz.
+Bu örnek 27.10.2026 gününe aittir. UNCHANGED, SAP kaydı ile hesaplanan değerin eşit olduğunu belirtir.
 
 | Sütun | Bu ekrandaki değer | Nasıl okunur? |
 |---|---|---|
