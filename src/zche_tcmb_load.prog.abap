@@ -2402,7 +2402,7 @@ CLASS lcl_app IMPLEMENTATION.
               CHANGING  ct_texts = lt_texts ).
     add_text( EXPORTING iv_name = 'P_DEST'  iv_kind = 'P' iv_en = `SM59 destination (optional)` iv_tr = `SM59 hedefi (isteğe bağlı)`
               CHANGING  ct_texts = lt_texts ).
-    add_text( EXPORTING iv_name = 'P_URL'   iv_kind = 'P' iv_en = `TCMB base URL (normally blank)` iv_tr = `TCMB temel adresi (normalde boş)`
+    add_text( EXPORTING iv_name = 'P_URL'   iv_kind = 'P' iv_en = `TCMB base URL (normally blank)` iv_tr = `TCMB adresi (normalde boş)`
               CHANGING  ct_texts = lt_texts ).
     add_text( EXPORTING iv_name = 'R_FILE'  iv_kind = 'P' iv_en = `From a folder on the server` iv_tr = `Sunucudaki bir klasörden`
               CHANGING  ct_texts = lt_texts ).
