@@ -4,7 +4,7 @@
 
 **Upload one report, run it, and bring TCMB exchange rates into SAP.**
 
-`ZCHE_TCMB_LOAD` is a single ABAP report that loads daily exchange rates from the Central Bank of the Republic of Türkiye (TCMB) into SAP **OB08 / TCURR**, using `BAPI_EXCHANGERATE_CREATE`. Copy one file into SE38, preview the rates, then save them.
+Use `ZCHE_TCMB_LOAD` to view daily exchange rates from the Central Bank of the Republic of Türkiye (TCMB) in SAP, inspect them without saving, and then import them. You can also schedule the same process to run automatically each day.
 
 ![TCMB rate preview in SAP](docs/images/result-preview.png)
 
@@ -34,7 +34,8 @@ Choose **Türkçe** or **English** on the report. Save reusable settings as a st
 
 | Environment / check | Status |
 |---|---|
-| SAP ABAP Platform 2023 / SAP_BASIS 7.58 | Current report: warning-free activation, 55/55 SAP Unit tests, HTTPS preview and dynamic-date preview job passed. |
+| SAP ABAP Platform 2023 / SAP_BASIS 7.58 — v0.3.0 | Warning-free activation, 55/55 SAP Unit tests, HTTPS preview and dynamic-date preview job passed. |
+| v0.3.1 | ABAP 7.00 lint passes. Fixes mapping collisions and result retention after errors; SAP runtime tests were not repeated. |
 | v0.3.0 | v700 lint/source checks pass; invalid direct URL and parent-folder selections rejected. Earlier revision: limited writes verified in OB08. |
 | ECC 6.0 / SAP_BASIS 7.00–7.02 | 7.00 syntax target; runtime not yet tested. Feedback welcome. |
 

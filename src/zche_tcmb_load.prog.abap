@@ -27,7 +27,7 @@ TABLES sscrfields.
 "! Shared types and constants
 INTERFACE lif_tcmb.
 
-  CONSTANTS version TYPE string VALUE `0.3.0`.
+  CONSTANTS version TYPE string VALUE `0.3.1`.
 
   " Address of the TCMB bulletins; one day is <url>/YYYYMM/DDMMYYYY.xml
   CONSTANTS default_url TYPE string VALUE `https://www.tcmb.gov.tr/kurlar`.
@@ -423,6 +423,14 @@ CLASS lcl_text IMPLEMENTATION.
         lv_template = choose(
           iv_en = `Rate type &1 is entered for two TCMB rates; a rate type can take only one`
           iv_tr = `&1 kur tipi iki TCMB alanına girilmiş; her kur tipine yalnızca bir TCMB alanı atanabilir` ).
+      WHEN 'DUPLICATE_WRITE_KEY'.
+        lv_template = choose(
+          iv_en = `Conflicting SAP rate keys: no rates processed for this day. Check currency mappings and BEFORE_WRITE.`
+          iv_tr = `SAP kur anahtarları çakışıyor; bu günün kurları işlenmedi. Döviz eşlemelerini ve BEFORE_WRITE kodunu kontrol edin.` ).
+      WHEN 'DAY_INTERRUPTED'.
+        lv_template = choose(
+          iv_en = `Not processed: the day stopped with an error. See the error row.`
+          iv_tr = `İşlenmedi: gün hata nedeniyle durdu. Hata satırını inceleyin.` ).
       WHEN 'FILE_FOLDER_REQUIRED'.
         lv_template = choose(
           iv_en = `Enter the folder of the bulletin files`
@@ -1641,6 +1649,11 @@ CLASS lcl_writer DEFINITION FINAL.
       CHANGING
         ct_lines    TYPE lif_tcmb=>ty_lines.
 
+    "! Reject colliding final keys, including implicit currency mappings.
+    CLASS-METHODS has_duplicate_keys
+      IMPORTING it_lines TYPE lif_tcmb=>ty_lines
+      RETURNING value(rv_duplicate) TYPE abap_bool.
+
     "! TCURR keeps dates as 99999999 minus YYYYMMDD
     CLASS-METHODS inverted_date
       IMPORTING
@@ -1653,6 +1666,31 @@ ENDCLASS.
 
 CLASS lcl_writer IMPLEMENTATION.
 
+  METHOD has_duplicate_keys.
+    TYPES: BEGIN OF ty_key,
+             rate_type TYPE tcurr-kurst,
+             from_curr TYPE tcurr-fcurr,
+             to_curr TYPE tcurr-tcurr,
+             valid_from TYPE d,
+           END OF ty_key.
+    DATA lt_keys TYPE SORTED TABLE OF ty_key
+      WITH UNIQUE KEY rate_type from_curr to_curr valid_from.
+    DATA ls_key TYPE ty_key.
+    DATA ls_line TYPE lif_tcmb=>ty_line.
+
+    LOOP AT it_lines INTO ls_line WHERE status IS INITIAL.
+      ls_key-rate_type = ls_line-rate_type.
+      ls_key-from_curr = ls_line-from_curr.
+      ls_key-to_curr = ls_line-to_curr.
+      ls_key-valid_from = ls_line-valid_from.
+      INSERT ls_key INTO TABLE lt_keys.
+      IF sy-subrc <> 0.
+        rv_duplicate = abap_true.
+        RETURN.
+      ENDIF.
+    ENDLOOP.
+  ENDMETHOD.
+
   METHOD write.
     DATA ls_return TYPE bapiret2.
     DATA ls_rate TYPE bapi1093_0.
@@ -1661,7 +1699,17 @@ CLASS lcl_writer IMPLEMENTATION.
     DATA lv_existing TYPE tcurr-ukurs.
     DATA lv_gdatu TYPE tcurr-gdatu.
     DATA lv_existing_text TYPE string.
+    DATA lv_success_status TYPE lif_tcmb=>ty_status.
     FIELD-SYMBOLS <ls_line> TYPE lif_tcmb=>ty_line.
+
+    " Validate the entire day before the first database read or write.
+    IF has_duplicate_keys( ct_lines ) = abap_true.
+      LOOP AT ct_lines ASSIGNING <ls_line> WHERE status IS INITIAL.
+        <ls_line>-status = lif_tcmb=>status-error.
+        <ls_line>-message = lcl_text=>message( iv_key = 'DUPLICATE_WRITE_KEY' ).
+      ENDLOOP.
+      RETURN.
+    ENDIF.
 
     LOOP AT ct_lines ASSIGNING <ls_line> WHERE status IS INITIAL.
       " An indirect quotation is stored with a minus sign
@@ -1697,6 +1745,9 @@ CLASS lcl_writer IMPLEMENTATION.
         CONTINUE.
       ENDIF.
 
+      " A planned status becomes success only after the commit succeeds.
+      lv_success_status = <ls_line>-status.
+      CLEAR <ls_line>-status.
       CLEAR ls_rate.
       ls_rate-rate_type  = <ls_line>-rate_type.
       ls_rate-from_curr  = <ls_line>-from_curr.
@@ -1747,6 +1798,8 @@ CLASS lcl_writer IMPLEMENTATION.
         <ls_line>-status = lif_tcmb=>status-error.
         <ls_line>-message = lcl_text=>message( iv_key = 'COMMIT_FAILED' iv_1 = ls_return-message ).
         CALL FUNCTION 'BAPI_TRANSACTION_ROLLBACK'.
+      ELSE.
+        <ls_line>-status = lv_success_status.
       ENDIF.
     ENDLOOP.
   ENDMETHOD.
@@ -1818,8 +1871,8 @@ CLASS lcl_loader DEFINITION FINAL.
       IMPORTING
         iv_date         TYPE d
         iv_test         TYPE abap_bool
-      RETURNING
-        value(rt_lines) TYPE lif_tcmb=>ty_lines
+      CHANGING
+        ct_lines        TYPE lif_tcmb=>ty_lines
       RAISING
         lcx_tcmb.
 
@@ -1931,6 +1984,7 @@ CLASS lcl_loader IMPLEMENTATION.
     DATA lv_class TYPE string.
     DATA lv_error TYPE string.
     DATA ls_error TYPE lif_tcmb=>ty_line.
+    FIELD-SYMBOLS <ls_pending> TYPE lif_tcmb=>ty_line.
 
     lv_problem = check( ms_settings ).
     IF lv_problem IS NOT INITIAL.
@@ -1971,16 +2025,17 @@ CLASS lcl_loader IMPLEMENTATION.
     lv_date = iv_from.
     WHILE lv_date <= iv_to.
       IF is_weekday( lv_date ) = abap_true.
+        CLEAR: lt_day, ls_error.
         TRY.
-            lt_day = load_day( iv_date = lv_date iv_test = iv_test ).
-            APPEND LINES OF lt_day TO rt_lines.
+            " By-reference results survive an AFTER_WRITE exception.
+            load_day( EXPORTING iv_date = lv_date iv_test = iv_test
+                      CHANGING ct_lines = lt_day ).
           CATCH lcx_tcmb INTO lx_tcmb.
             CLEAR ls_error.
             ls_error-bulletin_date = lv_date.
             ls_error-status = lif_tcmb=>status-error.
             ls_error-message = lx_tcmb->get_text( ).
-            APPEND ls_error TO rt_lines.
-            EXIT.
+
           CATCH cx_root INTO lx_error.
             " Preserve earlier row commits/results when an unexpected error stops the range.
             lv_class = cl_abap_classdescr=>get_class_name( lx_error ).
@@ -1990,9 +2045,19 @@ CLASS lcl_loader IMPLEMENTATION.
             ls_error-status = lif_tcmb=>status-error.
             ls_error-message = lcl_text=>message(
               iv_key = 'UNEXPECTED_ERROR' iv_1 = lv_class iv_2 = lv_error ).
-            APPEND ls_error TO rt_lines.
-            EXIT.
+
         ENDTRY.
+        IF ls_error-status IS NOT INITIAL.
+          LOOP AT lt_day ASSIGNING <ls_pending> WHERE status IS INITIAL.
+            <ls_pending>-status = lif_tcmb=>status-error.
+            <ls_pending>-message = lcl_text=>message( iv_key = 'DAY_INTERRUPTED' ).
+          ENDLOOP.
+        ENDIF.
+        APPEND LINES OF lt_day TO rt_lines.
+        IF ls_error-status IS NOT INITIAL.
+          APPEND ls_error TO rt_lines.
+          EXIT.
+        ENDIF.
       ENDIF.
       IF lv_date = iv_to.
         EXIT.
@@ -2073,7 +2138,7 @@ CLASS lcl_loader IMPLEMENTATION.
           ls_line-status = lif_tcmb=>status-no_bulletin.
         ENDIF.
         ls_line-message = lx_error->get_text( ).
-        APPEND ls_line TO rt_lines.
+        APPEND ls_line TO ct_lines.
         RETURN.
     ENDTRY.
 
@@ -2083,14 +2148,14 @@ CLASS lcl_loader IMPLEMENTATION.
     lt_factors = read_factors( iv_date = lv_valid_from iv_target = lv_target ).
 
     CREATE OBJECT lo_calc.
-    rt_lines = lo_calc->build_lines( is_bulletin   = ls_bulletin
+    ct_lines = lo_calc->build_lines( is_bulletin   = ls_bulletin
                                      is_settings   = ms_settings
                                      iv_valid_from = lv_valid_from
                                      it_factors    = lt_factors
                                      it_known      = lt_known ).
 
     mo_exit->before_write( EXPORTING is_settings = ms_settings
-                           CHANGING  ct_lines    = rt_lines ).
+                           CHANGING  ct_lines    = ct_lines ).
 
     IF ms_settings-existing_rate IS INITIAL.
       lv_existing = lif_tcmb=>existing-update.
@@ -2100,9 +2165,9 @@ CLASS lcl_loader IMPLEMENTATION.
     CREATE OBJECT lo_writer.
     lo_writer->write( EXPORTING iv_existing = lv_existing
                                 iv_test     = iv_test
-                      CHANGING  ct_lines    = rt_lines ).
+                      CHANGING  ct_lines    = ct_lines ).
 
-    mo_exit->after_write( is_settings = ms_settings it_lines = rt_lines iv_test = iv_test ).
+    mo_exit->after_write( is_settings = ms_settings it_lines = ct_lines iv_test = iv_test ).
   ENDMETHOD.
 
 

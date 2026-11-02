@@ -1,6 +1,6 @@
 {
   "name": "abap-tcmb-rates",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "Local static checks for the ABAP TCMB exchange-rate loader",
   "license": "MIT",
