@@ -1,9 +1,13 @@
 # Changelog
 
-## Unreleased
+## 0.3.1 — 2026-11-02
 
+- Reject duplicate final SAP rate keys before processing a day's rows, including collisions introduced by currency mappings or BEFORE_WRITE.
+- Preserve completed rows from the same day when AFTER_WRITE or later processing raises an exception; retain the error alongside those results.
+- Mark real writes as NEW/UPDATED only after a successful commit.
 - Shorten the Turkish TCMB URL label to fit the selection screen.
 - Clarify the one-report setup message and remove unreferenced documentation images.
+- Keep native SAP acceptance results identified as v0.3.0; v0.3.1 passes v700 lint but SAP runtime tests were not repeated.
 
 ## 0.3.0 — 2026-11-02
 

@@ -91,6 +91,10 @@ Yerel sınıflar başka bir rapordan global sınıf gibi çağrılamaz. Aynı ra
 
 ## Hatalar ve yeniden deneme
 
+v0.3.1, BEFORE_WRITE sonrasında ve ilk veritabanı karşılaştırması/yazmasından önce işlenecek satırların **kur tipi + kaynak para birimi + hedef para birimi + geçerlilik tarihi** anahtarlarını kontrol eder. Aynı anahtara iki satır yönlenirse o günün işlenecek satırları ERROR olur ve o gün için yazma yapılmaz. Bu kontrol örtük eşlemeleri de kapsar: USD ve EUR birlikte seçiliyken EUR=USD eşlemesi çakışır.
+
+Gün sonuçları referansla tutulur. AFTER_WRITE hatasında aynı günün tamamlanmış satırları korunur, hata ayrıca eklenir ve aralık durur. İşlenmemiş satırlar hata olarak işaretlenir. Gerçek çalıştırmada NEW/UPDATED durumu ancak commit başarılı olduktan sonra atanır.
+
 Tarih aralığı tek atomik işlem değildir. Yazma ve commit satır bazında kontrol edilir. BAPI hatasında satır `ERROR` olur ve rollback çağrılır. Commit hatası başarı gibi gösterilmez; OB08 ve SM13'le mutabakat gerekir. `R_KEEP`, BAPI'nin güncellemeye izin bayrağını da kapatır; eşzamanlı eklenen kayıt üzerine yazılmamalıdır. Kilit/yarış durumunu SAP'de ayrıca doğrulayın.
 
 Sonraki gün kaynak/ayrıştırma hatası verirse önceki günlerin sonuçları ve hata satırı listede tutulur, sonraki günlere geçilmez. Başarısız veya Cancelled job önceki commit'leri geri almaz. Yeniden denemeden önce sonuç/spool ve OB08'i kontrol edin; commit sorunu varsa yetkili kişiyle SM13'ü inceleyin. Genel kurtarma yöntemi olarak kur silmeyin.

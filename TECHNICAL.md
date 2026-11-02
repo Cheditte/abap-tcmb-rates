@@ -85,6 +85,10 @@ Local classes cannot be called as global classes from another report. Edit **`LC
 
 ## Errors and reruns
 
+From v0.3.1, after BEFORE_WRITE and before the first database comparison/write, the writer checks each pending row's **rate type + source currency + target currency + valid-from date** key. Duplicate keys mark the day's pending rows ERROR and prevent writes for that day. Implicit mappings are included: selecting USD and EUR with EUR=USD produces a collision.
+
+Daily results are retained by reference. If AFTER_WRITE fails, completed rows from the same day remain in the result, the error is appended, and the range stops. Unprocessed rows are marked as errors. Real-run NEW/UPDATED statuses are assigned only after a successful commit.
+
 A range is not atomic. Writes and commits are checked per row. A BAPI failure marks `ERROR` and rolls back. Commit failure is not reported as success; reconcile OB08/SM13 before retrying. `R_KEEP` also disables the BAPI update flag; concurrently inserted rates must not be overwritten. Verify locks/races in SAP acceptance.
 
 When a later day has a fatal source/parse failure, earlier days' results and an error row are retained, then processing stops. A failed/cancelled job does not undo prior commits. Reconcile results/spool and OB08 before retrying; have an authorized owner inspect SM13 after commit errors. Do not delete rates as a generic recovery procedure.
