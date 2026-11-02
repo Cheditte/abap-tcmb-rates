@@ -36,7 +36,8 @@ TCMB'nin günlük döviz kurlarını SAP'de görmek veya standart kur kayıtlar�
 - Test modu varsayılan olarak açıktır. `NEW` / `UPDATED`, testte yapılması planlanan işlemi gösterir.
 - Yeni kurulum için özel tablo, domain, data element, global sınıf veya ayrı installer gerekmez. abapGit isteğe bağlıdır.
 - **v0.3.0 birleşim adayıdır.** Kodun sözdizimi hedefi ABAP 7.00'dır. Gerçek 7.00/7.01/7.02 sistemlerde çalışması henüz doğrulanmadı.
-- Devir notunda A4H deneme sisteminde 34 test ve sınırlı gerçek kur yazma sonuçları bildirildi. Birleştirme ve dil değişiklikleriyle 48 teste ulaşan güncel sürüm SAP'de tekrar doğrulanmayı bekliyor. Paylaşılan ekranlarda Türkçe seçim/sonuçlar, bağlantı başarısı, kısmen başarılı bir kayıt çalışması ve OB08 EUR kayıtları görülüyor. Bazı satırlar kilit hatası almış; tam mutabakat, 48 test sonucu ve arka plan kabulü henüz tamamlanmadı. [Doğrulama kaydı](docs/validation-v0.3.0.md).
+- **A4H üzerinde görüldü:** TCMB bağlantısı, Türkçe sonuçlar, OB08’de bazı kur kayıtları ve Türkçe varyantla tamamlanan tek seferlik deneme job’ı. [Ekranlarla job kurulumu](WALKTHROUGH.tr.md#gunluk-kullanim).
+- **Doğrulaması sürenler:** güncel 48 SAP Unit testi, eski SAP sürümleri, günlük dinamik tarih ve gerçek yazma job’ı. Önceki kilit hatalı dört kayıt hâlâ eksik; son deneme bunları yazmadı. [Doğrulama kaydı](docs/validation-v0.3.0.md).
 
 Türkçe seçimi programın ekran etiketleri, tarih listesi, kendi mesajları ve sonuç listesi başlıklarını kapsar. `NEW` / `ERROR` gibi teknik durum kodları korunur; yanlarında seçilen dilde açıklama gösterilir. SAP GUI menüleri ve SAP/BAPI/işletim sisteminden gelen özgün teknik mesajlar kendi sistem/oturum dilinde kalabilir.
 

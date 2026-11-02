@@ -6,9 +6,9 @@
 
 ## Seçim ekranının tamamı
 
-![Türkçe seçim ekranında tarih aralığı, M kur tipi, aynı gün kuralı ve işaretli Deneme kutusu](docs/images/sap-tr-range-test-settings.png)
+![Türkçe seçim ekranında tarih aralığı, M kur tipi, aynı gün kuralı ve işaretli Deneme kutusu](docs/images/sap-live-02-preview-settings.png)
 
-Bu gerçek örnekte tarih aralığı **01.07.2026–01.08.2026**, Döviz alış **M**, tarih kuralı **Bülten ile aynı gün**, para birimi **TRY** ve **Deneme işaretli**. Döviz alanında USD görünüyor; çoklu seçim penceresi kapalı olduğu için ek kodlar bu görüntüden doğrulanamaz. **Güncelle seçili**, fakat Deneme işaretli olduğundan standart kur yazma işlemi yapılmaz. İlk kullanımda tek gün ve tek dövizle başlayın.
+Bu gerçek örnekte tarih aralığı **01.07.2026–01.08.2026**, Döviz alış **M**, tarih kuralı **Bülten ile aynı gün**, para birimi **TRY** ve **Deneme işaretli**. Döviz alanında USD görünüyor; [çoklu seçim görüntüsü](docs/images/sap-live-03-multiple-currencies.png) USD ve EUR seçildiğini gösteriyor. **Olduğu gibi bırak seçili** ve Deneme işaretli olduğundan standart kur yazma işlemi yapılmaz. İlk kullanımda tek gün ve tek dövizle başlayın.
 
 ## Çalıştırma: dil, tarih ve deneme
 

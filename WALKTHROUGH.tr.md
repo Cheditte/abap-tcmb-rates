@@ -45,7 +45,7 @@ Program kurulu değilse aşağıdaki hazırlık ve kurulumla başlayın. Kuruluy
 
 **Kontrol noktası:** `ZCHE_TCMB_LOAD` aktif ve F8 ile seçim ekranı açılıyor. Ayrı installer, ayar programı veya SE11/SE54/SM30 işlemi yoktur. Varsayılan **Otomatik / Logon language** dil seçimi Türkçe oturumda Türkçe, diğer oturumlarda İngilizce kullanır; **Dil / Language** alanından bunu değiştirebilirsiniz. Metin öğelerini elle doldurmanız gerekmez. Açılışta hata varsa tam mesajı kaydedin.
 
-Mevcut programın eski sürümü varsa üzerine yüklemeden önce kaynağını, özel kodunu ve varyantlarını koruyun; [geçiş notunu](TECHNICAL.tr.md#eski-surumden-gecis) izleyin. Türkçe seçim ekranı ve başarılı bağlantı mesajı [kullanıcının paylaştığı ekranda](#turkce-ekran) görülüyor. Temiz kurulumun bütün adımları, dil değiştirme anı, varyant ve arka plan davranışı için kabul kontrolleri sürüyor. Yukarıdaki görsel yalnız genel SE38 yükleme menüsünü gösterir.
+Mevcut programın eski sürümü varsa üzerine yüklemeden önce kaynağını, özel kodunu ve varyantlarını koruyun; [geçiş notunu](TECHNICAL.tr.md#eski-surumden-gecis) izleyin. Türkçe seçim ekranı ve başarılı bağlantı mesajı [kullanıcının paylaştığı ekranda](#turkce-ekran) görülüyor. Sabit tarihli Türkçe varyantla tek seferlik arka plan denemesi [Yol C](#gunluk-kullanim) bölümünde gösteriliyor. Temiz kurulum, dil değiştirme anı, dinamik tarih ve diğer kabul kontrolleri sürüyor. Yukarıdaki görsel yalnız genel SE38 yükleme menüsünü gösterir.
 
 <a id="onizleme"></a>
 
@@ -111,14 +111,29 @@ Bu örnekte 30.10.2026 bülteni okunmuş. Mesajdaki **22 para birimi**, kaydedil
 
 Tek günlük sonucu doğruladıktan sonra bitiş tarihini doldurun; birden fazla dövizi çoklu seçimde ayrı satırlara girin. Cumartesi/pazar atlanır. İlk ve son gün aralığa dahildir.
 
+**A4H üzerinde izlenen örnek:** 2 Kasım 2026'da aşağıdaki seçimle F8 çalıştırıldı. Bu örnek Temmuz ayındaki önceki kayıtları karşılaştırmak içindir; ilk denemenizde kendi tek gününüzü seçin.
+
+1. **Deneme işaretli**, **Olduğu gibi bırak** seçili. Tarih aralığı 01.07.2026–01.08.2026, Döviz alış M, tarih kuralı SAME_DAY, hedef TRY ve kaynak HTTPS.
+
 <details>
-<summary>Gerçek ekran örneği: Temmuz ayı için deneme seçimi</summary>
+<summary>Deneme ve mevcut kayıtları koruma seçimi — ekranı aç</summary>
 
-![01.07.2026–01.08.2026 tarih aralığında işaretli Deneme kutusu](docs/images/sap-tr-range-test-settings.png)
-
-Bu görüntüde **Deneme işaretli**, **Güncelle seçili**. Böylece güncelleme etkisi yazmadan incelenebilir. Döviz alanında USD görünür; çoklu seçim penceresi kapalıdır. İlk kullanımda bu geniş aralığı kopyalamak yerine tek günle başlayın.
+![Deneme ve mevcut kayıtları koruma seçimi](docs/images/sap-live-02-preview-settings.png)
 
 </details>
+
+2. **TCMB döviz kodları** yanındaki çoklu seçim düğmesini açın. **Select Single Values** sekmesinde her dövizi ayrı satıra yazın; örnekte USD ve EUR var. Yeşil onay/aktarma düğmesiyle seçim ekranına dönün. Aralık veya hariç tutma sekmelerini yalnız bu davranışı istiyorsanız kullanın.
+
+<details>
+<summary>Çoklu seçimde USD ve EUR — ekranı aç</summary>
+
+![Çoklu seçimde USD ve EUR](docs/images/sap-live-03-multiple-currencies.png)
+
+</details>
+
+3. F8 sonrası **4 yeni kayıt planlanıyor, 40 kayıt aynı, 1 gün için bülten yok, 0 hata** görüldü. Alttaki özet **Deneme çalıştırması (kayıt yok)** diyor. Bu dört eksik kayıt yazılmadı.
+
+![Deneme sonucu ve kayıt yapılmadığını gösteren özet](docs/images/sap-live-04-preview-results.png)
 
 **Burada durabilirsiniz:** amacınız yalnızca görmekse Deneme işaretini kaldırmayın. Deneme modu yazma yetkisini veya kayıt kesinleştirmesini sınamaz. Özel exit eklediyseniz [testte yan etki kurallarını](TECHNICAL.tr.md#yerel-siniflar-ve-genisletme) uygulayın.
 
@@ -173,18 +188,116 @@ Gerçek kayıt standart **TCURR** tablosuna gider. Raporu başka Z adıyla kopya
 
 <a id="gunluk-kullanim"></a>
 
-## Yol C — Her gün otomatik çalışsın istiyorum
+## Yol C — Programı arka planda çalıştırmak istiyorum
 
-**Başlangıç koşulu:** Yol B ile bağlantı, gerçek kayıt ve OB08 kontrolü tamamlanmış olmalı. Otomasyon aynı programı bir varyantla çalıştırır.
+**Büyük resim:** seçimlerinizi **varyanta** kaydedersiniz → **SM36** ile ne zaman çalışacağını tanımlarsınız → **SM37** ile sonucu izlersiniz. Varyant ayarları saklar; job bu ayarlarla programı çalıştırır. Spool, arka plandaki sonuç listesidir.
 
-1. Seçim ekranında **Varyant olarak kaydet** komutuyla kendi adınızı verin; örneğin `TCMB_GUNLUK`. Varyant, dil dahil seçimlerin kaydıdır; tek başına döviz kuru yazmaz.
-2. Varyant özniteliklerinde `S_DATE` için **D / Dinamik tarih → Güncel tarih** seçin. Önceki denemedeki sabit geçmiş tarih veya bitiş tarihini günlük işe taşımayın.
-3. Kaydedecek varyantta **Deneme işareti kaldırılmış** olmalı. Eksikleri eklemek mi, mevcutları güncellemek mi istediğinizi B1'e göre belirleyin. Türkçe çıktı için açıkça Türkçe seçimini saklayın.
-4. **SM36**'da `ZCHE_TCMB_LOAD` ve varyantınızla günlük job tanımlayın. Bültenin yayımlanmasından sonraya planlayın; sistem/job saat dilimini doğrulayın.
-5. İlk işi **SM37**, job log'u ve spool üzerinden izleyin; OB08'le karşılaştırın. Hata veya Cancelled durumu önceki başarılı kayıtları geri almaz.
-6. Hedef sistemlerde programı normal transport süreciyle taşıyın; bağlantı, FI ayarları, çalışma kullanıcısı ve varyantı ayrı kontrol edin.
+Önce bir kez, **kur yazmayan deneme job'ı** kurun. Aşağıdaki ekranlar A4H/001'de 2 Kasım 2026'da yapılan bu denemeden alındı. Program çıktısı Türkçe; SAP'nin standart job menüleri bu oturumda İngilizce.
 
-**Varyantı tekrar yükleyip kontrol etmek de testin parçasıdır.** Dinamik tarih, dil varyantı, sınırlı yetkili kullanıcı ve arka plan kabul kontrolleri bu sürümde henüz tamamlanmadı. Ekran/menu adları SAP oturum diline göre değişebilir.
+### C1. Seçimlerinizi bir varyanta kaydedin
+
+1. Yol A'daki seçim ekranında **Deneme işaretli**, dil **Türkçe** ve mevcut farklı kur için **Olduğu gibi bırak** olsun. Kendi test tarihinizi ve dövizlerinizi kontrol edin.
+2. **Ctrl+S / Varyant olarak kaydet** ile yeni bir ad verin. Burada `TCMB_DOC_TEST` kullanıldı; kendi sisteminizde ayırt edici ve kullanılmayan bir ad seçin. Kısa açıklama yazıp kaydedin. Mevcut bir varyantın üzerine yazmayın.
+3. Varyantı seçim ekranından tekrar çağırıp Deneme, tarih, dövizler ve dili kontrol edin. Bu örneğin tarihleri **sabittir**; günlük otomasyon için C7'yi izleyin.
+
+<details>
+<summary>Varyant adı ve öznitelikleri — ekranı aç</summary>
+
+![Varyant adı ve öznitelikleri](docs/images/sap-live-05-variant-attributes.png)
+
+</details>
+
+### C2. SM36'da işi adlandırın
+
+Komut alanına **/nSM36** yazın. **Job Name** alanına kendi iş adınızı girin. Örnekte `ZTCMB_DOC_TEST_20261102` kullanıldı. **Job Class: C** bırakıldı; Target alanı bu sistemde boş. Kurumunuz özel sunucu veya sınıf gerektiriyorsa kendi kuralını uygulayın.
+
+<details>
+<summary>SM36 iş adı — ekranı aç</summary>
+
+![SM36 iş adı](docs/images/sap-live-07-sm36-job-name.png)
+
+</details>
+
+### C3. Çalışacak programı ve varyantı seçin
+
+**Step / Adım** düğmesine basın. **ABAP program** bölümünde:
+
+| Alan | Girilecek bilgi |
+|---|---|
+| Name | `ZCHE_TCMB_LOAD` |
+| Variant | C1'de kaydettiğiniz deneme varyantı; örnekte `TCMB_DOC_TEST` |
+| User | İşi çalıştırmaya yetkili kullanıcı; örnekte oturum kullanıcısı. `DEVELOPER` adını kendi sisteminize kopyalamayın. |
+| Language | SAP çalışma dili. Örnekte EN; varyanttaki açık Türkçe seçimi programın kendi çıktısını yine Türkçe yaptı. |
+
+Disk simgesiyle adımı kaydedin. Adım listesinde program ve varyantı kontrol edip F3 ile ana iş ekranına dönün. **1 Step(s) defined** görünmeli.
+
+![Job adımında ZCHE_TCMB_LOAD ve deneme varyantı](docs/images/sap-live-08-sm36-step.png)
+
+### C4. Bir kez hemen çalıştırın
+
+**Start condition → Immediate** seçin. **Periodic Job işaretsiz** kalsın. Pencerenin disk simgesiyle başlangıç koşulunu kaydedin; ardından ana SM36 ekranında **Ctrl+S** ile işi kaydedin. Bu son kayıt işi başlatılabilir duruma getirir.
+
+<details>
+<summary>Immediate seçili, Periodic Job işaretsiz — ekranı aç</summary>
+
+![Immediate seçili, Periodic Job işaretsiz](docs/images/sap-live-10-sm36-immediate.png)
+
+</details>
+
+Alt mesajda **saved with status: Released** görünmesini kontrol edin. Yalnız **Scheduled** görünmesi henüz çalışacağı anlamına gelmez; başlangıç koşulunu ve serbest bırakma yetkisini inceleyin.
+
+<details>
+<summary>Job kaydedildi ve Released mesajı alındı — ekranı aç</summary>
+
+![Job kaydedildi ve Released mesajı alındı](docs/images/sap-live-12-sm36-released.png)
+
+</details>
+
+### C5. SM37'de tamamlanmasını izleyin
+
+1. **/nSM37** açın. **Job Name** alanına kendi iş adınızı, **User Name** alanına ilgili kullanıcıyı girin.
+2. Tarih aralığı job'ın çalıştırıldığı günü kapsasın. Released, Ready, Active, Finished ve Canceled durumlarını seçip F8'e basın. Listede yoksa Scheduled seçimini de dahil edip başlangıç koşulunu kontrol edin.
+3. **Refresh** ile yenileyin. Örnekte iş 74 saniyede **Finished** oldu; sizin sisteminizde süre değişebilir.
+
+<details>
+<summary>SM37 iş adı, kullanıcı ve tarih filtresi — ekranı aç</summary>
+
+![SM37 iş adı, kullanıcı ve tarih filtresi](docs/images/sap-live-13-sm37-selection.png)
+
+</details>
+
+![SM37 Finished sonucu](docs/images/sap-live-14-sm37-finished.png)
+
+### C6. Job logunu ve spool'u okuyun
+
+İş satırının solundaki kutuyu seçin ve **Job log** düğmesine basın. Örnekte programın Türkçe özeti **Deneme çalıştırması (kayıt yok): 4 yeni, 0 güncellenen, 40 değişmeyen, 0 atlanan, 1 bülten bulunamayan gün, 0 hata** diyor.
+
+![Türkçe job logunda kayıt yapılmadığı ve sonuç özeti](docs/images/sap-live-15-sm37-job-log.png)
+
+F3 ile listeye dönün. Seçili iş için **Spool** düğmesine basın; spool listesindeki **Type / belge simgesini** açın. **Yazdır düğmesine basmanız gerekmez.** Sonuç satırlarının tarihini, para çiftini, kur tipini ve durumunu inceleyin. Ekran küçük görünüyorsa görsele tıklayıp tam boy açın.
+
+<details>
+<summary>İşin spool isteği — ekranı aç</summary>
+
+![İşin spool isteği](docs/images/sap-live-16-spool-list.png)
+
+</details>
+
+![Spool içinde Türkçe sonuçlar ve planlanan dört eksik kayıt](docs/images/sap-live-17-spool-results.png)
+
+**Kontrol noktası:** bu deneme işi tamamlandı; kur kaydı yapmadı. `Finished` tek başına kur yazıldığının kanıtı değildir. Buradaki `NEW`, **Yeni kayıt planlanıyor** anlamında. Önceki kilit hatalarıyla ilişkili 1 Temmuz USD, 6 Temmuz USD/EUR ve 7 Temmuz USD kayıtları hâlâ eksik. Tamamlamak için [Yol B'yi](#ilk-kayit) izleyin.
+
+### C7. Günlük otomasyona geçerken ne değişir?
+
+Önce Yol B ile gerçek kayıt ve OB08 kontrolünü tamamlayın. Yukarıdaki sabit Temmuz varyantını her gün tekrar çalıştırmayın.
+
+1. Ayrı bir günlük varyant oluşturun; örneğin `TCMB_GUNLUK`. **S_DATE** için varyant özniteliklerinden **D / Dinamik tarih → Güncel tarih** seçin. Sabit başlangıç/bitiş aralığını taşımayın; varyantı tekrar çağırıp tek günün hesaplandığını kontrol edin.
+2. Önce günlük varyantı **Deneme işaretli** sınayın. Gerçek kayıt için deneme işaretini kaldırıp kaydedin; **Olduğu gibi bırak / Güncelle** kararını Yol B'ye göre verin.
+3. SM36'da ayrı iş adı ve günlük varyantla adım oluşturun. **Start condition → Date/Time** ile ilk çalışma tarih/saatini, **Periodic Job → Period values → Daily** ile günlük tekrarı tanımlayın. Başlangıç koşulunu ve ana işi kaydedin.
+4. Saati bültenin yayımlanmasından sonraya planlayın; SAP sistem/job saat dilimini doğrulayın. Ekrandaki örnek saatleri kopyalamayın.
+5. İlk işleri SM37 log/spool ve OB08 ile doğrulayın. Canceled veya satır hatası varsa önceki başarılı kayıtlar otomatik geri alınmaz. Hedef sistemlerde bağlantı, FI ayarları, varyant ve çalışma kullanıcısını ayrıca kontrol edin.
+
+Bu oturumda **sabit tarihli, tek seferlik ve kur yazmayan iş** doğrulandı. Günlük dinamik tarih, periyodik gerçek yazma ve sınırlı yetkili kullanıcı kabulü henüz yapılmadı; bunlar yukarıdaki deneme ekranlarının kanıtladığı kapsamın dışındadır.
 
 <a id="kilit-ve-kismi-kayit"></a>
 

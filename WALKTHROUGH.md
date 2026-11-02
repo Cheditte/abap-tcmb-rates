@@ -45,7 +45,7 @@ If not installed, start with preparation and SE38 below. Otherwise jump to your 
 
 **Checkpoint:** `ZCHE_TCMB_LOAD` is active and F8 opens its selection screen. No separate installer, settings report or SE11/SE54/SM30 work is needed. Default **Otomatik / Logon language** uses Turkish for a Turkish logon and English otherwise; change it in **Dil / Language**. No manual text-element entry is required. Record the complete message if initialization fails.
 
-If an older report already exists, preserve its source, custom changes and variants before replacement; follow [the migration note](TECHNICAL.md#migration-from-the-old-edition). An [operator-supplied Turkish screenshot](WALKTHROUGH.tr.md#turkce-ekran) now shows selection labels and a successful connection message. Full clean installation, the language-switch interaction, variants and background behavior still need acceptance. The capture above illustrates only the general SE38 upload menu.
+If an older report already exists, preserve its source, custom changes and variants before replacement; follow [the migration note](TECHNICAL.md#migration-from-the-old-edition). An [operator-supplied Turkish screenshot](WALKTHROUGH.tr.md#turkce-ekran) now shows selection labels and a successful connection message. A fixed-date Turkish variant and one-off preview job are now evidenced below. Full clean installation, the language-switch interaction, dynamic dates and broader background acceptance remain pending. The capture above illustrates only the general SE38 upload menu.
 
 <a id="preview"></a>
 
@@ -149,7 +149,29 @@ Start after Path B acceptance. A variant stores selections; it does not itself s
 5. Monitor the first runs through **SM37**, log/spool and OB08. A cancelled job does not undo earlier successful rows.
 6. Transport through the normal customer-package process; verify target connectivity, FI settings, variants and runtime-user permissions separately.
 
-Language variants, dynamic dates, restricted-user execution and background behavior remain pending acceptance for this revision.
+### First rehearse with a one-off preview job
+
+The [illustrated Turkish job guide](WALKTHROUGH.tr.md#gunluk-kullanim) follows every screen from variant creation to job log and spool. The screenshots are real A4H/001 captures from 2 November 2026; SAP standard menus are English and the report output is Turkish.
+
+1. Keep **Test run checked**, choose **Keep**, select your dates/currencies and explicitly choose Turkish. Save a new variant with Ctrl+S; the captured example is `TCMB_DOC_TEST`, with the fixed range 1 July–1 August 2026, USD/EUR, FX buying → M, SAME_DAY and TRY. Reload to inspect selections. Use your own test date and unique names.
+2. In **SM36**, enter a new job name; the example is `ZTCMB_DOC_TEST_20261102`, class C. Choose **Step**, ABAP program `ZCHE_TCMB_LOAD`, and your test variant. Save the step and return with F3. Use an appropriately authorized execution user.
+
+![SM36 program and preview variant](docs/images/sap-live-08-sm36-step.png)
+
+3. Choose **Start condition → Immediate**, leave **Periodic Job unchecked**, save the condition, then save the main job. Check the Released confirmation.
+4. In **SM37**, filter by your job name/user and execution date. Include Released/Ready/Active/Finished/Canceled, execute and refresh. Include Scheduled too if diagnosing a missing/unreleased job.
+
+![One-off preview job finished in SM37](docs/images/sap-live-14-sm37-finished.png)
+
+5. Select the job row and choose **Job log**. This run finished in 74 seconds and explicitly reports a no-write test: 4 planned new, 0 updated, 40 unchanged, 0 skipped, 1 no-bulletin day, 0 errors.
+
+![Turkish no-write summary in the job log](docs/images/sap-live-15-sm37-job-log.png)
+
+6. Return to the job list; choose **Spool**, then the document icon in the Type column. Inspect the rows; printing is unnecessary. The step language was EN, while the explicit Turkish variant produced Turkish report messages and spool statuses.
+
+![Turkish spool rows with four planned new records](docs/images/sap-live-17-spool-results.png)
+
+**Finished does not prove a write.** The four missing keys (1 July USD, 6 July USD/EUR, 7 July USD) were only planned and remain missing. Daily operation needs a separate dynamic-date variant and, after Path B acceptance, deliberate write settings. For daily scheduling use Date/Time, Periodic Job and Period values → Daily, then save both the condition and main job. Dynamic dates, recurring actual writes and restricted-user execution remain pending acceptance.
 
 <a id="locks-and-partial-writes"></a>
 

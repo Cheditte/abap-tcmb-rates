@@ -36,7 +36,8 @@ A **variant** stores reusable selections. **OB08** is SAP's rate-maintenance scr
 - Test mode is selected by default. `NEW` / `UPDATED` in a preview describe planned operations.
 - Fresh installation needs no custom tables, domains, data elements, global classes or separate installer. abapGit is optional.
 - **v0.3.0 integration candidate.** The syntax target is ABAP 7.00. Runtime on actual 7.00/7.01/7.02 systems remains unverified.
-- The handoff reports 34 tests and limited real-write results on the A4H sandbox. Integration and language changes bring the current suite to 48 tests; SAP acceptance remains pending. Supplied captures show Turkish selections/results, a successful connection, a partially successful write run and EUR records in OB08. Some rows failed with locks; full reconciliation, the 48-test result and background acceptance remain incomplete. [Validation record](docs/validation-v0.3.0.md).
+- **Observed on A4H:** TCMB connectivity, Turkish results, some rates visible in OB08, and a completed one-off preview job using a Turkish variant. [Illustrated job setup](WALKTHROUGH.md#daily-use).
+- **Still being verified:** all 48 current SAP Unit tests, older SAP releases, dynamic daily dates and actual-write jobs. Four previously lock-failed keys remain missing; the latest preview did not write them. [Validation record](docs/validation-v0.3.0.md).
 
 The language choice covers selection labels, the date-rule list, project-authored messages and result-list headings. Technical status codes such as `NEW` / `ERROR` stay unchanged, with a description in the selected language. SAP GUI menus and raw SAP/BAPI/OS diagnostics may remain in their system/logon language.
 

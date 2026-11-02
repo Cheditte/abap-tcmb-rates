@@ -1,0 +1,54 @@
+[
+  {
+    "file": "sap-live-02-preview-settings.png",
+    "sha256": "04d4369a863db0cfc555ce25865a5b4d8236875fb655ead7a1c01946a8b0f665"
+  },
+  {
+    "file": "sap-live-03-multiple-currencies.png",
+    "sha256": "71cac15d46457bcbd00fad8c5d676d5c64acf9bbe4e02017f7a812b8e753cabe"
+  },
+  {
+    "file": "sap-live-04-preview-results.png",
+    "sha256": "3ee6db238485abce70620f36c75ca0872f78ccf784d0d87be9d10261de0b52be"
+  },
+  {
+    "file": "sap-live-05-variant-attributes.png",
+    "sha256": "9592e8fcb4d6ac8b58b46d66a181cf353c71c67a333c09e9efe1aa2ed5b05f88"
+  },
+  {
+    "file": "sap-live-07-sm36-job-name.png",
+    "sha256": "a3fc7ef0dc0ce0477356a5d86c1178d1b749a605d996c38f5cf099ee723b7382"
+  },
+  {
+    "file": "sap-live-08-sm36-step.png",
+    "sha256": "74c297c0abf68d48573abd5b0c4c25deab919031beebff6891c907ebf5b9944c"
+  },
+  {
+    "file": "sap-live-10-sm36-immediate.png",
+    "sha256": "2e53b8b9889a0e03228a9dd03846fd4c60ef677ce4fb9fc023ced20b99390119"
+  },
+  {
+    "file": "sap-live-12-sm36-released.png",
+    "sha256": "d7720d1de9eba16994c66f15ae95c4812eb35ae2acef426577e23832ea595c78"
+  },
+  {
+    "file": "sap-live-13-sm37-selection.png",
+    "sha256": "e7743cdb55bc1e36f33e43d9aeedbc7e7031bd5f8a2fdb1db138304bbeae2e68"
+  },
+  {
+    "file": "sap-live-14-sm37-finished.png",
+    "sha256": "cddb5b03f880363f1fca9f3cf5d574e3af2045a6bf3cf4f4b29fcf3669af3335"
+  },
+  {
+    "file": "sap-live-15-sm37-job-log.png",
+    "sha256": "63738ac1f3a2ffa55bca6da9c78a9a70a760737a822e437edec28826ca03c945"
+  },
+  {
+    "file": "sap-live-16-spool-list.png",
+    "sha256": "64cfb623be1164555011879b0c185fd16dc9bf6311441bbda29c0df272475023"
+  },
+  {
+    "file": "sap-live-17-spool-results.png",
+    "sha256": "acc75b1671d303aafc80a55c413e3f8c82ad6f118584e61e86c86a7fcc082714"
+  }
+]

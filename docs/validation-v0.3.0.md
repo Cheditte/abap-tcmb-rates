@@ -1,6 +1,6 @@
 # Validation record — v0.3.0 integration candidate
 
-Date: 2 November 2026. This record separates maintainer-supplied handoff reports from checks performed during integration. No SAP GUI actions or exchange-rate writes were performed during this integration; the operator elected to perform SAP steps personally.
+Date: 2 November 2026. This record separates maintainer-supplied handoff reports from checks performed during integration. The initial integration used operator-supplied SAP evidence. The operator subsequently authorized direct GUI work; a fresh, non-writing foreground and background check is recorded below. No exchange-rate writes were performed in that later documentation session.
 
 ## Source provenance
 
@@ -83,10 +83,28 @@ The mixed result visibly flags at least 1 July USD, 6 July USD/EUR and 7 July US
 
 The open OB08 Change View is a plausible lock source, not a proven diagnosis from lock management. Guides now explicitly require exiting maintenance after inspection and before writes. Resolve the owning transaction normally; inspect actual object/owner via SM12 if needed rather than deleting active locks as a generic workaround. See [SAP's lock-management guidance](https://learning.sap.com/courses/technical-implementation-and-operation-i-of-sap-s-4hana-and-sap-business-suite/describing-as-abap).
 
-Still needed: exact current source identity; native 48-test results; unambiguous real-write selection state; complete rate/factor and conversion readback; restricted-user and older-release checks; saved variants/jobs; and confirmation that affected lock-error keys were recovered.
+Still needed: exact current source identity; native 48-test results; unambiguous real-write selection state; complete rate/factor and conversion readback; restricted-user and older-release checks; dynamic-date/recurring write jobs; and confirmation that affected lock-error keys were recovered.
+
+## Direct GUI evidence — 2 November 2026
+
+With explicit operator authorization, the documentation session used the open A4H/001 SAP GUI and saved original captures without editing their contents. [Capture hashes](images/live-captures-2026-11-02.json) identify the 13 published PNGs. These actions extend the earlier evidence; they do not establish the installed source hash.
+
+- Foreground selection: explicit T, 2026-07-01–2026-08-01, USD and EUR confirmed in the multiple-selection dialog, FX_BUY → M, SAME_DAY, TRY, inverse off, Keep, no-bulletin information, HTTPS, destination/URL blank. **Test was checked before execution.**
+- Foreground result: 4 planned new, 0 updated, 40 unchanged, 0 skipped, 1 no-bulletin day (15 July), 0 errors. Missing keys are 1 July USD, 6 July USD/EUR and 7 July USD. They were not written or recovered.
+- Saved variant `TCMB_DOC_TEST`; fixed dates, explicit Turkish, Test checked. Created one-off job `ZTCMB_DOC_TEST_20261102`, class C, report `ZCHE_TCMB_LOAD`, variant `TCMB_DOC_TEST`, execution user DEVELOPER, step language EN. Immediate start; Periodic Job unchecked.
+- Job count **11385500**, SM37 **Finished**, start **02.11.2026 11:38:55**, end **11:40:09**, duration **74 seconds**, as shown in the job log. Spool **22145** was opened, not printed. The spool list displays a different time (12:40); time-zone agreement was not verified and should not be inferred from these screens.
+- The Turkish job summary explicitly says **Deneme çalıştırması (kayıt yok)** with the same 4/0/40/0/1/0 counts. Turkish spool statuses include planned NEW and UNCHANGED; the stored Turkish selection is effective despite the EN step language.
+- No recurring job, actual-write job, email notification or spool delivery recipient was configured. No existing rates, locks or other jobs were deleted. The saved test variant and completed job remain available for inspection.
+- The separate OB08 window could not be captured: the UI tool twice returned `window crop is outside captured monitor`. Further actions on that window were stopped. The guide retains the operator-supplied OB08 screenshot and does not claim a new OB08 check.
+
+![Foreground no-write result](images/sap-live-04-preview-results.png)
+
+![Finished preview job and Turkish summary](images/sap-live-15-sm37-job-log.png)
+
+This confirms one fixed-date foreground/background preview on the installed report, including a saved explicit-T variant, HTTPS processing and spool creation. It does not validate dynamic daily dates, restricted-user operation, actual-write jobs, old-release compatibility, all 48 native tests, full source identity or recovery of the four missing keys.
 
 ## Outstanding SAP acceptance
 
 Run the [acceptance checklist](../CONTRIBUTING.md#sap-acceptance-checklist) against the integrated source hash: clean paste/upload and fixed-point arithmetic; actual GUI labels/listbox/connection button; all 48 tests; HTTPS/dry run; controlled write plus OB08/conversion readback; file errors/path spaces; failure recovery/commit and concurrency; saved variants/dynamic-date SM36 jobs; restricted user; SM59; optional abapGit; custom exits; actual older releases.
 
-Old settings/installer screenshots are historical evidence for the earlier architecture and are not used as current single-report screens. The new connection, selection, result and OB08 images above were supplied by the operator and illustrate only their visible states; the outstanding acceptance checks remain pending.
+Old settings/installer screenshots are historical evidence for the earlier architecture and are not used as current single-report screens. The earlier connection, selection, result and OB08 images were operator-supplied. The later sap-live captures were collected directly during the authorized GUI session. Both groups illustrate only their recorded states; the remaining acceptance checks are still pending.
