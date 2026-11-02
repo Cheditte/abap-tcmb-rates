@@ -239,11 +239,79 @@ Varsayılan adres `https://www.tcmb.gov.tr/kurlar` gerçek TCMB adresidir; kendi
 
 ## 4. Deneme sisteminde gerçek kaydı doğrulayın
 
-1. Hata ve beklenmeyen atlamaları çözün; kur tipi, geçerlilik tarihi ve beklenen para çevrimini doğrulayın.
-2. İlk yeni kayıt denemesinde OB08'de aynı anahtar/tarihte kayıt olup olmadığına bakın. `UNCHANGED`, bu çalıştırmanın yeni kayıt yaptığına kanıt değildir. Var olan farklı kuru değiştirmeden denemek için **Olduğu gibi bırak** seçimini koruyun.
-3. Aynı küçük seçimle, **kaydetmek istediğinizde Deneme (kur kaydedilmez) işaretini kaldırıp F8'e basın**.
-4. Hatasız `NEW` / `UPDATED` sonucunu **OB08'de aynı kur tipi, para çifti ve geçerlilik tarihiyle** doğrulayın. SAP para çevrimiyle beklenen tutarı da kontrol edin.
-5. Aynı günü tekrarlayın; eşit kayıtların `UNCHANGED` olması beklenir.
+**Kuru program kaydeder; OB08'de sonucu kontrol edersiniz.** OB08'e ayrıca tutar yazmanız veya orada Kaydet'e basmanız gerekmez. Program standart SAP kayıt işlemini ve kayıt kesinleştirmesini kendisi çağırır.
+
+İzlenecek sıra: **mevcut kaydı kontrol et → deneme sonucunu incele → Deneme işaretini kaldır → F8 → OB08'de doğrula**.
+
+### 4.1. Önce ortamı ve mevcut kaydı kontrol edin
+
+1. DEV/deneme sisteminde ve doğru istemcide olduğunuzu kontrol edin. [1. adımdaki](#kurulum) 48 SAP Unit testini henüz çalıştırmadıysanız çalıştırın; başarısız testi çözmeden gerçek kayda geçmeyin. Deneme sonucu da hata veya açıklanamayan oran/kur içermemeli.
+2. Sonuç listesindeki **kur tipi, kaynak/hedef para birimi ve geçerlilik tarihini** not edin. Örneğimiz `M`, `USD`, `TRY`, `30.10.2026` olacak. `M` sisteminizde bu kullanım için uygun ve tanımlı olmalıdır.
+3. SAP komut alanına **`/oOB08`** yazıp Enter'a basın. OB08 yeni oturumda açılır; program ekranınız önceki oturumda kalır. Yeni oturum sınırına ulaştıysanız seçimlerinizi not edip aynı oturumda `/nOB08` ile açabilirsiniz.
+4. OB08'in seçim, filtre veya konumlandırma alanlarıyla aynı kur tipini, para çiftini ve geçerlilik tarihini bulun. Alanların/düğmelerin konumu SAP sürümü ve oturum diline göre değişebilir. **Veri eklemeyin veya değiştirmeyin; yalnız mevcut kayda bakın.**
+5. Aynı anahtarda kayıt varsa bunu not edin. Eşit değer için sonuç `UNCHANGED`, farklı değeri korumayı seçtiğinizde `SKIPPED` olur. Yeni kayıt denemesi için bülteni bulunan ve aynı anahtarda kayıt olmayan bir tarih kullanın. Mevcut kuru sırf deneme yapmak için silmeyin.
+
+Önceki ekran örneğindeki **27.10.2026 / M / USD → TRY zaten UNCHANGED** idi. O satırı yeniden çalıştırmak yeni kayıt yaptığınızı göstermez. 30.10.2026 da sisteminizde kayıtlı olabilir; önce kontrol edin.
+
+### 4.2. Yazmadan önce aynı seçimi deneyin
+
+1. Programın seçim ekranına dönün; sonuç listesindeyseniz **F3** kullanın.
+2. Şu seçimleri yapın:
+
+| Alan | İlk gerçek kayıt denemesinden önce |
+|---|---|
+| Dil | Türkçe |
+| Bülten tarihi | Örneğin `30.10.2026`; bitiş boş. Başka gün seçtiyseniz aşağıdaki bütün kontrolleri o güne göre yapın. |
+| Döviz alış | `M`; diğer beş kur alanı boş. |
+| Tarih kuralı | **Bülten ile aynı gün**; fabrika takvimi boş. |
+| TCMB döviz kodları | Yalnız `USD`. |
+| Farklı SAP kodu / Ters yönü de yaz | Boş / işaretsiz. |
+| TCMB kurlarının para birimi | `TRY`. |
+| Mevcut farklı kur | **Olduğu gibi bırak**. Bu seçim mevcut kuru korur, eksik yeni kaydın eklenmesini engellemez. |
+| Kaynak | Başarılı bağlantı testinde kullandığınız HTTPS ayarları. |
+| Deneme (kur kaydedilmez) | **İşaretli**. |
+
+3. **F8** ile çalıştırın. Yeni kayıt denemesinde **Yeni kayıt planlanıyor / NEW** beklenir. Bu aşamada henüz kur kaydedilmez.
+4. Kur tipi, USD → TRY yönü, geçerlilik tarihi, tutar ve oranları kontrol edin. `ERROR` varsa açıklamayı çözün. `UNCHANGED` veya `SKIPPED` varsa mevcut kaydı tekrar değerlendirin; sırf NEW sonucu almak için Güncelle'ye geçmeyin.
+
+### 4.3. Gerçek kaydı çalıştırın
+
+1. Hatasız ön izlemeden **F3** ile geri dönün. Tarih, para birimi, kur tipi ve diğer seçimler aynı kalsın.
+2. **Deneme (kur kaydedilmez) kutusunun işaretini kaldırın.** `Olduğu gibi bırak` seçimini koruyun.
+3. Seçim ekranının görüntüsünü alın: tarih, kur tipi, döviz kodu ve kaldırılmış Deneme işareti görünmeli.
+4. **F8**'e basın. Bu kez program gerçek kayıt işlemini çalıştırır; ayrıca bir Kaydet düğmesine basmanız gerekmez. Ayrı bir onay penceresi beklemeyin.
+5. Sonuç ekranını ve varsa mesajı inceleyip görüntüsünü alın.
+
+| Gerçek çalıştırma sonucu | Anlamı / sonraki adım |
+|---|---|
+| **Yeni kayıt / NEW** | Program yeni kaydı başarıyla yazdığını bildiriyor. OB08'de bağımsız olarak doğrulayın. |
+| **Aynı kayıt mevcut / UNCHANGED** | Aynı kur zaten vardı; bu satır için yeni yazma yapılmadı. |
+| **Atlandı / SKIPPED** | Satır yazılmadı; açıklamayı okuyun. Koruma seçimiyle farklı mevcut kur atlanmış olabilir. |
+| **Güncellendi / UPDATED** | Güncelleme seçimiyle mevcut değer değiştirilmiş. Bu örnekte koruma seçtiğimiz için beklenen sonuç değildir; seçimlerinizi kontrol edin. |
+| **Bülten yok / NO_BULLETIN** | O gün için kur alınamadı; bu satırda kayıt oluşmaz. |
+| **Hata / ERROR** | Açıklamayı okuyun. Özellikle kayıt kesinleştirme (commit) hatasında tekrar çalıştırmadan önce OB08 ve SM13'ü kontrol edin. |
+
+### 4.4. OB08'de aynı kaydı bulun
+
+1. OB08 oturumuna geçin. Önceden açık olan liste eski veriyi gösterebilir; listeyi yeniden okuyun veya işlemden çıkıp OB08'i tekrar açın.
+2. **Aynı sistem ve istemcide**, programın sonuç satırındaki değerlerle aşağıdaki kaydı bulun:
+
+| OB08'de karşılaştıracağınız bilgi | Bu örnekte |
+|---|---|
+| Kur tipi | `M` |
+| Kaynak para birimi | `USD` |
+| Hedef para birimi | `TRY` |
+| Geçerlilik başlangıcı | `30.10.2026`; başka gün/kural seçtiyseniz sonuçtaki **Geçerlilik tarihi** |
+| Kur ve oranlar | Programın **o çalıştırmada** gösterdiği değerler; 27.10.2026 ekranındaki `49,69970` değerini başka gün için kopyalamayın. |
+
+3. Eşleşen satırın ekran görüntüsünü alın. Kur tipi, para çifti, geçerlilik tarihi, kur ve oranlar görünür olsun. Kontrol için OB08'de değişiklik yapıp Kaydet'e basmayın.
+4. Kur tutarı/oranları farklı görünüyorsa kayıt doğrulandı demeyin; doğru tarih, kotasyon ve oranları karşılaştırın. SAP para çevrimiyle beklenen tutarı da doğrulayın; teknik geri okuma ayrıntıları [teknik başvuruda](TECHNICAL.tr.md#tarih-ve-oran-hesabı).
+
+### 4.5. Tekrar çalıştırınca ne oluyor?
+
+Programda aynı seçimleri koruyun, **Deneme (kur kaydedilmez)** kutusunu yeniden işaretleyin ve F8'e basın. Az önce kaydettiğiniz kur için **Aynı kayıt mevcut / UNCHANGED** beklenir. Böylece yeniden kontrol ederken yazma modunu açık bırakmamış olursunuz.
+
+**Ekran görüntüsü sırası:** Deneme işareti kaldırılmış seçim ekranı → gerçek çalıştırma sonucu → OB08'de eşleşen satır → tekrar denemede UNCHANGED. Bu sürüm için gerçek kayıt/OB08 görüntüleri henüz sağlanmadı; yukarıdaki mevcut UNCHANGED görüntüsü yeni kayıt kanıtı olarak kullanılmaz.
 
 **Gerçek kayıt standart TCURR tablosuna gider.** Programı başka Z adıyla kopyalamak, kur verilerini ayrı bir alana taşımaz. Gerçek yazma denemesini yalnız yetkili deneme ortamında yapın.
 
