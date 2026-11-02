@@ -7,6 +7,7 @@ const source = (await readFile(new URL('src/zche_tcmb_load.prog.abap',root),'utf
 const metadata = await readFile(new URL('src/zche_tcmb_load.prog.xml',root),'utf8');
 assert.match(source,/^REPORT zche_tcmb_load\./m);
 assert.match(metadata,/<NAME>ZCHE_TCMB_LOAD<\/NAME>/);
+assert.match(metadata,/<FIXPT>X<\/FIXPT>/,'abapGit imports must enable fixed-point arithmetic');
 assert.ok(!source.includes('\uFFFD'),'Invalid UTF-8 replacement character');
 assert.ok(source.split('\n').every(l=>l.length<=255),'A line exceeds the classic editor maximum of 255');
 const code = source.split('\n').map(l=>l.startsWith('*')?'':l.replace(/'(?:''|[^'])*'|`(?:``|[^`])*`/g,'literal').split('"')[0]).join('\n');
