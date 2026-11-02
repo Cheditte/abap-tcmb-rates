@@ -60,10 +60,17 @@ The operator supplied this screenshot after receiving the language-enabled repor
 - Visible: P_LANG is T / Türkçe, Turkish selection labels and the Turkish test-mode label; a Turkish success message reports bulletin 2026/204 dated 2026-10-30 with 22 currencies.
 - Interpretation: the displayed connection test succeeded in reading a bulletin. Its last-seven-days search is separate from the selected S_DATE (2026-10-29 in the image). The currency count is a parsed bulletin count, not a write count.
 - Limits: rate mappings and date rule are still empty; no F8 rate preview, ALV translation, 48-test result, BAPI write or OB08 readback is evidenced. The screenshot does not attest the complete installed source hash, older-release compatibility, clean installation or the language-switching interaction.
-- Next screen evidence: completed Turkish selections; multiple-currency selection if used; F8 preview; SAP Unit results; controlled write and matching OB08 record; saved variant and scheduled job results. These have not been supplied for this revision and are not represented by mock screenshots.
+### Turkish result list supplied subsequently
+
+![Operator-supplied Turkish ALV result with an unchanged USD TRY rate](images/sap-tr-result-unchanged.png)
+
+- Visible: one row for bulletin date and valid-from date 2026-10-27, USD, FX_BUY, rate type M, USD to TRY, rate 49.69970, factors 1:1, blank indirect-quotation flag, Turkish status description "Aynı kayıt mevcut" and technical status UNCHANGED. Several column headings are shortened by their display width.
+- Interpretation: the result reports that the calculated rate already matches the SAP record. Turkish result headings and the localized unchanged-status description are now evidenced in a real result list.
+- Limits: the selection screen/test flag and data-source selection are not visible. This is not evidence of a current BAPI write or an independent OB08 readback. It uses 27 October, whereas the walkthrough's initial-entry example uses 30 October; they must not be presented as the same run. Complete source identity and the 48 native tests remain unverified by this screenshot.
+- Next screen evidence: completed Turkish selections with test mode visible; multiple-currency selection if used; preview of a proposed new record; SAP Unit results; controlled write and matching OB08 record; saved variant and scheduled job results. These are not represented by mock screenshots.
 
 ## Outstanding SAP acceptance
 
 Run the [acceptance checklist](../CONTRIBUTING.md#sap-acceptance-checklist) against the integrated source hash: clean paste/upload and fixed-point arithmetic; actual GUI labels/listbox/connection button; all 48 tests; HTTPS/dry run; controlled write plus OB08/conversion readback; file errors/path spaces; failure recovery/commit and concurrency; saved variants/dynamic-date SM36 jobs; restricted user; SM59; optional abapGit; custom exits; actual older releases.
 
-Old settings/installer screenshots are historical evidence for the earlier architecture and are not used as current single-report screens. The new Turkish connection image above was supplied by the operator and illustrates only the state visible in that image; subsequent results are still pending.
+Old settings/installer screenshots are historical evidence for the earlier architecture and are not used as current single-report screens. The new Turkish connection and result images above were supplied by the operator and illustrate only their visible states; the outstanding acceptance checks remain pending.

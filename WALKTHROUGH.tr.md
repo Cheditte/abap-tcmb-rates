@@ -193,7 +193,35 @@ Bu seçim ağ, sertifika, geçersiz XML veya okunamayan sunucu dosyası hatalar�
 | `NO_BULLETIN` | HTTP kaynağı o hafta içi gün için bülten bulunmadığını bildirdi. Seçtiğiniz politika bunu hata da sayabilir. |
 | `ERROR` | Sorunu mesajdan inceleyin; gerçek kayda geçmeyin. |
 
-**Kontrol noktası:** gerçek TCMB verisini görüyorsunuz; testte `NEW` görmek OB08'e kayıt yapıldığı anlamına gelmez. Test modu gerçek yazma yetkisini veya commit başarısını doğrulamaz. Özel `LCL_EXIT` kodu eklediyseniz testte de çalışır; [yan etki kurallarını](TECHNICAL.tr.md#yerel-siniflar-ve-genisletme) uygulayın.
+<a id="turkce-sonuc"></a>
+
+### Sonuç listesini gerçek bir örnekle okuyalım
+
+![Türkçe sonuç listesinde 27.10.2026 tarihli USD TRY M kuru ve Aynı kayıt mevcut UNCHANGED durumu](docs/images/sap-tr-result-unchanged.png)
+
+*Kullanıcının paylaştığı sonuç ekranı **27.10.2026** gününe aittir; yukarıdaki ilk seçim örneğindeki 30.10.2026'dan farklı bir çalıştırmadır. Seçim ekranı bu görüntüde olmadığı için Deneme kutusunun işaretli olup olmadığı buradan anlaşılmaz.*
+
+Bu satırın anlamı: **27.10.2026 bültenindeki USD döviz alış değeri için, M kur tipinde ve 27.10.2026 geçerlilik tarihinde SAP'de aynı kur zaten bulunuyor.** `UNCHANGED` hata değildir; bu satır için yeni kayıt veya güncelleme yapılmaz.
+
+| Sütun | Bu ekrandaki değer | Nasıl okunur? |
+|---|---|---|
+| **Bülten tarihi** | `27.10.2026` | Verinin ait olduğu TCMB bülten günü. |
+| **TCMB kodu** | `USD` | Bültenden seçilen para birimi. |
+| **TCMB kur alanı** | `FX_BUY` | Döviz alış seçilmiş. Bu teknik kod dil değişse de aynı kalır. |
+| **SAP kur tipi** | `M` | Kurun SAP'de hangi tip altında değerlendirildiği. |
+| **Kaynak para birimi** | `USD` | Dönüşümün başlangıç para birimi. |
+| **Hedef para birimi** | `TRY` | Dönüşümün karşılık para birimi. |
+| **Geçerlilik tarihi** | `27.10.2026` | Kurun SAP'de hangi günden itibaren geçerli olduğu. OB08'de bu tarihe bakın. |
+| **Döviz kuru** | `49,69970` | Programın hesaplayıp SAP kaydıyla karşılaştırdığı değer. Bu örnekte doğrudan kotasyon ve 1:1 oranla **1 USD = 49,69970 TRY** anlamına gelir. |
+| **Kaynak oranı / Hedef oranı** | `1 / 1` | Kurun kaç birim üzerinden uygulandığı. Başka bir dövizde, özellikle JPY'de, 1:1 olduğunu varsaymayın. |
+| **Ters kotasyon** | Boş | Bu satır ters kotasyon kullanmıyor. |
+| **Durum** | `Aynı kayıt mevcut` | Sonucun seçtiğiniz dilde açıklaması. |
+| **Durum kodu** | `UNCHANGED` | SAP'deki mevcut kayıt hesaplanan kurla eşit. |
+| **Açıklama** | Boş | Bu satırda ek açıklama yok. Atlanan veya hatalı satırlarda nedeni burada okuyun. |
+
+Bazı sütun başlıkları dar oldukları için ekranda kısaltılmıştır; tablodaki adlar tam anlamlarını gösterir. Bu sonuç, kurun **bu çalıştırmada kaydedildiğini kanıtlamaz**. Yeni kayıt denemesi için aynı anahtarda kayıt bulunmayan bir bülten gününü önce deneme modunda değerlendirin; örnek üretmek için mevcut kuru silmeyin.
+
+**Kontrol noktası:** sonuç listesini okuyabiliyorsunuz; testte `NEW` görmek OB08'e kayıt yapıldığı anlamına gelmez. Test modu gerçek yazma yetkisini veya commit başarısını doğrulamaz. Özel `LCL_EXIT` kodu eklediyseniz testte de çalışır; [yan etki kurallarını](TECHNICAL.tr.md#yerel-siniflar-ve-genisletme) uygulayın.
 
 <details>
 <summary>Bağlantı başarısızsa</summary>
