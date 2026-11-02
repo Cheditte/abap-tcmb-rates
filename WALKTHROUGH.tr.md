@@ -39,44 +39,141 @@ Sıra: [0 · Hazırlık](#hazirlik) → [1 · SE38](#kurulum) → [2 · Seçimle
 
 **Kontrol noktası:** `ZCHE_TCMB_LOAD` aktif ve F8 ile seçim ekranı açılıyor. Ayrı installer, ayar programı veya SE11/SE54/SM30 işlemi yoktur. Varsayılan **Otomatik / Logon language** dil seçimi Türkçe oturumda Türkçe, diğer oturumlarda İngilizce kullanır; **Dil / Language** alanından bunu değiştirebilirsiniz. Metin öğelerini elle doldurmanız gerekmez. Açılışta hata varsa tam mesajı kaydedin.
 
-Mevcut programın eski sürümü varsa üzerine yüklemeden önce kaynağını, özel kodunu ve varyantlarını koruyun; [geçiş notunu](TECHNICAL.tr.md#eski-surumden-gecis) izleyin. Bu birleşim adayında yenilenen SAP GUI görünümü, dil seçiminin ekranı yenilemesi ve temiz kopyala-yapıştır kurulumu kabul testi bekliyor. Yukarıdaki görsel yalnız genel SE38 yükleme menüsünü gösterir.
+Mevcut programın eski sürümü varsa üzerine yüklemeden önce kaynağını, özel kodunu ve varyantlarını koruyun; [geçiş notunu](TECHNICAL.tr.md#eski-surumden-gecis) izleyin. Türkçe seçim ekranı ve başarılı bağlantı mesajı [kullanıcının paylaştığı ekranda](#turkce-ekran) görülüyor. Temiz kurulumun bütün adımları, dil değiştirme anı, varyant ve arka plan davranışı için kabul kontrolleri sürüyor. Yukarıdaki görsel yalnız genel SE38 yükleme menüsünü gösterir.
 
 <a id="ayarlar"></a>
 
 ## 2. Aynı ekranda ilk seçimleri yapın
 
-### 2.1. Küçük bir örnekle başlayın
+### 2.1. Önce ekranda ne yaptığımızı anlayalım
 
-**SE38 → `ZCHE_TCMB_LOAD` → F8** ile ekranı açın. Aşağıdaki seçimler deneme örneğidir; kendi FI kararlarınıza göre uyarlayın.
+Bu ekran üç soruya cevap verir: **Hangi günün hangi kurlarını alacağız? SAP'de hangi kur tipi ve tarihle kullanacağız? Şimdilik yalnız sonucu mu göreceğiz, yoksa kaydedecek miyiz?**
 
-**İngilizce oturumda Türkçe ekran için:** ilk bloktaki **Dil / Language** listesinden **Türkçe** seçin. Oturumdan çıkmanız gerekmez. Bu seçim programın alan ve sonuç başlıkları, tarih listesi, bağlantı/hata/satır mesajları ve çalışma özetinde kullanılır. SAP GUI'nin kendi menüleri ve SAP/BAPI/işletim sisteminin özgün teknik mesajları sistem/oturum dilinde kalabilir.
+**SE38 → `ZCHE_TCMB_LOAD` → F8** ile açılır. Programın alanlarını Türkçe görmek için **Dil / Language → Türkçe** seçin. SAP oturumundan çıkmanız gerekmez. SAP'nin kendi menüleri, pencere başlığı ve özgün sistem mesajları oturum dilinde kalabilir.
 
-| Alan | İlk denemede ne yapacaksınız? |
+<a id="turkce-ekran"></a>
+
+![Türkçe SAP seçim ekranı ve başarılı TCMB bağlantı mesajı; kur tipi ve tarih kuralı henüz doldurulmamış](docs/images/sap-tr-connection-success.png)
+
+*Kullanıcının deneme sisteminden paylaştığı gerçek ekran. Türkçe alanlar ve bağlantı mesajı görülüyor. Bu, tamamlanmış bir kur seçimi veya OB08'e kayıt sonucu değildir.*
+
+**Bu ekrandaysanız:** bilgi penceresinin sağ altındaki **yeşil onay işaretine** basıp pencereyi kapatın. Pencere açıkken arkadaki alanların soluk görünmesi normaldir; önce bu mesajı kapatmanız gerekir.
+
+**Mesaj ne söylüyor?** Program 30.10.2026 tarihli, `2026/204` numaralı TCMB bültenini okuyup 22 para birimi bulmuş. Bu sayı SAP'ye kaydedilen kur sayısı değildir. Ekranda 29.10 seçiliyken mesajda 30.10 görünmesi de normaldir: bağlantı düğmesi seçilen tarihi değil, **son yedi gün içinde erişebildiği bir bülteni** sınar.
+
+<a id="ilk-onizleme-secimleri"></a>
+
+### 2.2. İlk ön izleme için ekranı doldurun
+
+İlk denemeyi **tek gün ve tek para birimiyle** yapalım. Aşağıdaki `30.10.2026` tarihi, yukarıdaki gerçek bağlantı testinde okunan bültene aittir. Kendi kurulumunuzda erişebildiğiniz bir bülten tarihi kullanabilirsiniz. `M`, sisteminizde tanımlı ve deneme için uygun olması gereken örnek SAP kur tipidir.
+
+| Sıra | Ekranda yapacağınız işlem |
 |---|---|
-| Dil / Language (`P_LANG`) | Türkçe için **Türkçe (`T`)**, İngilizce için **English (`E`)**. Varsayılan **Otomatik / Logon language (`A`)** oturum dilini izler. |
-| Bülten tarih(ler)i (`S_DATE`) | Bülteni yayımlanmış geçmiş bir hafta içi günü; ilk seferde tek gün. |
-| Test çalıştırma (`P_TEST`) | **İşaretli kalsın.** |
-| Döviz alış (`P_FXBUY`) | Örnekte `M`; uygun ve tanımlı SAP kur tipinizi girin. |
-| Diğer beş kur alanı | İlk denemede boş bırakın. Bir SAP kur tipini iki farklı TCMB alanına vermeyin. |
-| Tarih kuralı (`P_RULE`) | Listeden **Bülten ile aynı gün** seçin. Alan zorunludur; varsayılan seçim yoktur. |
-| Fabrika takvimi (`P_CAL`) | Yalnız **Sonraki iş günü** seçeneğinde kendi SCAL takviminiz gerekir. `TR` her sistemde hazır değildir. |
-| TCMB döviz kodları (`S_CURR`) | İlk denemeyi sınırlamak için `USD` ve `JPY`. Çoklu seçimde ayrı tekil satırlara girin. |
-| Farklı SAP kodu (`P_MAP`) | SAP kodları aynıysa boş. Örneğin `USD=USD2` yalnız sisteminizde gerçekten farklı kod varsa kullanılır. |
-| TCMB kurlarının para birimi (`P_TARG`) | `TRY`; başka para birimine çevrim yapılmaz. |
-| Ters yönü de yaz (`P_INV`) | İlk denemede işaretsiz. |
-| Mevcut farklı kur | İlk denemede **Olduğu gibi bırak (`R_KEEP`)** seçin. Programın varsayılanı Güncelle'dir; bu seçimi özellikle kontrol edin. |
-| Bülten olmayan iş günü | **Yalnızca listede göster (`R_NBLOG`)**. |
-| Kaynak | **TCMB'den HTTPS ile (`R_HTTP`)**. SM59 hedefi ve farklı adres, kurumunuz gerektirmiyorsa boş. |
+| 1 | **Dil / Language:** Türkçe seçin. |
+| 2 | **Bülten tarih(ler)i:** soldaki alana `30.10.2026` yazın; sağdaki bitiş alanını boş bırakın. |
+| 3 | **Deneme (kur kaydedilmez):** işaretli kalsın. |
+| 4 | **Döviz alış:** `M` yazın. Altındaki diğer beş kur alanını boş bırakın. |
+| 5 | **Tarih kuralı:** listeden **Bülten ile aynı gün** seçin. Fabrika takvimini boş bırakın. |
+| 6 | **TCMB döviz kodları:** `USD` yazın. Farklı SAP kodunu boş, para birimini `TRY`, ters yön seçimini işaretsiz bırakın. |
+| 7 | **TCURR'da o gün için farklı bir kur varsa:** **Olduğu gibi bırak** seçin. Açılıştaki varsayılan Güncelle'dir; bunu değiştirin. |
+| 8 | **TCMB bülteni olmayan iş günü:** **Yalnızca listede göster** seçili kalsın. |
+| 9 | **Bülten nereden alınır:** **TCMB'den HTTPS ile** seçili kalsın. Bağlantı zaten bu ayarlarla başarılıysa SM59 hedefini, farklı adresi ve XML klasörünü boş bırakın. |
 
-**Boş para birimi listesi “hiçbiri” demek değildir:** bültendeki bütün kodları değerlendirir; SAP'de tanımlı olmayanlar atlanır. Hariç tutma ve SAP kod eşlemesi desteklenir. İlk denemede açık bir dahil etme listesi kullanın. [Bütün alanlar ve tarih kuralları](TECHNICAL.tr.md#secim-alanlari).
+**Beklenen seçim:** 30.10.2026 bültenindeki USD döviz alış kuru → SAP'de `M`, USD → TRY, 30.10.2026 geçerlilik tarihi → **ön izleme; kayıt yok**. Alanları aşağıda tek tek açıkladık. Hazırsanız [3. adımdaki F8 ön izlemesine](#onizleme) geçin.
 
-### 2.2. Seçimlerinizi varyant olarak saklayın
+### 2.3. Çalıştırma: dil, tarih ve deneme
 
-1. Seçim ekranında **Goto → Variants → Save as Variant** veya ilgili **Varyant olarak kaydet** düğmesini kullanın; çoğu GUI'de Ctrl+S'dir.
-2. Örneğin `TCMB_DENEME` adı ve kendi açıklamanızı girin. Bu örnek ad hazır gelmez.
-3. Kaydedin. Sonraki çalıştırmada bu varyantı seçerek dil dahil aynı alanları doldurun. Oturum dilinden bağımsız Türkçe çıktı istiyorsanız varyantta **Türkçe** seçimini saklayın.
+| Alan / düğme | Ne işe yarar? | Nasıl doldurulur? |
+|---|---|---|
+| **Dil / Language** | Bu programın alanlarını, kendi mesajlarını ve sonuç başlıklarını seçtiğiniz dilde gösterir. | **Türkçe** veya **English** seçin. **Otomatik / Logon language**, Türkçe SAP oturumunda Türkçe, diğer oturumlarda İngilizce kullanır. |
+| **Bülten tarih(ler)i** | TCMB'den hangi günün bülteninin okunacağını belirler. | Tek gün için yalnız sol alanı doldurun. Aralık için sağa son günü girin; iki uç gün de aralığa dahildir. Cumartesi ve pazar atlanır. |
+| **Deneme (kur kaydedilmez)** | Kurları okur, hesaplar ve SAP'deki mevcut kayıtlarla karşılaştırır; standart kur kaydı yapmaz. | İlk çalıştırmada **işaretli** bırakın. İşareti kaldırıp F8'e basmak gerçek kayıt yolunu çalıştırır. |
+| **TCMB bağlantısını test et** | Seçilen kaynaktan yakın tarihli bir bültenin okunabildiğini sınar. | Düğmeye basın ve mesajı okuyun. Kur yazmaz; F8 ile yapılacak ön izlemenin yerine geçmez. |
 
-**Kontrol noktası:** seçimler yeniden yüklenebiliyor. Varyant yalnız SAP'nin standart seçim kaydıdır; özel profil tablolarına veya OB08'e kur yazmaz. Günlük işin tarihini 5. adımda dinamik yapacağız.
+### 2.4. Hangi TCMB kuru hangi SAP kur tipine yazılır?
+
+**Bu altı kutuya `34,50` gibi bir kur tutarı yazmayın.** Tutarı program TCMB'den alır. Siz, o tutarın SAP'de kullanılacağı **kur tipini** yazarsınız. Kur tipi, SAP'nin farklı amaçlarla kullanılan kurları ayırdığı anahtardır.
+
+Örneğin **Döviz alış** yanına `M` yazmak, “TCMB'nin döviz alış değerini SAP'de M kur tipine al” demektir. Bu seçim `M` tipinin her kurumda döviz alış için kullanıldığı anlamına gelmez. Kendi sisteminizdeki FI kullanımını esas alın.
+
+| Alan | Programın alacağı değer | İlk denemede |
+|---|---|---|
+| **Döviz alış** | TCMB'nin döviz alış değeri. | Örnekte `M`. |
+| **Döviz satış** | TCMB'nin döviz satış değeri. | Boş bırakın. |
+| **Efektif alış** | TCMB'nin nakit döviz için ayrı yayımladığı alış değeri. | Boş bırakın. |
+| **Efektif satış** | TCMB'nin nakit döviz için ayrı yayımladığı satış değeri. | Boş bırakın. |
+| **Döviz ortalama (alış+satış)/2** | Program döviz alış ve satış değerlerinin aritmetik ortalamasını hesaplar; iki değerin de bulunması gerekir. | Boş bırakın. |
+| **Efektif ortalama** | Program efektif alış ve satış değerlerinin aritmetik ortalamasını hesaplar; iki değerin de bulunması gerekir. | Boş bırakın. |
+
+**Boş alan o kur türünü yüklememek demektir.** En az birini doldurun. Birden fazla tür alacaksanız her birine farklı, sisteminizde tanımlı ve amacınıza uygun kur tipi girin. Aynı `M` değerini iki satıra yazmayın; program bunu reddeder.
+
+### 2.5. Kurlar hangi günden itibaren geçerli?
+
+**Bülten tarihi**, veriyi aldığınız gündür. **Geçerlilik tarihi**, bu kurun SAP'de hangi günden itibaren kullanılacağıdır. Bu bölüm ikinci tarihi belirler; başka bir günün bültenini indirmez.
+
+| Tarih kuralı | Ne yapar? | Örnek |
+|---|---|---|
+| **Bülten ile aynı gün** | SAP geçerlilik tarihi bülten tarihi olur. | 30.10.2026 bülteni → 30.10.2026 geçerlilik. İlk denemede bunu seçin. |
+| **Ertesi takvim günü** | Geçerliliği bir sonraki güne alır; hafta sonu/tatil ayrımı yapmaz. | 30.10.2026 bülteni → 31.10.2026 geçerlilik. |
+| **Sonraki iş günü (takvim)** | Bülten gününden sonraki ilk iş gününü seçtiğiniz SAP fabrika takviminden bulur. | Sonuç, takviminizde hangi günlerin iş günü olduğuna bağlıdır. |
+
+**Fabrika takvimi (iş günü):** yalnız **Sonraki iş günü (takvim)** için doldurulur. SCAL'da tanımlı, sizin süreciniz için uygun takvimin kodunu kullanın. `TR` gibi bir kodun her sistemde hazır olduğunu varsaymayın. Diğer iki kuralda boş bırakın. Tarih kuralı başlangıçta boştur; listeden mutlaka seçin.
+
+### 2.6. Para birimleri: hangi dövizler, hangi yön?
+
+| Alan | Ne işe yarar? | Nasıl doldurulur? |
+|---|---|---|
+| **TCMB döviz kodları** | Bültendeki hangi dövizlerin işleneceğini seçer. | İlk denemede `USD`. Birkaç kod için sağdaki **çoklu seçim** düğmesini açın; tekil değerler bölümüne `USD` ve `JPY` gibi kodları ayrı satırlarda yazıp onaylayın. Aralık bölümüne yazmayın. |
+| **Farklı SAP kodu (USD=USD2)** | TCMB kodu ile SAP'deki kod farklıysa eşleştirir. | Normalde **boş**. Yalnız SAP'de gerçekten bu kod tanımlıysa `USD=USD2` gibi eşleme girin. Birden fazla eşlemeyi `;` ile ayırın. Bu işlem döviz dönüşümü yapmaz. |
+| **TCMB kurlarının para birimi** | Alınan kurların karşılığının Türk lirası olduğunu belirtir. | `TRY` bırakın. EUR gibi başka hedef girerek çapraz kur hesaplatamazsınız. |
+| **Ters yönü de yaz (TRY→döviz)** | Döviz → TRY yönüne ek olarak TRY → döviz yönünü ters kotasyonla hazırlar. | İlk denemede **işaretsiz**. İki yönü de kullanmanız gerekiyorsa oranları ve SAP çevrim sonucunu ayrıca doğrulayın. |
+
+**Döviz kodlarını boş bırakmak “hiçbir dövizi alma” değildir:** bültendeki bütün kodlar değerlendirilir. Çoklu seçimde hariç tutma da desteklenir. SAP'de tanımlı olmayan kodlar atlanır. İlk denemede kapsamı `USD` ile sınırlayın; daha sonra `JPY` eklediğinizde bültendeki 100 birim bilgisi ile OBBS oranlarını da inceleyin.
+
+### 2.7. SAP'de o gün için zaten kur varsa
+
+**TCURR**, SAP'nin standart döviz kuru tablosudur; kayıtları **OB08** üzerinden kontrol edebilirsiniz. Program aynı kur tipi, para çifti ve geçerlilik tarihindeki kayda bakar.
+
+| Seçenek | Farklı bir mevcut kur bulunursa |
+|---|---|
+| **Güncelle** | Gerçek çalıştırmada eski değeri yenisiyle değiştirir. Denemede yalnız değişikliği gösterir. Programın açılış varsayılanıdır. |
+| **Olduğu gibi bırak** | Mevcut farklı değeri korur; satırı gerekçesiyle atlar. İlk denemede bunu seçin. |
+
+**Olduğu gibi bırak, bütün kaydı kapatmaz:** aynı anahtarda kayıt yoksa gerçek çalıştırmada yeni kayıt eklenebilir. Hiç kur kaydetmemek için üstteki **Deneme (kur kaydedilmez)** kutusu işaretli olmalıdır. Mevcut kayıt zaten eşitse iki seçimde de `UNCHANGED` görülür.
+
+### 2.8. TCMB bülteni olmayan iş günü
+
+Program hafta içi bir tarih için HTTPS kaynağından “bülten yok” yanıtı alırsa bu seçimi uygular. Örneğin tatil günü veya henüz yayımlanmamış bülten olabilir. Bu seçenek başka bir günün kurunu otomatik olarak kullanmaz.
+
+| Seçenek | Ne olur? |
+|---|---|
+| **Yalnızca listede göster** | Bülten bulunamadığı sonuç listesinde belirtilir. İlk denemede bunu bırakın. |
+| **Uyarı ver** | Sonuç kaydına ek olarak çalışma sonunda uyarı verilir. |
+| **Hata (job iptal olur)** | Eksik bülten hata sayılır; arka plan işi hata ile sonlanır. |
+
+Bu seçim ağ, sertifika, geçersiz XML veya okunamayan sunucu dosyası hatalarını yok saymaz. Tarih aralığındaki gerçek yazmalar satır satır yapılır; sonradan oluşan hata daha önce kaydedilmiş kurları geri almaz.
+
+### 2.9. Bülten nereden alınır?
+
+**Normal kullanımda TCMB'den HTTPS ile seçili olsun; altındaki üç metin alanını boş bırakın.** Program TCMB adresini zaten bilir. Ekrandaki başarılı bağlantı mesajı sizin bu yolu kullanabildiğinizi gösterir.
+
+| Alan / seçenek | Ne işe yarar? | Ne zaman doldurulur? |
+|---|---|---|
+| **TCMB'den HTTPS ile** | SAP uygulama sunucusu bülteni doğrudan internetten okur. | İlk denemede seçili bırakın. TCMB hesabı veya parola gerekmez. |
+| **SM59 hedefi (isteğe bağlı)** | SAP'de önceden hazırlanmış HTTP bağlantısının ayarlarını kullanır. | Kurumunuz bu yolu kullanıyorsa gerçek SM59 hedef **adını** yazın. Buraya internet adresi yazılmaz. Normal doğrudan bağlantıda boş bırakın. |
+| **Farklı adres (isteğe bağlı)** | SM59 hedefi kullanılmadığında varsayılan bülten kök adresini değiştirir. | Normalde boş. Özel bir kaynak kullanıyorsanız beklenen günlük XML yapısını sunan kök adres gerekir. Klasör yolu veya tek güne ait XML bağlantısı girmeyin. |
+| **Sunucudaki bir klasörden** | İnternetten almak yerine önceden hazırlanmış XML dosyalarını okur. | HTTPS yerine dosya yolunu kullanacaksanız seçin; otomatik bir yedek kaynak değildir. |
+| **XML dosyalarının klasörü** | Dosya kaynağının bulunduğu SAP uygulama sunucusu klasörüdür. | Yalnız klasörden okumada gerçek sunucu yolunu girin. Kendi bilgisayarınızın İndirilenler klasörü değildir. [Dosya hazırlama adımları](#dosyadan-okuma). |
+
+### 2.10. Seçimlerinizi varyant olarak saklayın
+
+**Varyant**, bu ekrana girdiğiniz seçimlere verdiğiniz addır. Aynı alanları her seferinde tekrar doldurmanızı önler; kur kaydetmez.
+
+1. Alanları tamamlayın. Seçim ekranında **Goto → Variants → Save as Variant** veya SAP GUI'nizdeki **Varyant olarak kaydet** komutunu kullanın; çoğu GUI'de Ctrl+S'dir. Menüler oturum dilinde kalabilir.
+2. Örneğin `TCMB_DENEME` adı ve `USD döviz alış - kayıt yapmadan deneme` açıklamasını girin. Bunlar sizin oluşturacağınız örnek ad ve açıklamadır.
+3. Kaydedin. Sonraki çalıştırmada varyantı yükleyip dil, tarih ve **Deneme (kur kaydedilmez)** seçiminin beklediğiniz gibi geldiğini kontrol edin.
+
+**Kontrol noktası:** seçimler yeniden yüklenebiliyor. Bu varyantta tek bir geçmiş günü saklıyoruz; otomatik günlük kullanım için tarihi [5. adımda](#gunluk-kullanim) dinamik yapacağız.
 
 <a id="onizleme"></a>
 
@@ -84,7 +181,7 @@ Mevcut programın eski sürümü varsa üzerine yüklemeden önce kaynağını, 
 
 1. **TCMB bağlantısını test et** düğmesine basın. Son yedi gün içinde yakın tarihli bir bülteni alıp okuyabilirse seçtiğiniz dilde bağlantının başarılı olduğunu bildiren mesaj verir. Bu düğme seçtiğiniz tarih aralığını kullanmaz ve kur yazmaz.
 2. Geçmiş tek gün seçiminizi kontrol edin. Bugünün bülteni henüz yayımlanmamış olabilir.
-3. **Test çalıştırma işaretli kalsın**, F8'e basın.
+3. **Deneme (kur kaydedilmez) işaretli kalsın**, F8'e basın.
 4. ALV sonuç listesinde bülten tarihi, geçerlilik tarihi (`VALID_FROM`), para çifti, kur tipi, oranlar, durum ve açıklamayı inceleyin. Başlıklar ve ek durum açıklaması seçtiğiniz dildedir; `NEW`, `ERROR` gibi teknik durum kodları aynı kalır. TCMB değeriyle karşılaştırırken JPY gibi birim/oran etkisini dikkate alın.
 
 | Durum | Test çalıştırmasında anlamı |
@@ -116,7 +213,7 @@ Varsayılan adres `https://www.tcmb.gov.tr/kurlar` gerçek TCMB adresidir; kendi
 
 1. Hata ve beklenmeyen atlamaları çözün; kur tipi, geçerlilik tarihi ve beklenen para çevrimini doğrulayın.
 2. İlk yeni kayıt denemesinde OB08'de aynı anahtar/tarihte kayıt olup olmadığına bakın. `UNCHANGED`, bu çalıştırmanın yeni kayıt yaptığına kanıt değildir. Var olan farklı kuru değiştirmeden denemek için **Olduğu gibi bırak** seçimini koruyun.
-3. Aynı küçük seçimle, **kaydetmek istediğinizde Test çalıştırma işaretini kaldırıp F8'e basın**.
+3. Aynı küçük seçimle, **kaydetmek istediğinizde Deneme (kur kaydedilmez) işaretini kaldırıp F8'e basın**.
 4. Hatasız `NEW` / `UPDATED` sonucunu **OB08'de aynı kur tipi, para çifti ve geçerlilik tarihiyle** doğrulayın. SAP para çevrimiyle beklenen tutarı da kontrol edin.
 5. Aynı günü tekrarlayın; eşit kayıtların `UNCHANGED` olması beklenir.
 
@@ -127,7 +224,7 @@ Varsayılan adres `https://www.tcmb.gov.tr/kurlar` gerçek TCMB adresidir; kendi
 ## 5. Kabulden sonra günlük iş planlayın
 
 1. Programı kendi paketiniz ve normal transport sürecinizle taşıyın. Her hedefte bağlantı, FI ayarları ve çalışma kullanıcısının yetkilerini doğrulayın.
-2. Günlük kullanım için ayrı varyant oluşturun. Varyant özniteliklerinde `S_DATE` için **D / Dinamik tarih → Güncel tarih** seçin; sabit bir geçmiş günü kaydetmeyin. Yazacak varyantta Test çalıştırma seçimini ayrıca kontrol edin.
+2. Günlük kullanım için ayrı varyant oluşturun. Varyant özniteliklerinde `S_DATE` için **D / Dinamik tarih → Güncel tarih** seçin; sabit bir geçmiş günü kaydetmeyin. Yazacak varyantta **Deneme (kur kaydedilmez)** seçimini ayrıca kontrol edin.
 3. **SM36**'da `ZCHE_TCMB_LOAD` ve bu varyantla job oluşturun. Bültenin yayımlanmasından sonraya planlayın ve SAP/job saat dilimini doğrulayın.
 4. Sınırlı yetkili çalışma kullanıcısıyla deneyin. **SM37**, job log'u ve spool üzerinden sonuçları izleyin. Hata job'ı `Cancelled` yapar; önceki başarılı kayıtlar geri alınmaz.
 

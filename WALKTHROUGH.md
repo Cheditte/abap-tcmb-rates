@@ -39,7 +39,7 @@ Order: [0 · Prepare](#prepare) → [1 · SE38](#install) → [2 · Settings](#s
 
 **Checkpoint:** `ZCHE_TCMB_LOAD` is active and F8 opens its selection screen. No separate installer, settings report or SE11/SE54/SM30 work is needed. Default **Otomatik / Logon language** uses Turkish for a Turkish logon and English otherwise; change it in **Dil / Language**. No manual text-element entry is required. Record the complete message if initialization fails.
 
-If an older report already exists, preserve its source, custom changes and variants before replacement; follow [the migration note](TECHNICAL.md#migration-from-the-old-edition). The refreshed GUI layout, language-triggered screen refresh and fresh copy/paste installation still need acceptance for this integration candidate. The capture above illustrates only the general SE38 upload menu.
+If an older report already exists, preserve its source, custom changes and variants before replacement; follow [the migration note](TECHNICAL.md#migration-from-the-old-edition). An [operator-supplied Turkish screenshot](WALKTHROUGH.tr.md#turkce-ekran) now shows selection labels and a successful connection message. Full clean installation, the language-switch interaction, variants and background behavior still need acceptance. The capture above illustrates only the general SE38 upload menu.
 
 <a id="settings"></a>
 

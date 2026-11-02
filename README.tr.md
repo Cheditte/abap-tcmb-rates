@@ -29,6 +29,8 @@ SAP uygulama sunucusundan **`www.tcmb.gov.tr:443`** adresine HTTPS erişimi ve g
 
 **[Ekran görüntüsü ve diyagramlarla adım adım rehber →](WALKTHROUGH.tr.md)**
 
+Programı açtıysanız **[ilk deneme seçimleri ve ekrandaki bütün alanların açıklaması](WALKTHROUGH.tr.md#ilk-onizleme-secimleri)** ile başlayın.
+
 **[Tek programın kaynak dosyasını açın / kaydedin](src/zche_tcmb_load.prog.abap)**
 
 **Varyant**, seçim ekranındaki değerleri saklar; günlük iş için de kullanılabilir. **OB08**, SAP'de döviz kurlarını görüntüleyip bakımını yaptığınız işlemdir. Varyant kaydetmek döviz kuru yazmaz.
@@ -39,7 +41,7 @@ SAP uygulama sunucusundan **`www.tcmb.gov.tr:443`** adresine HTTPS erişimi ve g
 - Test modu varsayılan olarak açıktır. `NEW` / `UPDATED`, testte yapılması planlanan işlemi gösterir.
 - Yeni kurulum için özel tablo, domain, data element, global sınıf veya ayrı installer gerekmez. abapGit isteğe bağlıdır.
 - **v0.3.0 birleşim adayıdır.** Kodun sözdizimi hedefi ABAP 7.00'dır. Gerçek 7.00/7.01/7.02 sistemlerde çalışması henüz doğrulanmadı.
-- Devir notunda A4H deneme sisteminde 34 test ve sınırlı gerçek kur yazma sonuçları bildirildi. Birleştirme ve dil değişiklikleriyle 48 teste ulaşan güncel sürüm SAP'de tekrar doğrulanmayı bekliyor. Yenilenen ekran, dil seçiminin varyantla yüklenmesi ve arka plan dili henüz kabul testi bekliyor. [Doğrulama kaydı](docs/validation-v0.3.0.md).
+- Devir notunda A4H deneme sisteminde 34 test ve sınırlı gerçek kur yazma sonuçları bildirildi. Birleştirme ve dil değişiklikleriyle 48 teste ulaşan güncel sürüm SAP'de tekrar doğrulanmayı bekliyor. Kullanıcının paylaştığı ekran Türkçe alanları ve başarılı TCMB bağlantı mesajını gösteriyor; güncel sürümde ön izleme, gerçek kayıt/OB08, dil varyantları ve arka plan kontrolleri henüz tamamlanmadı. [Doğrulama kaydı](docs/validation-v0.3.0.md).
 
 Türkçe seçimi programın ekran etiketleri, tarih listesi, kendi mesajları ve sonuç listesi başlıklarını kapsar. `NEW` / `ERROR` gibi teknik durum kodları korunur; yanlarında seçilen dilde açıklama gösterilir. SAP GUI menüleri ve SAP/BAPI/işletim sisteminden gelen özgün teknik mesajlar kendi sistem/oturum dilinde kalabilir.
 

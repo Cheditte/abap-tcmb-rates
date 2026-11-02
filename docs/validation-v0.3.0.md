@@ -49,10 +49,21 @@ Earlier multi-object readback and installer results remain historical. See the [
 
 The report now has P_LANG values A (automatic/logon), T (Türkçe), E (English). The selection is applied at initialization, selection-screen PBO/PAI and START-OF-SELECTION for background runs. Variants can store an explicit choice independently of the execution logon language. Project-authored messages and ALV headings/descriptions use that choice; technical status codes, rate keys and calculations remain unchanged. Raw SAP/BAPI/OS messages and GUI menus retain their underlying language.
 
-The four added native tests cover explicit/automatic choice, dynamic parameters containing placeholder-like text, technical status stability and visible unknown keys. Tests save/restore the language state; existing English wildcard assertions explicitly select English. The refreshed screen and language switching have not been executed in SAP during this update. Verify that labels refresh immediately after USER-COMMAND LANG and that language variants/job log/spool behave correctly.
+The four added native tests cover explicit/automatic choice, dynamic parameters containing placeholder-like text, technical status stability and visible unknown keys. Tests save/restore the language state; existing English wildcard assertions explicitly select English. The operator subsequently supplied the Turkish selection-screen and connection-success capture documented below. It does not show the language-switching interaction itself. Verify immediate refresh after USER-COMMAND LANG, saved language variants and job log/spool separately.
+
+## Operator-supplied screen evidence — 2 November 2026
+
+![Operator-supplied Turkish selection screen and successful connection message](images/sap-tr-connection-success.png)
+
+The operator supplied this screenshot after receiving the language-enabled report. The original PNG was copied unchanged; no SAP GUI actions were performed by the documentation editor.
+
+- Visible: P_LANG is T / Türkçe, Turkish selection labels and the Turkish test-mode label; a Turkish success message reports bulletin 2026/204 dated 2026-10-30 with 22 currencies.
+- Interpretation: the displayed connection test succeeded in reading a bulletin. Its last-seven-days search is separate from the selected S_DATE (2026-10-29 in the image). The currency count is a parsed bulletin count, not a write count.
+- Limits: rate mappings and date rule are still empty; no F8 rate preview, ALV translation, 48-test result, BAPI write or OB08 readback is evidenced. The screenshot does not attest the complete installed source hash, older-release compatibility, clean installation or the language-switching interaction.
+- Next screen evidence: completed Turkish selections; multiple-currency selection if used; F8 preview; SAP Unit results; controlled write and matching OB08 record; saved variant and scheduled job results. These have not been supplied for this revision and are not represented by mock screenshots.
 
 ## Outstanding SAP acceptance
 
 Run the [acceptance checklist](../CONTRIBUTING.md#sap-acceptance-checklist) against the integrated source hash: clean paste/upload and fixed-point arithmetic; actual GUI labels/listbox/connection button; all 48 tests; HTTPS/dry run; controlled write plus OB08/conversion readback; file errors/path spaces; failure recovery/commit and concurrency; saved variants/dynamic-date SM36 jobs; restricted user; SM59; optional abapGit; custom exits; actual older releases.
 
-Old settings/installer screenshots are historical evidence for the earlier architecture and are not used as current single-report screens. No fresh public screenshots were fabricated or captured from the operator's SAP system during this integration.
+Old settings/installer screenshots are historical evidence for the earlier architecture and are not used as current single-report screens. The new Turkish connection image above was supplied by the operator and illustrates only the state visible in that image; subsequent results are still pending.

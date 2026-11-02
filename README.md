@@ -39,7 +39,7 @@ A **variant** stores selection-screen values and can be used by a daily job. **O
 - Test mode is selected by default. `NEW` / `UPDATED` in a preview describe planned operations.
 - Fresh installation needs no custom tables, domains, data elements, global classes or separate installer. abapGit is optional.
 - **v0.3.0 integration candidate.** The syntax target is ABAP 7.00. Runtime on actual 7.00/7.01/7.02 systems remains unverified.
-- The handoff reports 34 tests and limited real-write results on the A4H sandbox. Integration and language changes bring the current suite to 48 tests; SAP acceptance remains pending. The refreshed screen, language variants and background localization also need acceptance. [Validation record](docs/validation-v0.3.0.md).
+- The handoff reports 34 tests and limited real-write results on the A4H sandbox. Integration and language changes bring the current suite to 48 tests; SAP acceptance remains pending. An operator-supplied screenshot shows Turkish selection labels and a successful TCMB connection message; current preview, write/OB08, language variants and background checks remain outstanding. [Validation record](docs/validation-v0.3.0.md).
 
 The language choice covers selection labels, the date-rule list, project-authored messages and result-list headings. Technical status codes such as `NEW` / `ERROR` stay unchanged, with a description in the selected language. SAP GUI menus and raw SAP/BAPI/OS diagnostics may remain in their system/logon language.
 
