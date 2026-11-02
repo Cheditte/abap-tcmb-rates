@@ -69,6 +69,8 @@ SE38'den programı çalıştırın. Aşağıdaki tarih bir örnektir; siz erişi
 
 ![Türkçe seçim ekranı; alan grupları aşağıda açıklanır](docs/images/sap-selection-tr.png)
 
+Görsel v0.3.0 ekranıdır; güncel kaynakta adres etiketi **TCMB adresi (normalde boş)** olarak görünür.
+
 ### A2. Bağlantıyı sınayın
 
 **TCMB bağlantısını test et** düğmesine basın. Başarı mesajını okuyup yeşil onayla kapatın. Düğme son yedi gün içinde erişilebilir bülteni arar; seçtiğiniz tarihi kullanmaz. Mesajdaki para birimi sayısı kayıt sayısı değildir.

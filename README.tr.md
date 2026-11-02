@@ -2,6 +2,8 @@
 
 > [English](README.md) | **Türkçe**
 
+**Tek programı yükleyin, çalıştırın; TCMB kurlarını SAP’ye alın.**
+
 `ZCHE_TCMB_LOAD`, TCMB'nin günlük döviz kurlarını **SAP'ye (OB08 / TCURR)** `BAPI_EXCHANGERATE_CREATE` üzerinden aktaran tek ABAP programıdır. Bir dosyayı SE38'e kopyalayın, önce kurları inceleyin, ardından kaydedin.
 
 ![SAP'de TCMB kur ön izlemesi](docs/images/result-preview.png)
@@ -33,7 +35,7 @@ Programdan **Türkçe** veya **English** seçebilirsiniz. Tekrar kullanacağın�
 | Ortam / kontrol | Durum |
 |---|---|
 | SAP ABAP Platform 2023 / SAP_BASIS 7.58 | Güncel rapor uyarısız etkinleşti; 55/55 SAP testi, HTTPS ön izleme ve dinamik tarihli deneme job'ı geçti. |
-| Güncel yayın adayı | v700 lint/kaynak kontrolü geçti; geçersiz adres ve klasör reddedildi. Önceki revizyonda sınırlı kayıt OB08 ile doğrulandı. |
+| v0.3.0 | v700 lint/kaynak kontrolü geçti; geçersiz adres ve klasör reddedildi. Önceki revizyonda sınırlı kayıt OB08 ile doğrulandı. |
 | ECC 6.0 / SAP_BASIS 7.00–7.02 | 7.00 sözdizimi hedefleniyor; bu sistemlerde henüz çalıştırılmadı. Geri bildirime açık. |
 
 [Doğrulama tablosu ve bilinen sınırlar](docs/validation.md). [Eski kurulumdan geçiş](TECHNICAL.tr.md#eski-surumden-gecis).

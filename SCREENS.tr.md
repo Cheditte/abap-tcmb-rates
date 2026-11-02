@@ -6,6 +6,8 @@
 
 ![Türkçe seçim ekranı](docs/images/sap-selection-tr.png)
 
+Görsel v0.3.0 ekranıdır. Güncel kaynakta adres alanının adı **TCMB adresi (normalde boş)** olarak kısaltılmıştır.
+
 ## Çalıştırma: dil, tarih ve deneme
 
 | Alan / düğme | Ne işe yarar? | Nasıl doldurulur? |
@@ -85,7 +87,7 @@ Bu seçim ağ, sertifika, geçersiz XML veya okunamayan sunucu dosyası hatalar�
 |---|---|---|
 | **TCMB'den HTTPS ile** | SAP uygulama sunucusu bülteni doğrudan internetten okur. | İlk denemede seçili bırakın. TCMB hesabı veya parola gerekmez. |
 | **SM59 hedefi (isteğe bağlı)** | SAP'de önceden hazırlanmış HTTP bağlantısının ayarlarını kullanır. | Kurumunuz bu yolu kullanıyorsa gerçek SM59 hedef **adını** yazın. Buraya internet adresi yazılmaz. Normal doğrudan bağlantıda boş bırakın. |
-| **TCMB temel adresi (normalde boş)** | Doğrudan TCMB HTTPS kök yolunu seçer. | Normalde boş. Yalnız https://www.tcmb.gov.tr ve alt yolları kabul edilir. Başka sunucu/iç ayna için Basis yönetimindeki SM59 hedefini kullanın. |
+| **TCMB adresi (normalde boş)** | Doğrudan TCMB HTTPS kök yolunu seçer. | Normalde boş. Yalnız https://www.tcmb.gov.tr ve alt yolları kabul edilir. Başka sunucu/iç ayna için Basis yönetimindeki SM59 hedefini kullanın. |
 | **Sunucudaki bir klasörden** | İnternetten almak yerine önceden hazırlanmış XML dosyalarını okur. | HTTPS yerine dosya yolunu kullanacaksanız seçin; otomatik bir yedek kaynak değildir. |
 | **XML dosyalarının klasörü** | Dosya kaynağının bulunduğu SAP uygulama sunucusu klasörüdür. | Yalnız klasörden okumada gerçek sunucu yolunu girin. Kendi bilgisayarınızın İndirilenler klasörü değildir. [Dosya hazırlama adımları](WALKTHROUGH.tr.md#dosyadan-okuma). |
 

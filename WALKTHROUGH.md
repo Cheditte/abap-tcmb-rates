@@ -66,6 +66,8 @@ Rate mapping fields take **SAP rate types, not amounts**. The report gets amount
 
 ![Selection-screen field groups (Turkish)](docs/images/sap-selection-tr.png)
 
+This screenshot shows v0.3.0; the current source shortens the Turkish URL label to **TCMB adresi (normalde boş)**.
+
 ### A2. Check connectivity
 
 Choose **Test the connection to TCMB**. Read and acknowledge the message. This searches the last seven days, independently of your selected date. The currency count is not a count of saved records.

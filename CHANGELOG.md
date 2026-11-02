@@ -1,6 +1,11 @@
 # Changelog
 
-## 0.3.0 — unreleased
+## Unreleased
+
+- Shorten the Turkish TCMB URL label to fit the selection screen.
+- Clarify the one-report setup message and remove unreferenced documentation images.
+
+## 0.3.0 — 2026-11-02
 
 - Install one executable `ZCHE_TCMB_LOAD` by copy/paste or upload in SE38; abapGit remains optional.
 - Replace custom profile tables and global classes with selection-screen settings and standard SAP variants.
