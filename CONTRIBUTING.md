@@ -14,7 +14,7 @@ npm run check:source
 
 abaplint 2.120.92 runs in `v700` mode. The three `.abaplint-deps/` stand-ins are local checker inputs, never SAP installation objects. Incomplete standard SAP definitions limit type/API coverage. The supplemental scanner catches selected newer constructs, packaging errors and lines over 255 characters; it does not prove 7.00 compatibility.
 
-There is no generated installer or JavaScript logic-test command. An attempted whole-report transpilation could not resolve selection-screen/ALV/legacy test dependencies. The 44 tests are embedded SAP Unit tests, not tests executed by CI.
+There is no generated installer or JavaScript logic-test command. An attempted whole-report transpilation could not resolve selection-screen/ALV/legacy test dependencies. The 48 tests are embedded SAP Unit tests, not tests executed by CI.
 
 ## Making a change
 
@@ -24,14 +24,16 @@ There is no generated installer or JavaScript logic-test command. An attempted w
 4. Run local checks, then applicable SAP acceptance on the exact source hash. A discovered test count is not a passing test result.
 5. Update both languages, diagrams and the validation record. Do not present handoff reports or an older revision's results as fresh observations.
 
+For localization changes, preserve `P_LANG` values `A` (Otomatik / Logon language), `T` (Türkçe) and `E` (English), and keep technical status codes unchanged. Cover both explicit languages independently of the test user's logon language. Reset mutable language state between tests. Retain raw SAP/BAPI/OS diagnostics while translating project-authored context; never imply that the report changes SAP GUI menus or system message language.
+
 ## SAP acceptance checklist
 
 Use an authorized DEV/test system with limited dates/currencies. Record source SHA-256, SAP_BASIS release/SP, kernel and configuration. Redact user names, system identifiers, transport numbers and private/business data from shared screenshots. Diagrams must be identified as illustrations rather than actual SAP evidence.
 
-- [ ] Create `ZCHE_TCMB_LOAD` by copy/paste and by file upload in a clean test context. Verify fixed-point arithmetic, long-line settings, syntax and activation; run all 44 embedded tests.
-- [ ] Open the actual selection screen. Check Turkish/English labels, date-rule list, connection button and field visibility. Check `SELECTION_TEXTS_MODIFY`/`VRM_SET_VALUES`, including background initialization.
+- [ ] Create `ZCHE_TCMB_LOAD` by copy/paste and by file upload in a clean test context. Verify fixed-point arithmetic, long-line settings, syntax and activation; run all 48 embedded tests.
+- [ ] Open the actual selection screen. From an English logon, select Türkçe in `P_LANG` without logging out, then switch back to English. Check refreshed labels/date choices, connection/error/row/summary messages, all ALV headings and localized status descriptions. Technical status codes must remain unchanged. Check `SELECTION_TEXTS_MODIFY`/`VRM_SET_VALUES`, including background initialization.
 - [ ] Run on an actual 7.00/7.01/7.02 system before claiming support. Check `CL_HTTP_CLIENT`, iXML, SALV, date/calendar functions, text/listbox APIs and BAPI interfaces.
-- [ ] Save/reload a variant. Test dynamic current-date selection with SM36 and verify SM37 log, spool, warnings and cancellation. Rebuild old `P_PROF` variants rather than reusing them.
+- [ ] Save/reload variants with explicit `T` and `E` language choices. Check `A` follows Turkish logon with Turkish and other logons with English. Test dynamic current-date selection with SM36, including a background user with a different logon language; verify selected-language job log/spool, warnings and cancellation. Rebuild old `P_PROF` variants rather than reusing them.
 - [ ] Test direct HTTPS and an SM59 type-G destination. Verify the current TLS chain and exercise HTTP/connection/malformed XML/date-mismatch failures.
 - [ ] Test server files: valid, missing, unreadable, incomplete and malformed XML, including repeated spaces in the folder. File-open failures must be `ERROR`, never an inferred holiday.
 - [ ] Reject malformed/duplicate currency codes, impossible dates, absent/fractional/nonpositive Units, invalid/nonpositive supplied values, zero factors and non-TRY targets without writing.

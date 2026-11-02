@@ -7,7 +7,7 @@ Date: 2 November 2026. This record separates maintainer-supplied handoff reports
 - Baseline: [single-program commit 9b1fc51](https://github.com/Cheditte/abap-tcmb-rates/commit/9b1fc51).
 - The source in the supplied tcmb-handoff.zip matches that Git source after line-ending normalization.
 - Baseline source SHA-256 (LF): bb9ee67592ddc80a864256a8a4f920d45819f3c918eb74528cabbc28d5118866.
-- Integrated source SHA-256 (LF): d8897ae496be72973bfb9dfe52c18503f8eb23474d9657c8f7973b062aac1c7e.
+- Integrated source SHA-256 (LF): 32de9aef8a306973110f3856cedb13072f65b5928d5b99a3fb33af31fcc3542b.
 - The integration branch starts from main; unrelated single-program history was copied deliberately rather than force-pushed over main.
 
 ## Results reported in the handoff
@@ -34,19 +34,25 @@ Earlier multi-object readback and installer results remain historical. See the [
 - Keep earlier date results visible when a later source/parse failure stops the range.
 - Respect Keep policy at the BAPI update flag, check BAPI/commit returns and report failed commits as ERROR. Commits are per row, so a range remains non-atomic.
 - Use the actual current certificate chain rather than prescribing one root name.
-- Add ten embedded regression tests: the integrated report contains 44 SAP tests. These additions were not executed in SAP here.
+- Add ten integration regression tests and four language tests: the integrated report contains 48 SAP tests. These additions were not executed in SAP here.
 
 ## Local integration checks
 
 | Check | Outcome and limit |
 |---|---|
 | abaplint 2.120.92, v700 | 0 issues. Three small standard-object stand-ins; incomplete SAP API/type definitions. Not a runtime compatibility result. |
-| Supplemental source check | Single report/metadata and selected classic-syntax restrictions checked. Discovers 44 tests; does not execute them. |
+| Supplemental source check | Single report/metadata and selected classic-syntax restrictions checked. Discovers 48 tests; does not execute them. Checks 56 bilingual message templates for key references/placeholder parity and all 14 ALV headers. |
 | Whole-report JavaScript transpilation attempt | Failed dependency resolution for selection-screen types, SALV and CL_AUNIT_ASSERT, among others. The old test:logic runner/dependencies were removed; no old test count is claimed for the new report. |
 | Documentation | Bilingual links/anchors and diagram layouts checked separately. Diagram art illustrates the intended workflow and is not a simulated SAP success capture. |
 
+## Turkish/English presentation update
+
+The report now has P_LANG values A (automatic/logon), T (Türkçe), E (English). The selection is applied at initialization, selection-screen PBO/PAI and START-OF-SELECTION for background runs. Variants can store an explicit choice independently of the execution logon language. Project-authored messages and ALV headings/descriptions use that choice; technical status codes, rate keys and calculations remain unchanged. Raw SAP/BAPI/OS messages and GUI menus retain their underlying language.
+
+The four added native tests cover explicit/automatic choice, dynamic parameters containing placeholder-like text, technical status stability and visible unknown keys. Tests save/restore the language state; existing English wildcard assertions explicitly select English. The refreshed screen and language switching have not been executed in SAP during this update. Verify that labels refresh immediately after USER-COMMAND LANG and that language variants/job log/spool behave correctly.
+
 ## Outstanding SAP acceptance
 
-Run the [acceptance checklist](../CONTRIBUTING.md#sap-acceptance-checklist) against the integrated source hash: clean paste/upload and fixed-point arithmetic; actual GUI labels/listbox/connection button; all 44 tests; HTTPS/dry run; controlled write plus OB08/conversion readback; file errors/path spaces; failure recovery/commit and concurrency; saved variants/dynamic-date SM36 jobs; restricted user; SM59; optional abapGit; custom exits; actual older releases.
+Run the [acceptance checklist](../CONTRIBUTING.md#sap-acceptance-checklist) against the integrated source hash: clean paste/upload and fixed-point arithmetic; actual GUI labels/listbox/connection button; all 48 tests; HTTPS/dry run; controlled write plus OB08/conversion readback; file errors/path spaces; failure recovery/commit and concurrency; saved variants/dynamic-date SM36 jobs; restricted user; SM59; optional abapGit; custom exits; actual older releases.
 
 Old settings/installer screenshots are historical evidence for the earlier architecture and are not used as current single-report screens. No fresh public screenshots were fabricated or captured from the operator's SAP system during this integration.

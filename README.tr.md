@@ -6,6 +6,8 @@ Türkiye Cumhuriyet Merkez Bankasının (TCMB) günlük döviz kurlarını SAP'y
 
 **Tek dosyayı SE38'e yapıştırın, etkinleştirin ve çalıştırın.** Bütün ayarlar aynı programın seçim ekranındadır. Tekrar kullanacağınız seçimleri SAP'nin standart **varyant** özelliğiyle saklarsınız.
 
+**İngilizce SAP oturumunda da Türkçe kullanabilirsiniz.** Programdaki **Dil / Language (`P_LANG`)** alanından **Türkçe** seçin; oturumdan çıkmanız gerekmez. Dil seçimi varyantla birlikte saklanır. Varsayılan **Otomatik / Logon language**, Türkçe oturumda Türkçe, diğer oturumlarda İngilizce kullanır.
+
 ![TCMB bülteninden seçim ekranına, kaydetmeden ön izlemeye ve kontrollü OB08 kaydına giden kullanım akışı](docs/images/overview-tr.svg)
 
 ## Başlamak için gerekenler
@@ -37,7 +39,9 @@ SAP uygulama sunucusundan **`www.tcmb.gov.tr:443`** adresine HTTPS erişimi ve g
 - Test modu varsayılan olarak açıktır. `NEW` / `UPDATED`, testte yapılması planlanan işlemi gösterir.
 - Yeni kurulum için özel tablo, domain, data element, global sınıf veya ayrı installer gerekmez. abapGit isteğe bağlıdır.
 - **v0.3.0 birleşim adayıdır.** Kodun sözdizimi hedefi ABAP 7.00'dır. Gerçek 7.00/7.01/7.02 sistemlerde çalışması henüz doğrulanmadı.
-- Devir notunda A4H deneme sisteminde 34 test ve sınırlı gerçek kur yazma sonuçları bildirildi. Birleştirmede eklenen düzeltmeler ve 44 testlik güncel sürüm SAP'de tekrar doğrulanmayı bekliyor. [Doğrulama kaydı](docs/validation-v0.3.0.md).
+- Devir notunda A4H deneme sisteminde 34 test ve sınırlı gerçek kur yazma sonuçları bildirildi. Birleştirme ve dil değişiklikleriyle 48 teste ulaşan güncel sürüm SAP'de tekrar doğrulanmayı bekliyor. Yenilenen ekran, dil seçiminin varyantla yüklenmesi ve arka plan dili henüz kabul testi bekliyor. [Doğrulama kaydı](docs/validation-v0.3.0.md).
+
+Türkçe seçimi programın ekran etiketleri, tarih listesi, kendi mesajları ve sonuç listesi başlıklarını kapsar. `NEW` / `ERROR` gibi teknik durum kodları korunur; yanlarında seçilen dilde açıklama gösterilir. SAP GUI menüleri ve SAP/BAPI/işletim sisteminden gelen özgün teknik mesajlar kendi sistem/oturum dilinde kalabilir.
 
 SAP'nin internet erişimi yoksa [sunucu klasöründeki XML dosyalarını okuma](WALKTHROUGH.tr.md#dosyadan-okuma) seçeneği vardır. Dosyaları indirme/hazırlama işlemi projeye dahil değildir.
 

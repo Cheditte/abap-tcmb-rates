@@ -10,6 +10,10 @@ Sözdizimi hedefi **ABAP 7.00**'dır. Açık bildirimler, `CREATE OBJECT`, klasi
 
 Manuel kurulumda program özelliklerindeki **Fixed point arithmetic** açık olmalıdır. Satırları 72 karaktere zorlamayın; bütün kaynak ve testleri birlikte yükleyin. Seçim metinleri `SELECTION_TEXTS_MODIFY` ile, tarih listesi `VRM_SET_VALUES` ile hazırlanır. Metin tablosu tam olarak `STANDARD TABLE OF rsseltexts WITH DEFAULT KEY` olmalıdır. Bu arayüzler hedef eski sistemde ayrıca denenmelidir.
 
+**Dil / Language (`P_LANG`)**, SAP oturumunu değiştirmeden programın dilini seçer. `A` = **Otomatik / Logon language**: `sy-langu = 'T'` için Türkçe, diğer oturumlarda İngilizce. `T` = **Türkçe**, `E` = **English**. Varsayılan `A` önceki davranışı korur. Açık dil seçimi varyantla saklanır ve arka planda da uygulanır.
+
+Seçim etiketleri, tarih listesi, projeye ait bağlantı/hata/satır/özet mesajları ve bütün ALV başlıkları bu seçimi kullanır. Teknik durum kodları korunur; ek durum açıklaması seçilen dilde gösterilir. SAP GUI menüleri ve SAP/BAPI/işletim sisteminden gelen özgün tanılama metinleri alttaki sistem/oturum dilinde kalabilir. Dil yenileme, varyant ve job davranışı güncel sürüm için SAP kabul testi bekler.
+
 <a id="secim-alanlari"></a>
 
 ## Seçim alanları
@@ -18,6 +22,7 @@ Varyantlar bu standart seçimleri saklar. Özel profil tablosu yoktur.
 
 | Alan | Anlamı / davranışı |
 |---|---|
+| `P_LANG` | `A`: otomatik, `T`: Türkçe, `E`: English. Dil seçimi varyantta saklanır; görüntü ve program mesajlarını etkiler. |
 | `S_DATE` | TCMB bülten günü veya aralığı; cumartesi/pazar atlanır. |
 | `P_TEST` | Varsayılan `X`; yazma BAPI'si ve commit çağrılmaz. Okuma, hesaplama, karşılaştırma ve exit'ler çalışır. |
 | `P_FXBUY` | Döviz alış / `ForexBuying` için SAP kur tipi. |
@@ -116,4 +121,4 @@ npm run check:source
 
 abaplint **2.120.92**, `v700` ayarı ve depodaki üç küçük standart sınıf/arayüz yer tutucusuyla çalışır. Standart SAP tür/API kapsamı eksiktir; lint aktivasyon veya eski sürüm desteği kanıtı değildir. Ek kaynak taraması bazı yeni sözdizimi yapılarını ve tek rapor paketini kontrol eder.
 
-Eski `test:logic` yeni raporla denendi; seçim ekranı, ALV ve `CL_AUNIT_ASSERT` gibi bağımlılıklar çözülemedi. Eski testleri çalışmış gibi göstermemek için bu adım kaldırıldı. **44 gömülü test SAP'de çalıştırılmalıdır.** [Katkı ve kabul kontrol listesi](CONTRIBUTING.md) · [Değişiklikler](CHANGELOG.md).
+Eski `test:logic` yeni raporla denendi; seçim ekranı, ALV ve `CL_AUNIT_ASSERT` gibi bağımlılıklar çözülemedi. Eski testleri çalışmış gibi göstermemek için bu adım kaldırıldı. **48 gömülü test SAP'de çalıştırılmalıdır.** Dil testleri değişen dili birbirine taşımamalı; açık İngilizce/Türkçe seçimi ve varsayılan davranış birbirinden bağımsız doğrulanmalıdır. [Katkı ve kabul kontrol listesi](CONTRIBUTING.md) · [Değişiklikler](CHANGELOG.md).

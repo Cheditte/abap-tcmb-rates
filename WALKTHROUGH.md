@@ -33,13 +33,13 @@ Order: [0 · Prepare](#prepare) → [1 · SE38](#install) → [2 · Settings](#s
 ![SE38 Upload menu; the file to load in this edition is zche_tcmb_load.prog.abap](docs/images/sap-upload.png)
 
 4. Check syntax and activate with **Ctrl+F3**. Enable **Fixed point arithmetic** in report attributes; calculations require it. The abapGit alternative imports this attribute from metadata.
-5. Run the embedded suite through **Program → Execute → Unit Tests**. The current source contains **44 tests**; this count does not mean they have passed in SAP. Resolve failures before a real-write trial.
+5. Run the embedded suite through **Program → Execute → Unit Tests**. The current source contains **48 tests**; this count does not mean they have passed in SAP. Resolve failures before a real-write trial.
 
 **Long-line error:** the source contains lines longer than 72 characters. Check **Downwards-compatible line length (72)** in editor settings and **Force Line Length 72** under Upload/Download. Disable the 72-character restriction and reload; do not truncate source. Menu wording varies by SAP GUI release/language.
 
-**Checkpoint:** `ZCHE_TCMB_LOAD` is active and F8 opens its selection screen. No separate installer, settings report or SE11/SE54/SM30 work is needed. Labels are generated in Turkish for a Turkish logon, otherwise English; no manual text-element entry is required. Record the complete message if initialization fails.
+**Checkpoint:** `ZCHE_TCMB_LOAD` is active and F8 opens its selection screen. No separate installer, settings report or SE11/SE54/SM30 work is needed. Default **Otomatik / Logon language** uses Turkish for a Turkish logon and English otherwise; change it in **Dil / Language**. No manual text-element entry is required. Record the complete message if initialization fails.
 
-If an older report already exists, preserve its source, custom changes and variants before replacement; follow [the migration note](TECHNICAL.md#migration-from-the-old-edition). SAP GUI layout and fresh copy/paste installation still need acceptance for this integration candidate. The capture above illustrates only the general SE38 upload menu.
+If an older report already exists, preserve its source, custom changes and variants before replacement; follow [the migration note](TECHNICAL.md#migration-from-the-old-edition). The refreshed GUI layout, language-triggered screen refresh and fresh copy/paste installation still need acceptance for this integration candidate. The capture above illustrates only the general SE38 upload menu.
 
 <a id="settings"></a>
 
@@ -49,8 +49,11 @@ If an older report already exists, preserve its source, custom changes and varia
 
 Open **SE38 → `ZCHE_TCMB_LOAD` → F8**. These are trial choices; adjust them to your FI decisions.
 
+**For Turkish in an English session:** choose **Türkçe** in **Dil / Language** in the first block, without logging out. This choice covers the report's field/result headings, date-rule list, connection/error/row messages and run summary. SAP GUI menus and raw SAP/BAPI/OS diagnostics may remain in the system/logon language.
+
 | Field | What to do for the first trial |
 |---|---|
+| Dil / Language (`P_LANG`) | **Türkçe (`T`)** for Turkish or **English (`E`)** for English. Default **Otomatik / Logon language (`A`)** follows the logon language. |
 | Bulletin date(s) (`S_DATE`) | One past weekday with a published bulletin. |
 | Test run (`P_TEST`) | **Keep selected.** |
 | Forex buying (`P_FXBUY`) | Example `M`; use an appropriate defined SAP rate type. |
@@ -71,7 +74,7 @@ Open **SE38 → `ZCHE_TCMB_LOAD` → F8**. These are trial choices; adjust them 
 
 1. On the selection screen, use **Goto → Variants → Save as Variant** or the equivalent button; Ctrl+S is available in many GUI versions.
 2. Choose a name such as `TCMB_TRIAL` and your own description. This example is not preinstalled.
-3. Save. Select this variant on a later run to restore the same values.
+3. Save. Select this variant on a later run to restore the same values, including language. Save an explicit **Türkçe** choice when the output must be Turkish independently of the logon language.
 
 **Checkpoint:** the choices can be reloaded. A variant is a standard SAP selection record; it writes neither custom profile tables nor OB08 rates. Step 5 makes the daily job's date dynamic.
 
@@ -79,10 +82,10 @@ Open **SE38 → `ZCHE_TCMB_LOAD` → F8**. These are trial choices; adjust them 
 
 ## 3. Test connectivity and preview without saving
 
-1. Click **Test the connection to TCMB**. It searches the last seven days for a recent bulletin; retrieval/parsing returns `Connection OK`. It ignores your date selection and does not write rates.
+1. Click **Test the connection to TCMB**. It searches the last seven days for a recent bulletin; retrieval/parsing returns a connection-success message in the selected language. It ignores your date selection and does not write rates.
 2. Check the single past date. Today's bulletin may not be available yet.
 3. Keep **Test run selected**, then F8.
-4. Review bulletin date, `VALID_FROM`, currency pair, rate type, ratios, status and messages in the ALV list. Account for units/ratios when comparing values such as JPY with the bulletin.
+4. Review bulletin date, `VALID_FROM`, currency pair, rate type, ratios, status and messages in the ALV list. Headings and the additional status description use your selected language; technical codes such as `NEW` and `ERROR` remain unchanged. Account for units/ratios when comparing values such as JPY with the bulletin.
 
 | Status | Meaning in a preview |
 |---|---|
@@ -128,7 +131,7 @@ Open **SE38 → `ZCHE_TCMB_LOAD` → F8**. These are trial choices; adjust them 
 3. In **SM36**, create a job for `ZCHE_TCMB_LOAD` and this variant. Schedule after bulletin publication; verify SAP/job time zones.
 4. Test with a restricted runtime user. Monitor **SM37**, job log and spool. Errors cancel the job; earlier successful writes remain.
 
-Prepare variants in each target or use your standard variant transport procedure; there is no custom profile-table transport. Saturdays/Sundays are skipped; the selected policy controls missing weekday HTTP bulletins. Saved variants and dynamic-date SM36 scheduling still need SAP acceptance for this edition.
+Prepare variants in each target or use your standard variant transport procedure; there is no custom profile-table transport. For Turkish job output, save **Dil / Language → Türkçe** explicitly; **Otomatik / Logon language** follows SAP's execution language. Saturdays/Sundays are skipped; the selected policy controls missing weekday HTTP bulletins. Language variants, background localization and dynamic-date SM36 scheduling still need SAP acceptance for this edition.
 
 ## Read from files
 

@@ -6,6 +6,8 @@ Use this project to load the daily exchange rates published by the Central Bank 
 
 **Paste one file into SE38, activate and run it.** All settings are on that report's selection screen. Save reusable choices with SAP's standard **variant** feature.
 
+**Use Turkish even in an English SAP session.** Choose **Türkçe** in the report's **Dil / Language (`P_LANG`)** field without logging out. The choice is stored in the variant. Default **Otomatik / Logon language** uses Turkish for a Turkish logon and English otherwise.
+
 ![TCMB bulletin, selection-screen settings, preview without saving, then a controlled write verified in OB08](docs/images/overview-en.svg)
 
 ## What you need
@@ -37,7 +39,9 @@ A **variant** stores selection-screen values and can be used by a daily job. **O
 - Test mode is selected by default. `NEW` / `UPDATED` in a preview describe planned operations.
 - Fresh installation needs no custom tables, domains, data elements, global classes or separate installer. abapGit is optional.
 - **v0.3.0 integration candidate.** The syntax target is ABAP 7.00. Runtime on actual 7.00/7.01/7.02 systems remains unverified.
-- The handoff reports 34 tests and limited real-write results on the A4H sandbox. Integration corrections and the current 44-test report still need SAP acceptance. [Validation record](docs/validation-v0.3.0.md).
+- The handoff reports 34 tests and limited real-write results on the A4H sandbox. Integration and language changes bring the current suite to 48 tests; SAP acceptance remains pending. The refreshed screen, language variants and background localization also need acceptance. [Validation record](docs/validation-v0.3.0.md).
+
+The language choice covers selection labels, the date-rule list, project-authored messages and result-list headings. Technical status codes such as `NEW` / `ERROR` stay unchanged, with a description in the selected language. SAP GUI menus and raw SAP/BAPI/OS diagnostics may remain in their system/logon language.
 
 If SAP has no internet access, use [XML files staged in a server folder](WALKTHROUGH.md#read-from-files). Downloading/staging them is outside this project.
 

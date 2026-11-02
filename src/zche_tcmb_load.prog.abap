@@ -178,6 +178,343 @@ INTERFACE lif_tcmb.
 ENDINTERFACE.
 
 
+"! Report language only: never changes the SAP logon language.
+CLASS lcl_text DEFINITION FINAL.
+  PUBLIC SECTION.
+    TYPES ty_language TYPE c LENGTH 1.
+    CLASS-METHODS set_language IMPORTING iv_language TYPE c.
+    CLASS-METHODS language RETURNING value(rv_language) TYPE ty_language.
+    CLASS-METHODS choose
+      IMPORTING iv_en TYPE csequence iv_tr TYPE csequence
+      RETURNING value(rv_text) TYPE string.
+    CLASS-METHODS message
+      IMPORTING iv_key TYPE csequence
+                iv_1 TYPE csequence OPTIONAL iv_2 TYPE csequence OPTIONAL
+                iv_3 TYPE csequence OPTIONAL iv_4 TYPE csequence OPTIONAL
+      RETURNING value(rv_text) TYPE string.
+    CLASS-METHODS status_text
+      IMPORTING iv_status TYPE lif_tcmb=>ty_status iv_test TYPE abap_bool
+      RETURNING value(rv_text) TYPE string.
+  PRIVATE SECTION.
+    CLASS-DATA mv_language TYPE c VALUE 'A'.
+    CLASS-METHODS expand
+      IMPORTING iv_template TYPE string
+                iv_1 TYPE csequence iv_2 TYPE csequence
+                iv_3 TYPE csequence iv_4 TYPE csequence
+      RETURNING value(rv_text) TYPE string.
+ENDCLASS.
+
+CLASS lcl_text IMPLEMENTATION.
+  METHOD set_language.
+    mv_language = iv_language.
+    IF mv_language <> 'T' AND mv_language <> 'E'.
+      mv_language = 'A'.
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD language.
+    rv_language = mv_language.
+  ENDMETHOD.
+
+  METHOD choose.
+    IF mv_language = 'T' OR ( mv_language = 'A' AND sy-langu = 'T' ).
+      rv_text = iv_tr.
+    ELSE.
+      rv_text = iv_en.
+    ENDIF.
+  ENDMETHOD.
+
+  METHOD message.
+    DATA lv_template TYPE string.
+    CASE iv_key.
+      WHEN 'INVALID_XML'.
+        lv_template = choose(
+          iv_en = `The TCMB answer is not valid XML`
+          iv_tr = `TCMB yanıtı geçerli bir XML dosyası değil` ).
+      WHEN 'NOT_BULLETIN'.
+        lv_template = choose(
+          iv_en = `The TCMB answer is not an exchange rate bulletin`
+          iv_tr = `TCMB yanıtı bir döviz kuru bülteni değil` ).
+      WHEN 'INVALID_CODE'.
+        lv_template = choose(
+          iv_en = `CurrencyCode must contain exactly three letters`
+          iv_tr = `CurrencyCode değeri tam olarak üç harf içermeli` ).
+      WHEN 'DUPLICATE_CODE'.
+        lv_template = choose(
+          iv_en = `The TCMB bulletin contains a duplicate currency code`
+          iv_tr = `TCMB bülteninde aynı para birimi kodu birden fazla kez bulunuyor` ).
+      WHEN 'EMPTY_BULLETIN'.
+        lv_template = choose(
+          iv_en = `The TCMB bulletin contains no currencies`
+          iv_tr = `TCMB bülteninde para birimi bulunmuyor` ).
+      WHEN 'POSITIVE_DECIMAL'.
+        lv_template = choose(
+          iv_en = `A supplied TCMB rate must be a positive decimal number`
+          iv_tr = `Bültende verilen kur, sıfırdan büyük bir ondalık sayı olmalı` ).
+      WHEN 'INVALID_NUMBER'.
+        lv_template = choose(
+          iv_en = `"&1" in the TCMB bulletin is not a number`
+          iv_tr = `TCMB bültenindeki "&1" değeri bir sayı değil` ).
+      WHEN 'POSITIVE_RATE'.
+        lv_template = choose(
+          iv_en = `A supplied TCMB rate must be greater than zero`
+          iv_tr = `Bültende verilen kur sıfırdan büyük olmalı` ).
+      WHEN 'POSITIVE_UNIT'.
+        lv_template = choose(
+          iv_en = `Unit must be a positive whole number`
+          iv_tr = `Birim (Unit) sıfırdan büyük bir tam sayı olmalı` ).
+      WHEN 'INVALID_UNIT'.
+        lv_template = choose(
+          iv_en = `Unit "&1" in the TCMB bulletin is not a number`
+          iv_tr = `TCMB bültenindeki birim (Unit) değeri "&1" bir sayı değil` ).
+      WHEN 'NONPOSITIVE_UNIT'.
+        lv_template = choose(
+          iv_en = `Unit "&1" in the TCMB bulletin is not positive`
+          iv_tr = `TCMB bültenindeki birim (Unit) değeri "&1" sıfırdan büyük olmalı` ).
+      WHEN 'DATE_FORMAT'.
+        lv_template = choose(
+          iv_en = `Bulletin date "&1" is not DD.MM.YYYY`
+          iv_tr = `Bülten tarihi "&1", GG.AA.YYYY biçiminde değil` ).
+      WHEN 'INVALID_DATE'.
+        lv_template = choose(
+          iv_en = `The bulletin contains an invalid calendar date`
+          iv_tr = `Bültende takvim açısından geçersiz bir tarih bulunuyor` ).
+      WHEN 'NO_BULLETIN'.
+        lv_template = choose(
+          iv_en = `TCMB has no bulletin for &1 (weekend, holiday, or not published yet; TCMB publishes on working days at 15:30)`
+          iv_tr = `&1 için TCMB bülteni bulunamadı (hafta sonu, tatil veya henüz yayımlanmamış olabilir; TCMB iş günlerinde 15:30'da yayımlar)` ).
+      WHEN 'HTTP_STATUS'.
+        lv_template = choose(
+          iv_en = `TCMB answered HTTP &1 &2 for &3`
+          iv_tr = `TCMB, &3 tarihi için HTTP &1 &2 yanıtını verdi` ).
+      WHEN 'DESTINATION_ERROR'.
+        lv_template = choose(
+          iv_en = `HTTP destination &1 cannot be used; check it in SM59`
+          iv_tr = `HTTP hedefi &1 kullanılamıyor; SM59 ayarlarını kontrol edin` ).
+      WHEN 'HTTP_CLIENT_ERROR'.
+        lv_template = choose(
+          iv_en = `Cannot create an HTTP client for &1 (is the ICM HTTPS plug-in active?)`
+          iv_tr = `&1 için HTTP istemcisi oluşturulamadı (ICM HTTPS eklentisi etkin mi?)` ).
+      WHEN 'SSL_ERROR'.
+        lv_template = choose(
+          iv_en = `Secure connection to TCMB failed (&1). Verify the current certificate chain in STRUST, SSL client Anonymous (or the PSE of the SM59 destination)`
+          iv_tr = `TCMB ile güvenli bağlantı kurulamadı (&1). STRUST'ta SSL client Anonymous veya SM59 hedefinin PSE'si için güncel sertifika zincirini doğrulayın` ).
+      WHEN 'CONNECTION_ERROR'.
+        lv_template = choose(
+          iv_en = `SAP cannot reach TCMB (&1). Network team: allow outbound HTTPS from the SAP host to www.tcmb.gov.tr:443, or use a proxy in an SM59 destination`
+          iv_tr = `SAP, TCMB'ye ulaşamıyor (&1). SAP sunucusundan www.tcmb.gov.tr:443 için HTTPS çıkışını açın veya SM59 hedefinde kurumunuzun proxy ayarını kullanın` ).
+      WHEN 'FILE_FOLDER_SCREEN'.
+        lv_template = choose(
+          iv_en = `Enter the folder of the bulletin files on the selection screen`
+          iv_tr = `Seçim ekranında bülten dosyalarının sunucu klasörünü girin` ).
+      WHEN 'FILE_OPEN_EXCEPTION'.
+        lv_template = choose(
+          iv_en = `Cannot open &1: &2`
+          iv_tr = `&1 dosyası açılamadı: &2` ).
+      WHEN 'FILE_OPEN_ERROR'.
+        lv_template = choose(
+          iv_en = `Cannot open file &1 (&2). Check the download, server folder and read permissions; a missing file does not prove a holiday`
+          iv_tr = `&1 dosyası açılamadı (&2). İndirme işlemini, sunucu klasörünü ve okuma izinlerini kontrol edin; dosyanın eksik olması günün tatil olduğunu kanıtlamaz` ).
+      WHEN 'FILE_READ_ERROR'.
+        lv_template = choose(
+          iv_en = `Cannot read &1: &2`
+          iv_tr = `&1 dosyası okunamadı: &2` ).
+      WHEN 'DATE_RULE_REQUIRED'.
+        lv_template = choose(
+          iv_en = `Choose a date rule; ask accounting which day a bulletin is valid for`
+          iv_tr = `Tarih kuralını seçin; bültenin hangi günden geçerli olacağını muhasebe sürecinize göre belirleyin` ).
+      WHEN 'DATE_RULE_UNKNOWN'.
+        lv_template = choose(
+          iv_en = `Unknown date rule "&1"; use SAME_DAY, NEXT_DAY or NEXT_WORKDAY`
+          iv_tr = `Tarih kuralı "&1" tanınmıyor; SAME_DAY, NEXT_DAY veya NEXT_WORKDAY seçin` ).
+      WHEN 'CALENDAR_REQUIRED'.
+        lv_template = choose(
+          iv_en = `Date rule NEXT_WORKDAY needs a factory calendar`
+          iv_tr = `Sonraki iş günü (NEXT_WORKDAY) kuralı için fabrika takvimi gerekir` ).
+      WHEN 'CALENDAR_ERROR'.
+        lv_template = choose(
+          iv_en = `Factory calendar &1 gives no working day after &2 (check it in SCAL)`
+          iv_tr = `&1 fabrika takviminde &2 sonrasındaki iş günü belirlenemedi (SCAL ayarlarını kontrol edin)` ).
+      WHEN 'CROSS_RATE_UNSUPPORTED'.
+        lv_template = choose(
+          iv_en = `TCMB quotes are in TRY; cross rates are not supported`
+          iv_tr = `TCMB kurları TRY karşılığındadır; çapraz kur hesaplanmaz` ).
+      WHEN 'UNKNOWN_CURRENCY'.
+        lv_template = choose(
+          iv_en = `Currency &1 is not defined in SAP (TCURC)`
+          iv_tr = `&1 para birimi SAP'de tanımlı değil (TCURC)` ).
+      WHEN 'MISSING_RATE_FIELD'.
+        lv_template = choose(
+          iv_en = `TCMB gives no &1 rate for &2`
+          iv_tr = `TCMB bülteninde &2 için &1 kuru bulunmuyor` ).
+      WHEN 'RENAME_FORMAT'.
+        lv_template = choose(
+          iv_en = `"&1" is not TCMB code = SAP code, for example USD=USD2`
+          iv_tr = `"&1" eşlemesi TCMB kodu=SAP kodu biçiminde değil; örnek: USD=USD2` ).
+      WHEN 'RENAME_DUPLICATE'.
+        lv_template = choose(
+          iv_en = `TCMB code &1 has two SAP codes; keep one`
+          iv_tr = `&1 TCMB kodu iki SAP koduyla eşlenmiş; tek bir eşleme bırakın` ).
+      WHEN 'MISSING_RATIO'.
+        lv_template = choose(
+          iv_en = `No ratio in TCURF for &1 &2/&3 (maintain it with OBBS)`
+          iv_tr = `&1 kur tipi ve &2/&3 çifti için TCURF oranı bulunamadı (OBBS üzerinden hazırlayın)` ).
+      WHEN 'POSITIVE_FACTORS'.
+        lv_template = choose(
+          iv_en = `TCMB Unit and both OBBS factors must be positive`
+          iv_tr = `TCMB birimi (Unit) ve OBBS'deki iki dönüşüm oranı da sıfırdan büyük olmalı` ).
+      WHEN 'RATE_OVERFLOW'.
+        lv_template = choose(
+          iv_en = `Rate &1 does not fit TCURR; use a larger ratio in TCURF (OBBS)`
+          iv_tr = `&1 kuru TCURR alanına sığmıyor; TCURF dönüşüm oranını OBBS üzerinden kontrol edin` ).
+      WHEN 'RATE_ROUNDS_ZERO'.
+        lv_template = choose(
+          iv_en = `Rate &1 rounds to zero; use a larger ratio in TCURF (OBBS)`
+          iv_tr = `&1 kuru sıfıra yuvarlanıyor; TCURF dönüşüm oranını OBBS üzerinden kontrol edin` ).
+      WHEN 'EXISTING_KEPT'.
+        lv_template = choose(
+          iv_en = `TCURR already has &1 for that day; kept`
+          iv_tr = `TCURR'da o gün için &1 kuru zaten var; mevcut kayıt korundu` ).
+      WHEN 'PREVIOUS_RATE'.
+        lv_template = choose(
+          iv_en = `Was &1`
+          iv_tr = `Önceki kur: &1` ).
+      WHEN 'BAPI_FAILED'.
+        lv_template = choose(
+          iv_en = `Exchange-rate BAPI failed`
+          iv_tr = `Döviz kuru kayıt BAPI'si başarısız oldu` ).
+      WHEN 'COMMIT_FAILED'.
+        lv_template = choose(
+          iv_en = `Commit failed. Check OB08 and SM13 before retrying. &1`
+          iv_tr = `Kayıt kesinleştirilemedi (commit). Yeniden denemeden önce OB08 ve SM13'ü kontrol edin. &1` ).
+      WHEN 'RATE_TYPE_REQUIRED'.
+        lv_template = choose(
+          iv_en = `Enter an SAP rate type for at least one TCMB rate`
+          iv_tr = `En az bir TCMB kur alanına SAP kur tipi girin` ).
+      WHEN 'CROSS_TARGET'.
+        lv_template = choose(
+          iv_en = `TCMB quotes are in TRY; another target would need a cross-rate calculation`
+          iv_tr = `TCMB kurları TRY karşılığındadır; başka hedef para birimi için çapraz kur hesabı gerekir` ).
+      WHEN 'DUPLICATE_RATE_TYPE'.
+        lv_template = choose(
+          iv_en = `Rate type &1 is entered for two TCMB rates; a rate type can take only one`
+          iv_tr = `&1 kur tipi iki TCMB alanına girilmiş; her kur tipine yalnızca bir TCMB alanı atanabilir` ).
+      WHEN 'FILE_FOLDER_REQUIRED'.
+        lv_template = choose(
+          iv_en = `Enter the folder of the bulletin files`
+          iv_tr = `Bülten dosyalarının sunucu klasörünü girin` ).
+      WHEN 'DATE_RANGE_ORDER'.
+        lv_template = choose(
+          iv_en = `The end date &1 is before the start date &2`
+          iv_tr = `Bitiş tarihi &1, başlangıç tarihi &2 öncesinde` ).
+      WHEN 'START_DATE_REQUIRED'.
+        lv_template = choose(
+          iv_en = `Choose a valid start date`
+          iv_tr = `Geçerli bir başlangıç tarihi seçin` ).
+      WHEN 'END_DATE_REQUIRED'.
+        lv_template = choose(
+          iv_en = `Choose a valid end date`
+          iv_tr = `Geçerli bir bitiş tarihi seçin` ).
+      WHEN 'CONNECTION_OK'.
+        lv_template = choose(
+          iv_en = `Connection OK: bulletin &1 of &2, &3 currencies`
+          iv_tr = `Bağlantı başarılı: &2 tarihli &1 numaralı bülten, &3 para birimi` ).
+      WHEN 'NO_RECENT_BULLETIN'.
+        lv_template = choose(
+          iv_en = `The connection works, but TCMB returned no bulletin for the last seven days`
+          iv_tr = `Bağlantı kuruldu, ancak TCMB son yedi gün için bülten döndürmedi` ).
+      WHEN 'BULLETIN_DATE_MISMATCH'.
+        lv_template = choose(
+          iv_en = `Asked TCMB for &1 but got the bulletin of &2`
+          iv_tr = `&1 tarihi istendi, ancak &2 tarihli TCMB bülteni alındı` ).
+      WHEN 'SUMMARY_WRITES'.
+        lv_template = choose(
+          iv_en = `&1 new, &2 updated, &3 unchanged`
+          iv_tr = `&1 yeni, &2 güncellenen, &3 değişmeyen` ).
+      WHEN 'SUMMARY_OTHER'.
+        lv_template = choose(
+          iv_en = `&1 skipped, &2 days without bulletin, &3 errors`
+          iv_tr = `&1 atlanan, &2 bülten bulunamayan gün, &3 hata` ).
+      WHEN 'TEST_PREFIX'.
+        lv_template = choose(
+          iv_en = `Test run: &1`
+          iv_tr = `Deneme çalıştırması (kayıt yok): &1` ).
+      WHEN 'NO_BULLETIN_WARNING'.
+        lv_template = choose(
+          iv_en = `Warning: TCMB published no bulletin on &1 working day(s)`
+          iv_tr = `Uyarı: &1 iş günü için TCMB bülteni bulunamadı` ).
+      WHEN 'ERROR_LINES'.
+        lv_template = choose(
+          iv_en = `&1 line(s) failed; see the ERROR lines`
+          iv_tr = `&1 satırda hata oluştu; ERROR durumundaki satırları inceleyin` ).
+      WHEN 'SAP_MESSAGE'.
+        lv_template = choose(
+          iv_en = `SAP message: &1`
+          iv_tr = `SAP mesajı: &1` ).
+      WHEN OTHERS.
+        lv_template = choose( iv_en = `Unknown text: &1` iv_tr = `Bilinmeyen metin: &1` ).
+        rv_text = expand( iv_template = lv_template iv_1 = iv_key iv_2 = iv_2 iv_3 = iv_3 iv_4 = iv_4 ).
+        RETURN.
+    ENDCASE.
+    rv_text = expand( iv_template = lv_template iv_1 = iv_1 iv_2 = iv_2 iv_3 = iv_3 iv_4 = iv_4 ).
+  ENDMETHOD.
+
+  METHOD expand.
+    DATA lt_parts TYPE STANDARD TABLE OF string WITH DEFAULT KEY.
+    DATA lv_part TYPE string.
+    DATA lv_value TYPE string.
+    DATA lv_slot TYPE c.
+    SPLIT iv_template AT '&' INTO TABLE lt_parts.
+    LOOP AT lt_parts INTO lv_part.
+      IF sy-tabix = 1.
+        rv_text = lv_part.
+        CONTINUE.
+      ENDIF.
+      lv_slot = lv_part.
+      CASE lv_slot.
+        WHEN '1'. lv_value = iv_1.
+        WHEN '2'. lv_value = iv_2.
+        WHEN '3'. lv_value = iv_3.
+        WHEN '4'. lv_value = iv_4.
+        WHEN OTHERS.
+          CONCATENATE rv_text `&` lv_part INTO rv_text.
+          CONTINUE.
+      ENDCASE.
+      SHIFT lv_part LEFT BY 1 PLACES.
+      " Insert parameters once; &2 inside a filename must stay literal.
+      CONCATENATE rv_text lv_value lv_part INTO rv_text.
+    ENDLOOP.
+  ENDMETHOD.
+
+  METHOD status_text.
+    CASE iv_status.
+      WHEN lif_tcmb=>status-new.
+        IF iv_test = abap_true.
+          rv_text = choose( iv_en = `New record planned` iv_tr = `Yeni kayıt planlanıyor` ).
+        ELSE.
+          rv_text = choose( iv_en = `New record` iv_tr = `Yeni kayıt` ).
+        ENDIF.
+      WHEN lif_tcmb=>status-updated.
+        IF iv_test = abap_true.
+          rv_text = choose( iv_en = `Update planned` iv_tr = `Güncelleme planlanıyor` ).
+        ELSE.
+          rv_text = choose( iv_en = `Updated` iv_tr = `Güncellendi` ).
+        ENDIF.
+      WHEN lif_tcmb=>status-unchanged.
+        rv_text = choose( iv_en = `Equal record exists` iv_tr = `Aynı kayıt mevcut` ).
+      WHEN lif_tcmb=>status-skipped.
+        rv_text = choose( iv_en = `Skipped` iv_tr = `Atlandı` ).
+      WHEN lif_tcmb=>status-no_bulletin.
+        rv_text = choose( iv_en = `No bulletin` iv_tr = `Bülten yok` ).
+      WHEN lif_tcmb=>status-error.
+        rv_text = choose( iv_en = `Error` iv_tr = `Hata` ).
+      WHEN OTHERS.
+        rv_text = iv_status.
+    ENDCASE.
+  ENDMETHOD.
+ENDCLASS.
+
+
 "! Values as text for messages (string templates need release 7.02)
 CLASS lcl_fmt DEFINITION FINAL.
   PUBLIC SECTION.
@@ -252,6 +589,7 @@ CLASS lcx_tcmb DEFINITION INHERITING FROM cx_static_check FINAL.
       IMPORTING
         kind     TYPE string OPTIONAL
         text     TYPE string OPTIONAL
+        text_key TYPE csequence OPTIONAL
         previous TYPE REF TO cx_root OPTIONAL.
 
     METHODS if_message~get_text REDEFINITION.
@@ -265,6 +603,9 @@ CLASS lcx_tcmb IMPLEMENTATION.
     super->constructor( previous = previous ).
     me->kind = kind.
     me->text = text.
+    IF text_key IS NOT INITIAL.
+      me->text = lcl_text=>message( text_key ).
+    ENDIF.
   ENDMETHOD.
 
 
@@ -360,7 +701,8 @@ CLASS lcl_parser DEFINITION FINAL.
 
     METHODS parse_error
       IMPORTING
-        iv_text TYPE string
+        iv_text TYPE string OPTIONAL
+        iv_key TYPE csequence OPTIONAL
       RAISING
         lcx_tcmb.
 ENDCLASS.
@@ -392,15 +734,15 @@ CLASS lcl_parser IMPLEMENTATION.
                                         istream        = lo_stream
                                         document       = lo_document ).
     IF lo_parser->parse( ) <> 0.
-      parse_error( `The TCMB answer is not valid XML` ).
+      parse_error( iv_key = 'INVALID_XML' ).
     ENDIF.
 
     lo_root = lo_document->get_root_element( ).
     IF lo_root IS NOT BOUND.
-      parse_error( `The TCMB answer is not an exchange rate bulletin` ).
+      parse_error( iv_key = 'NOT_BULLETIN' ).
     ENDIF.
     IF lo_root->get_name( ) <> `Tarih_Date`.
-      parse_error( `The TCMB answer is not an exchange rate bulletin` ).
+      parse_error( iv_key = 'NOT_BULLETIN' ).
     ENDIF.
 
     lv_text = lo_root->get_attribute( name = `Tarih` ).
@@ -417,12 +759,12 @@ CLASS lcl_parser IMPLEMENTATION.
       lv_text = lo_currency->get_attribute( name = `CurrencyCode` ).
       TRANSLATE lv_text TO UPPER CASE.
       IF strlen( lv_text ) <> 3 OR lv_text CN 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.
-        parse_error( `CurrencyCode must contain exactly three letters` ).
+        parse_error( iv_key = 'INVALID_CODE' ).
       ENDIF.
       ls_rate-code = lv_text.
       READ TABLE rs_bulletin-rates TRANSPORTING NO FIELDS WITH KEY code = ls_rate-code.
       IF sy-subrc = 0.
-        parse_error( `The TCMB bulletin contains a duplicate currency code` ).
+        parse_error( iv_key = 'DUPLICATE_CODE' ).
       ENDIF.
       lv_text = child_text( io_element = lo_currency iv_name = `Unit` ).
       ls_rate-unit = to_unit( lv_text ).
@@ -434,7 +776,7 @@ CLASS lcl_parser IMPLEMENTATION.
     ENDDO.
 
     IF rs_bulletin-rates IS INITIAL.
-      parse_error( `The TCMB bulletin contains no currencies` ).
+      parse_error( iv_key = 'EMPTY_BULLETIN' ).
     ENDIF.
   ENDMETHOD.
 
@@ -458,16 +800,16 @@ CLASS lcl_parser IMPLEMENTATION.
     ENDIF.
     FIND REGEX '^[0-9]+([.][0-9]+)?$' IN lv_text.
     IF sy-subrc <> 0.
-      parse_error( `A supplied TCMB rate must be a positive decimal number` ).
+      parse_error( iv_key = 'POSITIVE_DECIMAL' ).
     ENDIF.
     TRY.
         rv_value = lv_text.
       CATCH cx_sy_conversion_error.
-        CONCATENATE `"` lv_text `" in the TCMB bulletin is not a number` INTO lv_message.
-        parse_error( lv_message ).
+        lv_message = lcl_text=>message( iv_key = 'INVALID_NUMBER' iv_1 = lv_text ).
+        parse_error( iv_text = lv_message ).
     ENDTRY.
     IF rv_value <= 0.
-      parse_error( `A supplied TCMB rate must be greater than zero` ).
+      parse_error( iv_key = 'POSITIVE_RATE' ).
     ENDIF.
   ENDMETHOD.
 
@@ -475,17 +817,17 @@ CLASS lcl_parser IMPLEMENTATION.
   METHOD to_unit.
     DATA lv_message TYPE string.
     IF iv_text IS INITIAL OR iv_text CN '0123456789'.
-      parse_error( `Unit must be a positive whole number` ).
+      parse_error( iv_key = 'POSITIVE_UNIT' ).
     ENDIF.
     TRY.
         rv_unit = iv_text.
       CATCH cx_sy_conversion_error.
-        CONCATENATE `Unit "` iv_text `" in the TCMB bulletin is not a number` INTO lv_message.
-        parse_error( lv_message ).
+        lv_message = lcl_text=>message( iv_key = 'INVALID_UNIT' iv_1 = iv_text ).
+        parse_error( iv_text = lv_message ).
     ENDTRY.
     IF rv_unit <= 0.
-      CONCATENATE `Unit "` iv_text `" in the TCMB bulletin is not positive` INTO lv_message.
-      parse_error( lv_message ).
+      lv_message = lcl_text=>message( iv_key = 'NONPOSITIVE_UNIT' iv_1 = iv_text ).
+      parse_error( iv_text = lv_message ).
     ENDIF.
   ENDMETHOD.
 
@@ -494,28 +836,33 @@ CLASS lcl_parser IMPLEMENTATION.
     " TCMB writes the date as DD.MM.YYYY
     DATA lv_message TYPE string.
     IF strlen( iv_text ) <> 10 OR iv_text CN '0123456789.'.
-      CONCATENATE `Bulletin date "` iv_text `" is not DD.MM.YYYY` INTO lv_message.
-      parse_error( lv_message ).
+      lv_message = lcl_text=>message( iv_key = 'DATE_FORMAT' iv_1 = iv_text ).
+      parse_error( iv_text = lv_message ).
     ENDIF.
     IF iv_text+2(1) <> '.' OR iv_text+5(1) <> '.'.
-      CONCATENATE `Bulletin date "` iv_text `" is not DD.MM.YYYY` INTO lv_message.
-      parse_error( lv_message ).
+      lv_message = lcl_text=>message( iv_key = 'DATE_FORMAT' iv_1 = iv_text ).
+      parse_error( iv_text = lv_message ).
     ENDIF.
     CONCATENATE iv_text+6(4) iv_text+3(2) iv_text(2) INTO rv_date.
     CALL FUNCTION 'DATE_CHECK_PLAUSIBILITY'
       EXPORTING date = rv_date
       EXCEPTIONS OTHERS = 1.
     IF sy-subrc <> 0.
-      parse_error( `The bulletin contains an invalid calendar date` ).
+      parse_error( iv_key = 'INVALID_DATE' ).
     ENDIF.
   ENDMETHOD.
 
 
   METHOD parse_error.
+    DATA lv_text TYPE string.
+    lv_text = iv_text.
+    IF iv_key IS NOT INITIAL.
+      lv_text = lcl_text=>message( iv_key ).
+    ENDIF.
     RAISE EXCEPTION TYPE lcx_tcmb
       EXPORTING
         kind = lcx_tcmb=>kinds-parse
-        text = iv_text.
+        text = lv_text.
   ENDMETHOD.
 
 ENDCLASS.
@@ -601,15 +948,14 @@ CLASS lcl_source_http IMPLEMENTATION.
       WHEN 200.
         RETURN.
       WHEN 404.
-        CONCATENATE `TCMB has no bulletin for ` lv_date ` (weekend, holiday, `
-                    `or not published yet; TCMB publishes on working days at 15:30)` INTO lv_text.
+        lv_text = lcl_text=>message( iv_key = 'NO_BULLETIN' iv_1 = lv_date ).
         RAISE EXCEPTION TYPE lcx_tcmb
           EXPORTING
             kind = lcx_tcmb=>kinds-no_bulletin
             text = lv_text.
       WHEN OTHERS.
         lv_number = lcl_fmt=>int( lv_code ).
-        CONCATENATE `TCMB answered HTTP ` lv_number ` ` lv_reason ` for ` lv_date INTO lv_text.
+        lv_text = lcl_text=>message( iv_key = 'HTTP_STATUS' iv_1 = lv_number iv_2 = lv_reason iv_3 = lv_date ).
         RAISE EXCEPTION TYPE lcx_tcmb
           EXPORTING
             kind = lcx_tcmb=>kinds-http
@@ -641,7 +987,7 @@ CLASS lcl_source_http IMPLEMENTATION.
           OTHERS      = 1 ).
       IF sy-subrc <> 0.
         lv_destination = is_settings-rfc_destination.
-        CONCATENATE `HTTP destination ` lv_destination ` cannot be used; check it in SM59` INTO lv_text.
+        lv_text = lcl_text=>message( iv_key = 'DESTINATION_ERROR' iv_1 = lv_destination ).
         RAISE EXCEPTION TYPE lcx_tcmb
           EXPORTING
             kind = lcx_tcmb=>kinds-config
@@ -669,7 +1015,7 @@ CLASS lcl_source_http IMPLEMENTATION.
       EXCEPTIONS
         OTHERS = 1 ).
     IF sy-subrc <> 0.
-      CONCATENATE `Cannot create an HTTP client for ` lv_url ` (is the ICM HTTPS plug-in active?)` INTO lv_text.
+      lv_text = lcl_text=>message( iv_key = 'HTTP_CLIENT_ERROR' iv_1 = lv_url ).
       RAISE EXCEPTION TYPE lcx_tcmb
         EXPORTING
           kind = lcx_tcmb=>kinds-config
@@ -689,16 +1035,13 @@ CLASS lcl_source_http IMPLEMENTATION.
     lv_upper = lv_message.
     TRANSLATE lv_upper TO UPPER CASE.
     IF lv_upper CS 'SSL' OR lv_upper CS 'CERTIFICATE' OR lv_upper CS 'HANDSHAKE' OR lv_upper CS 'PSE'.
-      CONCATENATE `Secure connection to TCMB failed (` lv_message `). Verify the current `
-                  `certificate chain in STRUST, SSL client Anonymous `
-                  `(or the PSE of the SM59 destination)` INTO lv_text.
+      lv_text = lcl_text=>message( iv_key = 'SSL_ERROR' iv_1 = lv_message ).
       RAISE EXCEPTION TYPE lcx_tcmb
         EXPORTING
           kind = lcx_tcmb=>kinds-ssl
           text = lv_text.
     ENDIF.
-    CONCATENATE `SAP cannot reach TCMB (` lv_message `). Network team: allow outbound HTTPS `
-                `from the SAP host to www.tcmb.gov.tr:443, or use a proxy in an SM59 destination` INTO lv_text.
+    lv_text = lcl_text=>message( iv_key = 'CONNECTION_ERROR' iv_1 = lv_message ).
     RAISE EXCEPTION TYPE lcx_tcmb
       EXPORTING
         kind = lcx_tcmb=>kinds-connection
@@ -741,7 +1084,7 @@ CLASS lcl_source_file IMPLEMENTATION.
       RAISE EXCEPTION TYPE lcx_tcmb
         EXPORTING
           kind = lcx_tcmb=>kinds-config
-          text = `Enter the folder of the bulletin files on the selection screen`.
+          text_key = 'FILE_FOLDER_SCREEN'.
     ENDIF.
 
     lv_file = file_name( iv_folder = is_settings-file_folder iv_date = iv_date ).
@@ -749,7 +1092,7 @@ CLASS lcl_source_file IMPLEMENTATION.
         OPEN DATASET lv_file FOR INPUT IN BINARY MODE MESSAGE lv_os_message.
       CATCH cx_sy_file_authority cx_sy_file_open cx_sy_file_access_error INTO lx_open.
         lv_error = lx_open->get_text( ).
-        CONCATENATE `Cannot open ` lv_file `: ` lv_error INTO lv_text.
+        lv_text = lcl_text=>message( iv_key = 'FILE_OPEN_EXCEPTION' iv_1 = lv_file iv_2 = lv_error ).
         RAISE EXCEPTION TYPE lcx_tcmb
           EXPORTING
             kind     = lcx_tcmb=>kinds-file
@@ -759,8 +1102,7 @@ CLASS lcl_source_file IMPLEMENTATION.
     IF sy-subrc <> 0.
       lv_os_text = lv_os_message.
       CONDENSE lv_os_text.
-      CONCATENATE `Cannot open file ` lv_file ` (` lv_os_text `). Check the download, `
-                  `server folder and read permissions; a missing file does not prove a holiday` INTO lv_text.
+      lv_text = lcl_text=>message( iv_key = 'FILE_OPEN_ERROR' iv_1 = lv_file iv_2 = lv_os_text ).
       RAISE EXCEPTION TYPE lcx_tcmb
         EXPORTING
           kind = lcx_tcmb=>kinds-file
@@ -772,7 +1114,7 @@ CLASS lcl_source_file IMPLEMENTATION.
       CATCH cx_sy_file_io INTO lx_read.
         CLOSE DATASET lv_file.
         lv_error = lx_read->get_text( ).
-        CONCATENATE `Cannot read ` lv_file `: ` lv_error INTO lv_text.
+        lv_text = lcl_text=>message( iv_key = 'FILE_READ_ERROR' iv_1 = lv_file iv_2 = lv_error ).
         RAISE EXCEPTION TYPE lcx_tcmb
           EXPORTING
             kind     = lcx_tcmb=>kinds-file
@@ -846,13 +1188,13 @@ CLASS lcl_date_rule IMPLEMENTATION.
       RAISE EXCEPTION TYPE lcx_tcmb
         EXPORTING
           kind = lcx_tcmb=>kinds-config
-          text = `Choose a date rule; ask accounting which day a bulletin is valid for`.
+          text_key = 'DATE_RULE_REQUIRED'.
     ENDIF.
     IF iv_rule <> lif_tcmb=>date_rule-same_day
        AND iv_rule <> lif_tcmb=>date_rule-next_day
        AND iv_rule <> lif_tcmb=>date_rule-next_workday.
       lv_rule = iv_rule.
-      CONCATENATE `Unknown date rule "` lv_rule `"; use SAME_DAY, NEXT_DAY or NEXT_WORKDAY` INTO lv_text.
+      lv_text = lcl_text=>message( iv_key = 'DATE_RULE_UNKNOWN' iv_1 = lv_rule ).
       RAISE EXCEPTION TYPE lcx_tcmb
         EXPORTING
           kind = lcx_tcmb=>kinds-config
@@ -862,7 +1204,7 @@ CLASS lcl_date_rule IMPLEMENTATION.
       RAISE EXCEPTION TYPE lcx_tcmb
         EXPORTING
           kind = lcx_tcmb=>kinds-config
-          text = `Date rule NEXT_WORKDAY needs a factory calendar`.
+          text_key = 'CALENDAR_REQUIRED'.
     ENDIF.
     mv_rule     = iv_rule.
     mv_calendar = iv_calendar.
@@ -897,8 +1239,7 @@ CLASS lcl_date_rule IMPLEMENTATION.
         IF sy-subrc <> 0.
           lv_date = lcl_fmt=>date( iv_bulletin_date ).
           lv_calendar = mv_calendar.
-          CONCATENATE `Factory calendar ` lv_calendar ` gives no working day after `
-                      lv_date ` (check it in SCAL)` INTO lv_text.
+          lv_text = lcl_text=>message( iv_key = 'CALENDAR_ERROR' iv_1 = lv_calendar iv_2 = lv_date ).
           RAISE EXCEPTION TYPE lcx_tcmb
             EXPORTING
               kind = lcx_tcmb=>kinds-config
@@ -987,7 +1328,7 @@ CLASS lcl_calc IMPLEMENTATION.
     ENDIF.
     IF lv_target <> lif_tcmb=>default_target.
       ls_line-status = lif_tcmb=>status-error.
-      ls_line-message = `TCMB quotes are in TRY; cross rates are not supported`.
+      ls_line-message = lcl_text=>message( iv_key = 'CROSS_RATE_UNSUPPORTED' ).
       APPEND ls_line TO rt_lines.
       RETURN.
     ENDIF.
@@ -1011,7 +1352,7 @@ CLASS lcl_calc IMPLEMENTATION.
         READ TABLE it_known TRANSPORTING NO FIELDS WITH TABLE KEY table_line = lv_waers.
         IF sy-subrc <> 0.
           ls_line-status = lif_tcmb=>status-skipped.
-          CONCATENATE `Currency ` lv_waers ` is not defined in SAP (TCURC)` INTO ls_line-message.
+          ls_line-message = lcl_text=>message( iv_key = 'UNKNOWN_CURRENCY' iv_1 = lv_waers ).
           APPEND ls_line TO rt_lines.
           CONTINUE.
         ENDIF.
@@ -1021,7 +1362,7 @@ CLASS lcl_calc IMPLEMENTATION.
           ls_line-status = lif_tcmb=>status-skipped.
           lv_source = ls_mapping-source.
           lv_code = ls_rate-code.
-          CONCATENATE `TCMB gives no ` lv_source ` rate for ` lv_code INTO ls_line-message.
+          ls_line-message = lcl_text=>message( iv_key = 'MISSING_RATE_FIELD' iv_1 = lv_source iv_2 = lv_code ).
           APPEND ls_line TO rt_lines.
           CONTINUE.
         ENDIF.
@@ -1106,7 +1447,7 @@ CLASS lcl_calc IMPLEMENTATION.
       SPLIT lv_pair AT '=' INTO lv_code lv_sap.
       IF strlen( lv_code ) <> 3 OR lv_code CN 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
          OR lv_sap IS INITIAL OR strlen( lv_sap ) > 5 OR lv_sap CA '='.
-        CONCATENATE `"` lv_pair `" is not TCMB code = SAP code, for example USD=USD2` INTO lv_message.
+        lv_message = lcl_text=>message( iv_key = 'RENAME_FORMAT' iv_1 = lv_pair ).
         RAISE EXCEPTION TYPE lcx_tcmb
           EXPORTING
             kind = lcx_tcmb=>kinds-config
@@ -1116,7 +1457,7 @@ CLASS lcl_calc IMPLEMENTATION.
       ls_rename-sap_currency = lv_sap.
       INSERT ls_rename INTO TABLE rt_renames.
       IF sy-subrc <> 0.
-        CONCATENATE `TCMB code ` lv_code ` has two SAP codes; keep one` INTO lv_message.
+        lv_message = lcl_text=>message( iv_key = 'RENAME_DUPLICATE' iv_1 = lv_code ).
         RAISE EXCEPTION TYPE lcx_tcmb
           EXPORTING
             kind = lcx_tcmb=>kinds-config
@@ -1154,8 +1495,7 @@ CLASS lcl_calc IMPLEMENTATION.
     IF sy-subrc <> 0.
       ls_line-status = lif_tcmb=>status-error.
       lv_rate_type = ls_line-rate_type.
-      CONCATENATE `No ratio in TCURF for ` lv_rate_type ` ` lv_foreign `/` lv_target
-                  ` (maintain it with OBBS)` INTO ls_line-message.
+      ls_line-message = lcl_text=>message( iv_key = 'MISSING_RATIO' iv_1 = lv_rate_type iv_2 = lv_foreign iv_3 = lv_target ).
       APPEND ls_line TO ct_lines.
       RETURN.
     ENDIF.
@@ -1168,7 +1508,7 @@ CLASS lcl_calc IMPLEMENTATION.
     ENDIF.
     IF iv_unit <= 0 OR ls_factor-ffact <= 0 OR ls_factor-tfact <= 0.
       ls_line-status = lif_tcmb=>status-error.
-      ls_line-message = `TCMB Unit and both OBBS factors must be positive`.
+      ls_line-message = lcl_text=>message( iv_key = 'POSITIVE_FACTORS' ).
       APPEND ls_line TO ct_lines.
       RETURN.
     ENDIF.
@@ -1182,13 +1522,11 @@ CLASS lcl_calc IMPLEMENTATION.
         ls_line-rate = lv_rate.
       CATCH cx_sy_conversion_overflow cx_sy_arithmetic_error.
         ls_line-status = lif_tcmb=>status-error.
-        CONCATENATE `Rate ` lv_rate_text ` does not fit TCURR; use a larger ratio in TCURF (OBBS)`
-          INTO ls_line-message.
+        ls_line-message = lcl_text=>message( iv_key = 'RATE_OVERFLOW' iv_1 = lv_rate_text ).
     ENDTRY.
     IF ls_line-status IS INITIAL AND ls_line-rate <= 0.
       ls_line-status = lif_tcmb=>status-error.
-      CONCATENATE `Rate ` lv_rate_text ` rounds to zero; use a larger ratio in TCURF (OBBS)`
-        INTO ls_line-message.
+      ls_line-message = lcl_text=>message( iv_key = 'RATE_ROUNDS_ZERO' iv_1 = lv_rate_text ).
     ENDIF.
     APPEND ls_line TO ct_lines.
   ENDMETHOD.
@@ -1252,11 +1590,11 @@ CLASS lcl_writer IMPLEMENTATION.
         lv_existing_text = lcl_fmt=>num( lv_existing ).
         IF iv_existing = lif_tcmb=>existing-skip.
           <ls_line>-status = lif_tcmb=>status-skipped.
-          CONCATENATE `TCURR already has ` lv_existing_text ` for that day; kept` INTO <ls_line>-message.
+          <ls_line>-message = lcl_text=>message( iv_key = 'EXISTING_KEPT' iv_1 = lv_existing_text ).
           CONTINUE.
         ENDIF.
         <ls_line>-status = lif_tcmb=>status-updated.
-        CONCATENATE `Was ` lv_existing_text INTO <ls_line>-message.
+        <ls_line>-message = lcl_text=>message( iv_key = 'PREVIOUS_RATE' iv_1 = lv_existing_text ).
       ELSE.
         <ls_line>-status = lif_tcmb=>status-new.
       ENDIF.
@@ -1296,7 +1634,9 @@ CLASS lcl_writer IMPLEMENTATION.
         <ls_line>-status  = lif_tcmb=>status-error.
         <ls_line>-message = ls_return-message.
         IF <ls_line>-message IS INITIAL.
-          <ls_line>-message = `Exchange-rate BAPI failed`.
+          <ls_line>-message = lcl_text=>message( iv_key = 'BAPI_FAILED' ).
+        ELSE.
+          <ls_line>-message = lcl_text=>message( iv_key = 'SAP_MESSAGE' iv_1 = ls_return-message ).
         ENDIF.
         CALL FUNCTION 'BAPI_TRANSACTION_ROLLBACK'.
         CONTINUE.
@@ -1311,8 +1651,7 @@ CLASS lcl_writer IMPLEMENTATION.
         EXCEPTIONS OTHERS = 1.
       IF sy-subrc <> 0 OR ls_return-type CA 'EAX'.
         <ls_line>-status = lif_tcmb=>status-error.
-        CONCATENATE `Commit failed. Check OB08 and SM13 before retrying. `
-                    ls_return-message INTO <ls_line>-message.
+        <ls_line>-message = lcl_text=>message( iv_key = 'COMMIT_FAILED' iv_1 = ls_return-message ).
         CALL FUNCTION 'BAPI_TRANSACTION_ROLLBACK'.
       ENDIF.
     ENDLOOP.
@@ -1430,20 +1769,19 @@ CLASS lcl_loader IMPLEMENTATION.
     DATA lv_rate_type TYPE string.
 
     IF is_settings-mappings IS INITIAL.
-      rv_problem = `Enter an SAP rate type for at least one TCMB rate`.
+      rv_problem = lcl_text=>message( iv_key = 'RATE_TYPE_REQUIRED' ).
       RETURN.
     ENDIF.
     IF is_settings-target_currency IS NOT INITIAL
        AND is_settings-target_currency <> lif_tcmb=>default_target.
-      rv_problem = `TCMB quotes are in TRY; another target would need a cross-rate calculation`.
+      rv_problem = lcl_text=>message( iv_key = 'CROSS_TARGET' ).
       RETURN.
     ENDIF.
     LOOP AT is_settings-mappings INTO ls_mapping.
       LOOP AT is_settings-mappings TRANSPORTING NO FIELDS
            WHERE rate_type = ls_mapping-rate_type AND source <> ls_mapping-source.
         lv_rate_type = ls_mapping-rate_type.
-        CONCATENATE `Rate type ` lv_rate_type ` is entered for two TCMB rates; `
-                    `a rate type can take only one` INTO rv_problem.
+        rv_problem = lcl_text=>message( iv_key = 'DUPLICATE_RATE_TYPE' iv_1 = lv_rate_type ).
         RETURN.
       ENDLOOP.
     ENDLOOP.
@@ -1457,7 +1795,7 @@ CLASS lcl_loader IMPLEMENTATION.
         RETURN.
     ENDTRY.
     IF is_settings-origin = lif_tcmb=>origin-folder AND is_settings-file_folder IS INITIAL.
-      rv_problem = `Enter the folder of the bulletin files`.
+      rv_problem = lcl_text=>message( iv_key = 'FILE_FOLDER_REQUIRED' ).
     ENDIF.
   ENDMETHOD.
 
@@ -1482,7 +1820,7 @@ CLASS lcl_loader IMPLEMENTATION.
     IF iv_to < iv_from.
       lv_from = lcl_fmt=>date( iv_from ).
       lv_to = lcl_fmt=>date( iv_to ).
-      CONCATENATE `The end date ` lv_to ` is before the start date ` lv_from INTO lv_text.
+      lv_text = lcl_text=>message( iv_key = 'DATE_RANGE_ORDER' iv_1 = lv_to iv_2 = lv_from ).
       RAISE EXCEPTION TYPE lcx_tcmb
         EXPORTING
           kind = lcx_tcmb=>kinds-config
@@ -1492,13 +1830,13 @@ CLASS lcl_loader IMPLEMENTATION.
       EXPORTING date = iv_from EXCEPTIONS OTHERS = 1.
     IF sy-subrc <> 0.
       RAISE EXCEPTION TYPE lcx_tcmb
-        EXPORTING kind = lcx_tcmb=>kinds-config text = `Choose a valid start date`.
+        EXPORTING kind = lcx_tcmb=>kinds-config text_key = 'START_DATE_REQUIRED'.
     ENDIF.
     CALL FUNCTION 'DATE_CHECK_PLAUSIBILITY'
       EXPORTING date = iv_to EXCEPTIONS OTHERS = 1.
     IF sy-subrc <> 0.
       RAISE EXCEPTION TYPE lcx_tcmb
-        EXPORTING kind = lcx_tcmb=>kinds-config text = `Choose a valid end date`.
+        EXPORTING kind = lcx_tcmb=>kinds-config text_key = 'END_DATE_REQUIRED'.
     ENDIF.
     CREATE OBJECT mo_date_rule
       EXPORTING
@@ -1544,8 +1882,7 @@ CLASS lcl_loader IMPLEMENTATION.
             lv_day = lcl_fmt=>date( ls_bulletin-date ).
             lv_lines = lines( ls_bulletin-rates ).
             lv_count = lcl_fmt=>int( lv_lines ).
-            CONCATENATE `Connection OK: bulletin ` ls_bulletin-number ` of ` lv_day `, `
-                        lv_count ` currencies` INTO rv_text.
+            rv_text = lcl_text=>message( iv_key = 'CONNECTION_OK' iv_1 = ls_bulletin-number iv_2 = lv_day iv_3 = lv_count ).
             RETURN.
           CATCH lcx_tcmb INTO lx_error.
             IF lx_error->kind <> lcx_tcmb=>kinds-no_bulletin.
@@ -1558,7 +1895,7 @@ CLASS lcl_loader IMPLEMENTATION.
     RAISE EXCEPTION TYPE lcx_tcmb
       EXPORTING
         kind = lcx_tcmb=>kinds-no_bulletin
-        text = `The connection works, but TCMB returned no bulletin for the last seven days`.
+        text_key = 'NO_RECENT_BULLETIN'.
   ENDMETHOD.
 
 
@@ -1646,7 +1983,7 @@ CLASS lcl_loader IMPLEMENTATION.
     IF rs_bulletin-date <> iv_date.
       lv_asked = lcl_fmt=>date( iv_date ).
       lv_got = lcl_fmt=>date( rs_bulletin-date ).
-      CONCATENATE `Asked TCMB for ` lv_asked ` but got the bulletin of ` lv_got INTO lv_text.
+      lv_text = lcl_text=>message( iv_key = 'BULLETIN_DATE_MISMATCH' iv_1 = lv_asked iv_2 = lv_got ).
       RAISE EXCEPTION TYPE lcx_tcmb
         EXPORTING
           kind = lcx_tcmb=>kinds-parse
@@ -1721,6 +2058,7 @@ DATA gv_tcmb_code TYPE lif_tcmb=>ty_code.
 DATA gv_to TYPE d.
 
 SELECTION-SCREEN BEGIN OF BLOCK b_run WITH FRAME TITLE t_run.
+PARAMETERS p_lang TYPE c AS LISTBOX VISIBLE LENGTH 28 DEFAULT 'A' USER-COMMAND lang.
 SELECT-OPTIONS s_date FOR sy-datum NO-EXTENSION OBLIGATORY DEFAULT sy-datum.
 PARAMETERS p_test AS CHECKBOX DEFAULT 'X'.
 SELECTION-SCREEN PUSHBUTTON /1(40) b_conn USER-COMMAND conn.
@@ -1777,6 +2115,7 @@ CLASS lcl_app DEFINITION FINAL.
     CLASS-METHODS set_texts.
 
     CLASS-METHODS set_date_rules.
+    CLASS-METHODS set_languages.
 
     "! Called before a run from the screen: stops with the first problem
     CLASS-METHODS check_screen.
@@ -1791,8 +2130,30 @@ CLASS lcl_app DEFINITION FINAL.
 
   PRIVATE SECTION.
     CLASS-DATA gt_lines TYPE lif_tcmb=>ty_lines.
+    CLASS-DATA gv_test TYPE abap_bool.
+    TYPES: BEGIN OF ty_display,
+             bulletin_date TYPE d,
+             tcmb_code TYPE lif_tcmb=>ty_code,
+             source TYPE lif_tcmb=>ty_source,
+             rate_type TYPE tcurr-kurst,
+             from_curr TYPE tcurr-fcurr,
+             to_curr TYPE tcurr-tcurr,
+             valid_from TYPE d,
+             rate TYPE tcurr-ukurs,
+             from_factor TYPE tcurr-ffact,
+             to_factor TYPE tcurr-tfact,
+             indirect TYPE abap_bool,
+             status_text TYPE c LENGTH 30,
+             status TYPE lif_tcmb=>ty_status,
+             message TYPE string,
+           END OF ty_display,
+           ty_display_rows TYPE STANDARD TABLE OF ty_display WITH DEFAULT KEY.
 
-    "! English, or Turkish when you log on in Turkish
+    CLASS-METHODS column
+      IMPORTING io_columns TYPE REF TO cl_salv_columns_table
+                iv_name TYPE csequence iv_en TYPE csequence iv_tr TYPE csequence.
+
+    "! Explicit report language, or the logon language in automatic mode
     CLASS-METHODS text
       IMPORTING
         iv_en          TYPE csequence
@@ -1864,9 +2225,11 @@ CLASS lcl_app IMPLEMENTATION.
     b_conn  = text( iv_en = `Test the connection to TCMB`
                     iv_tr = `TCMB bağlantısını test et` ).
 
+    add_text( EXPORTING iv_name = 'P_LANG' iv_kind = 'P' iv_en = `Dil / Language` iv_tr = `Dil / Language`
+              CHANGING ct_texts = lt_texts ).
     add_text( EXPORTING iv_name = 'S_DATE'  iv_kind = 'S' iv_en = `Bulletin date(s)`            iv_tr = `Bülten tarih(ler)i`
               CHANGING  ct_texts = lt_texts ).
-    add_text( EXPORTING iv_name = 'P_TEST'  iv_kind = 'P' iv_en = `Test run, write nothing`     iv_tr = `Test çalıştırma, yazma`
+    add_text( EXPORTING iv_name = 'P_TEST'  iv_kind = 'P' iv_en = `Test run, write nothing`     iv_tr = `Deneme (kur kaydedilmez)`
               CHANGING  ct_texts = lt_texts ).
     add_text( EXPORTING iv_name = 'P_FXBUY' iv_kind = 'P' iv_en = `Forex buying`                iv_tr = `Döviz alış`
               CHANGING  ct_texts = lt_texts ).
@@ -1955,6 +2318,22 @@ CLASS lcl_app IMPLEMENTATION.
         OTHERS = 1.
   ENDMETHOD.
 
+  METHOD set_languages.
+    DATA lt_values TYPE vrm_values.
+    DATA ls_value TYPE vrm_value.
+    ls_value-key = 'A'.
+    ls_value-text = `Otomatik / Logon language`.
+    APPEND ls_value TO lt_values.
+    ls_value-key = 'T'.
+    ls_value-text = `Türkçe`.
+    APPEND ls_value TO lt_values.
+    ls_value-key = 'E'.
+    ls_value-text = `English`.
+    APPEND ls_value TO lt_values.
+    CALL FUNCTION 'VRM_SET_VALUES'
+      EXPORTING id = 'P_LANG' values = lt_values
+      EXCEPTIONS OTHERS = 1.
+  ENDMETHOD.
 
   METHOD check_screen.
     DATA ls_settings TYPE lif_tcmb=>ty_settings.
@@ -2007,6 +2386,7 @@ CLASS lcl_app IMPLEMENTATION.
     DATA lv_errors TYPE string.
     DATA lv_number TYPE i.
 
+    gv_test = iv_test.
     TRY.
         ls_settings = settings( ).
         CREATE OBJECT lo_loader
@@ -2031,35 +2411,31 @@ CLASS lcl_app IMPLEMENTATION.
     lv_no_bulletin = lcl_fmt=>int( lv_number ).
     lv_number = count( lif_tcmb=>status-error ).
     lv_errors      = lcl_fmt=>int( lv_number ).
-    CONCATENATE lv_new ` new, ` lv_updated ` updated, ` lv_unchanged ` unchanged, `
-                lv_skipped ` skipped, ` lv_no_bulletin ` days without bulletin, `
-                lv_errors ` errors` INTO lv_summary.
+    lv_summary = lcl_text=>message( iv_key = 'SUMMARY_WRITES' iv_1 = lv_new iv_2 = lv_updated iv_3 = lv_unchanged ).
+    lv_text = lcl_text=>message( iv_key = 'SUMMARY_OTHER' iv_1 = lv_skipped iv_2 = lv_no_bulletin iv_3 = lv_errors ).
+    CONCATENATE lv_summary `, ` lv_text INTO lv_summary.
     IF iv_test = abap_true.
       lv_text = lv_summary.
-      CONCATENATE `Test run: ` lv_text INTO lv_summary.
+      lv_summary = lcl_text=>message( iv_key = 'TEST_PREFIX' iv_1 = lv_text ).
     ENDIF.
     MESSAGE lv_summary TYPE 'S'.
     IF count( lif_tcmb=>status-no_bulletin ) > 0
        AND ls_settings-no_bulletin = lif_tcmb=>no_bulletin-warning.
-      CONCATENATE `Warning: TCMB published no bulletin on ` lv_no_bulletin ` working day(s)` INTO lv_text.
+      lv_text = lcl_text=>message( iv_key = 'NO_BULLETIN_WARNING' iv_1 = lv_no_bulletin ).
       MESSAGE lv_text TYPE 'S' DISPLAY LIKE 'W'.
     ENDIF.
 
     show( ).
 
     IF count( lif_tcmb=>status-error ) > 0.
-      CONCATENATE lv_errors ` line(s) failed; see the ERROR lines` INTO lv_text.
+      lv_text = lcl_text=>message( iv_key = 'ERROR_LINES' iv_1 = lv_errors ).
       fail( lv_text ).
     ENDIF.
   ENDMETHOD.
 
 
   METHOD text.
-    IF sy-langu = 'T'.
-      rv_text = iv_tr.
-    ELSE.
-      rv_text = iv_en.
-    ENDIF.
+    rv_text = lcl_text=>choose( iv_en = iv_en iv_tr = iv_tr ).
   ENDMETHOD.
 
 
@@ -2135,13 +2511,22 @@ CLASS lcl_app IMPLEMENTATION.
     DATA lo_alv TYPE REF TO cl_salv_table.
     DATA lo_functions TYPE REF TO cl_salv_functions_list.
     DATA lo_columns TYPE REF TO cl_salv_columns_table.
-    DATA lo_column TYPE REF TO cl_salv_column.
     DATA lx_salv TYPE REF TO cx_salv_msg.
     DATA lv_text TYPE string.
+    DATA lt_display TYPE ty_display_rows.
+    DATA ls_display TYPE ty_display.
+    DATA ls_line TYPE lif_tcmb=>ty_line.
+
+    LOOP AT gt_lines INTO ls_line.
+      CLEAR ls_display.
+      MOVE-CORRESPONDING ls_line TO ls_display.
+      ls_display-status_text = lcl_text=>status_text( iv_status = ls_line-status iv_test = gv_test ).
+      APPEND ls_display TO lt_display.
+    ENDLOOP.
 
     TRY.
         cl_salv_table=>factory( IMPORTING r_salv_table = lo_alv
-                                CHANGING  t_table      = gt_lines ).
+                                CHANGING  t_table      = lt_display ).
       CATCH cx_salv_msg INTO lx_salv.
         lv_text = lx_salv->get_text( ).
         MESSAGE lv_text TYPE 'I' DISPLAY LIKE 'E'.
@@ -2152,33 +2537,41 @@ CLASS lcl_app IMPLEMENTATION.
     lo_functions->set_all( ).
     lo_columns = lo_alv->get_columns( ).
     lo_columns->set_optimize( ).
-    TRY.
-        lo_column = lo_columns->get_column( 'BULLETIN_DATE' ).
-        lo_column->set_medium_text( 'Bulletin' ).
-        lo_column->set_long_text( 'TCMB bulletin date' ).
-        lo_column = lo_columns->get_column( 'TCMB_CODE' ).
-        lo_column->set_medium_text( 'TCMB code' ).
-        lo_column->set_long_text( 'TCMB currency code' ).
-        lo_column = lo_columns->get_column( 'SOURCE' ).
-        lo_column->set_medium_text( 'TCMB rate' ).
-        lo_column->set_long_text( 'TCMB rate' ).
-        lo_column = lo_columns->get_column( 'VALID_FROM' ).
-        lo_column->set_medium_text( 'Valid from' ).
-        lo_column->set_long_text( 'Valid from (TCURR)' ).
-        lo_column = lo_columns->get_column( 'INDIRECT' ).
-        lo_column->set_medium_text( 'Indirect' ).
-        lo_column->set_long_text( 'Indirect quotation' ).
-        lo_column = lo_columns->get_column( 'STATUS' ).
-        lo_column->set_medium_text( 'Status' ).
-        lo_column->set_long_text( 'Status' ).
-        lo_column = lo_columns->get_column( 'MESSAGE' ).
-        lo_column->set_medium_text( 'Message' ).
-        lo_column->set_long_text( 'Message' ).
-      CATCH cx_salv_not_found.                          "#EC NO_HANDLER
-    ENDTRY.
+    column( io_columns = lo_columns iv_name = 'BULLETIN_DATE' iv_en = `Bulletin date` iv_tr = `Bülten tarihi` ).
+    column( io_columns = lo_columns iv_name = 'TCMB_CODE' iv_en = `TCMB code` iv_tr = `TCMB kodu` ).
+    column( io_columns = lo_columns iv_name = 'SOURCE' iv_en = `TCMB rate field` iv_tr = `TCMB kur alanı` ).
+    column( io_columns = lo_columns iv_name = 'RATE_TYPE' iv_en = `SAP rate type` iv_tr = `SAP kur tipi` ).
+    column( io_columns = lo_columns iv_name = 'FROM_CURR' iv_en = `From currency` iv_tr = `Kaynak para birimi` ).
+    column( io_columns = lo_columns iv_name = 'TO_CURR' iv_en = `To currency` iv_tr = `Hedef para birimi` ).
+    column( io_columns = lo_columns iv_name = 'VALID_FROM' iv_en = `Valid from` iv_tr = `Geçerlilik tarihi` ).
+    column( io_columns = lo_columns iv_name = 'RATE' iv_en = `Exchange rate` iv_tr = `Döviz kuru` ).
+    column( io_columns = lo_columns iv_name = 'FROM_FACTOR' iv_en = `From factor` iv_tr = `Kaynak oranı` ).
+    column( io_columns = lo_columns iv_name = 'TO_FACTOR' iv_en = `To factor` iv_tr = `Hedef oranı` ).
+    column( io_columns = lo_columns iv_name = 'INDIRECT' iv_en = `Indirect quotation` iv_tr = `Ters kotasyon` ).
+    column( io_columns = lo_columns iv_name = 'STATUS' iv_en = `Status code` iv_tr = `Durum kodu` ).
+    column( io_columns = lo_columns iv_name = 'STATUS_TEXT' iv_en = `Status` iv_tr = `Durum` ).
+    column( io_columns = lo_columns iv_name = 'MESSAGE' iv_en = `Message` iv_tr = `Açıklama` ).
     lo_alv->display( ).
   ENDMETHOD.
 
+  METHOD column.
+    DATA lo_column TYPE REF TO cl_salv_column.
+    DATA lv_name TYPE lvc_fname.
+    DATA lv_short TYPE scrtext_s.
+    DATA lv_medium TYPE scrtext_m.
+    DATA lv_long TYPE scrtext_l.
+    lv_name = iv_name.
+    lv_long = text( iv_en = iv_en iv_tr = iv_tr ).
+    lv_medium = lv_long.
+    lv_short = lv_long.
+    TRY.
+        lo_column = io_columns->get_column( lv_name ).
+        lo_column->set_short_text( lv_short ).
+        lo_column->set_medium_text( lv_medium ).
+        lo_column->set_long_text( lv_long ).
+      CATCH cx_salv_not_found.                           "#EC NO_HANDLER
+    ENDTRY.
+  ENDMETHOD.
 
   METHOD fail.
     " In the background an E message ends the job as "Cancelled"
@@ -2964,8 +3357,10 @@ CLASS ltc_loader DEFINITION FINAL FOR TESTING.
   "#AU Duration Short
   PRIVATE SECTION.
     DATA ms_settings TYPE lif_tcmb=>ty_settings.
+    DATA mv_language TYPE lcl_text=>ty_language.
 
     METHODS setup.
+    METHODS teardown.
     METHODS weekdays FOR TESTING.
     METHODS valid_settings FOR TESTING.
     METHODS needs_a_rate_type FOR TESTING.
@@ -2985,6 +3380,8 @@ CLASS ltc_loader IMPLEMENTATION.
 
   METHOD setup.
     DATA ls_mapping TYPE lif_tcmb=>ty_mapping.
+    mv_language = lcl_text=>language( ).
+    lcl_text=>set_language( 'E' ).
     CLEAR ms_settings.
     ls_mapping-rate_type = 'M'.
     ls_mapping-source    = lif_tcmb=>source-fx_buy.
@@ -2993,6 +3390,9 @@ CLASS ltc_loader IMPLEMENTATION.
     ms_settings-origin    = lif_tcmb=>origin-https.
   ENDMETHOD.
 
+  METHOD teardown.
+    lcl_text=>set_language( mv_language ).
+  ENDMETHOD.
 
   METHOD weekdays.
     " 30 Oct 2026 is a Friday
@@ -3127,13 +3527,91 @@ CLASS ltc_source_file IMPLEMENTATION.
   ENDMETHOD.
 ENDCLASS.
 
+CLASS ltc_text DEFINITION FINAL FOR TESTING.
+  "#AU Risk_Level Harmless
+  "#AU Duration Short
+  PRIVATE SECTION.
+    DATA mv_language TYPE lcl_text=>ty_language.
+    METHODS setup.
+    METHODS teardown.
+    METHODS language_choices FOR TESTING.
+    METHODS parameters_stay_literal FOR TESTING.
+    METHODS technical_status_stays FOR TESTING.
+    METHODS unknown_key_is_visible FOR TESTING.
+ENDCLASS.
+
+CLASS ltc_text IMPLEMENTATION.
+  METHOD setup.
+    mv_language = lcl_text=>language( ).
+  ENDMETHOD.
+
+  METHOD teardown.
+    lcl_text=>set_language( mv_language ).
+  ENDMETHOD.
+
+  METHOD language_choices.
+    DATA lv_text TYPE string.
+    DATA lv_expected TYPE string.
+    lcl_text=>set_language( 'T' ).
+    lv_text = lcl_text=>choose( iv_en = `English` iv_tr = `Türkçe` ).
+    cl_aunit_assert=>assert_equals( act = lv_text exp = `Türkçe` ).
+    lcl_text=>set_language( 'E' ).
+    lv_text = lcl_text=>choose( iv_en = `English` iv_tr = `Türkçe` ).
+    cl_aunit_assert=>assert_equals( act = lv_text exp = `English` ).
+    lcl_text=>set_language( 'A' ).
+    IF sy-langu = 'T'.
+      lv_expected = `Türkçe`.
+    ELSE.
+      lv_expected = `English`.
+    ENDIF.
+    lv_text = lcl_text=>choose( iv_en = `English` iv_tr = `Türkçe` ).
+    cl_aunit_assert=>assert_equals( act = lv_text exp = lv_expected ).
+  ENDMETHOD.
+
+  METHOD parameters_stay_literal.
+    DATA lv_text TYPE string.
+    lcl_text=>set_language( 'T' ).
+    lv_text = lcl_text=>message( iv_key = 'FILE_OPEN_EXCEPTION'
+      iv_1 = `C:\two  spaces&2\file.xml` iv_2 = `ACCESS_DENIED` ).
+    cl_aunit_assert=>assert_equals( act = lv_text
+      exp = `C:\two  spaces&2\file.xml dosyası açılamadı: ACCESS_DENIED` ).
+    lcl_text=>set_language( 'E' ).
+    lv_text = lcl_text=>message( iv_key = 'CONNECTION_OK' iv_1 = `2026/204` iv_2 = `2026-10-30` iv_3 = `22` ).
+    cl_aunit_assert=>assert_equals( act = lv_text exp = `Connection OK: bulletin 2026/204 of 2026-10-30, 22 currencies` ).
+  ENDMETHOD.
+
+  METHOD technical_status_stays.
+    DATA lv_status TYPE lif_tcmb=>ty_status.
+    DATA lv_text TYPE string.
+    lv_status = lif_tcmb=>status-new.
+    lcl_text=>set_language( 'T' ).
+    lv_text = lcl_text=>status_text( iv_status = lv_status iv_test = abap_true ).
+    cl_aunit_assert=>assert_equals( act = lv_text exp = `Yeni kayıt planlanıyor` ).
+    cl_aunit_assert=>assert_equals( act = lv_status exp = lif_tcmb=>status-new ).
+    lv_text = lcl_text=>status_text( iv_status = lv_status iv_test = abap_false ).
+    cl_aunit_assert=>assert_equals( act = lv_text exp = `Yeni kayıt` ).
+  ENDMETHOD.
+
+  METHOD unknown_key_is_visible.
+    DATA lv_text TYPE string.
+    lcl_text=>set_language( 'T' ).
+    lv_text = lcl_text=>message( 'CUSTOM_KEY' ).
+    cl_aunit_assert=>assert_equals( act = lv_text exp = `Bilinmeyen metin: CUSTOM_KEY` ).
+  ENDMETHOD.
+ENDCLASS.
+
 INITIALIZATION.
+  lcl_text=>set_language( p_lang ).
   lcl_app=>set_texts( ).
 
 AT SELECTION-SCREEN OUTPUT.
+  lcl_text=>set_language( p_lang ).
+  lcl_app=>set_texts( ).
+  lcl_app=>set_languages( ).
   lcl_app=>set_date_rules( ).
 
 AT SELECTION-SCREEN.
+  lcl_text=>set_language( p_lang ).
   CASE sscrfields-ucomm.
     WHEN 'CONN'.
       lcl_app=>test_connection( ).
@@ -3142,6 +3620,7 @@ AT SELECTION-SCREEN.
   ENDCASE.
 
 START-OF-SELECTION.
+  lcl_text=>set_language( p_lang ).
   IF s_date-high IS INITIAL.
     gv_to = s_date-low.
   ELSE.

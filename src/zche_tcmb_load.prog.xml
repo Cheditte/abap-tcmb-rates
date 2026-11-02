@@ -13,6 +13,12 @@
    </PROGDIR>
    <TPOOL>
     <item>
+     <ID>S</ID>
+     <KEY>P_LANG</KEY>
+     <ENTRY>Dil / Language</ENTRY>
+     <LENGTH>22</LENGTH>
+    </item>
+    <item>
      <ID>R</ID>
      <ENTRY>TCMB exchange rates: load into TCURR</ENTRY>
      <LENGTH>36</LENGTH>

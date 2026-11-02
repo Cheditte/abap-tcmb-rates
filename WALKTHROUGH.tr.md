@@ -33,13 +33,13 @@ Sıra: [0 · Hazırlık](#hazirlik) → [1 · SE38](#kurulum) → [2 · Seçimle
 ![SE38 kaynak düzenleyicisinde Upload menüsü; bu sürümde yüklenecek dosya zche_tcmb_load.prog.abap](docs/images/sap-upload.png)
 
 4. Sözdizimi kontrolünü yapıp **Ctrl+F3** ile etkinleştirin. Program özelliklerinde **Fixed point arithmetic / Sabit nokta aritmetiği** açık olmalı; kur hesabı için gereklidir. abapGit alternatifi bu özelliği metaveriden alır.
-5. **Program → Execute → Unit Tests** üzerinden gömülü testleri çalıştırın. Güncel kaynakta **44 test** vardır; sayı, testlerin SAP'de geçtiği anlamına gelmez. Hata varsa ilk veri kaydına geçmeden inceleyin.
+5. **Program → Execute → Unit Tests** üzerinden gömülü testleri çalıştırın. Güncel kaynakta **48 test** vardır; sayı, testlerin SAP'de geçtiği anlamına gelmez. Hata varsa ilk veri kaydına geçmeden inceleyin.
 
 **Uzun satır hatası:** kaynakta 72 karakterden uzun satırlar vardır. Editör ayarlarındaki **Downwards-compatible line length (72)** ve Upload/Download menüsündeki **Force Line Length 72** seçeneklerini kontrol edin. 72 karaktere zorlamayı kapatıp dosyayı yeniden yükleyin; kodu kesmeyin. Menü adları SAP GUI sürümüne/diline göre değişebilir.
 
-**Kontrol noktası:** `ZCHE_TCMB_LOAD` aktif ve F8 ile seçim ekranı açılıyor. Ayrı installer, ayar programı veya SE11/SE54/SM30 işlemi yoktur. Ekran etiketleri Türkçe oturumda Türkçe, diğer oturumlarda İngilizce oluşturulur; metin öğelerini elle doldurmanız gerekmez. Açılışta hata varsa tam mesajı kaydedin.
+**Kontrol noktası:** `ZCHE_TCMB_LOAD` aktif ve F8 ile seçim ekranı açılıyor. Ayrı installer, ayar programı veya SE11/SE54/SM30 işlemi yoktur. Varsayılan **Otomatik / Logon language** dil seçimi Türkçe oturumda Türkçe, diğer oturumlarda İngilizce kullanır; **Dil / Language** alanından bunu değiştirebilirsiniz. Metin öğelerini elle doldurmanız gerekmez. Açılışta hata varsa tam mesajı kaydedin.
 
-Mevcut programın eski sürümü varsa üzerine yüklemeden önce kaynağını, özel kodunu ve varyantlarını koruyun; [geçiş notunu](TECHNICAL.tr.md#eski-surumden-gecis) izleyin. Bu birleşim adayında SAP GUI görünümü ve temiz kopyala-yapıştır kurulumu yeniden kabul testi bekliyor. Yukarıdaki görsel yalnız genel SE38 yükleme menüsünü gösterir.
+Mevcut programın eski sürümü varsa üzerine yüklemeden önce kaynağını, özel kodunu ve varyantlarını koruyun; [geçiş notunu](TECHNICAL.tr.md#eski-surumden-gecis) izleyin. Bu birleşim adayında yenilenen SAP GUI görünümü, dil seçiminin ekranı yenilemesi ve temiz kopyala-yapıştır kurulumu kabul testi bekliyor. Yukarıdaki görsel yalnız genel SE38 yükleme menüsünü gösterir.
 
 <a id="ayarlar"></a>
 
@@ -49,8 +49,11 @@ Mevcut programın eski sürümü varsa üzerine yüklemeden önce kaynağını, 
 
 **SE38 → `ZCHE_TCMB_LOAD` → F8** ile ekranı açın. Aşağıdaki seçimler deneme örneğidir; kendi FI kararlarınıza göre uyarlayın.
 
+**İngilizce oturumda Türkçe ekran için:** ilk bloktaki **Dil / Language** listesinden **Türkçe** seçin. Oturumdan çıkmanız gerekmez. Bu seçim programın alan ve sonuç başlıkları, tarih listesi, bağlantı/hata/satır mesajları ve çalışma özetinde kullanılır. SAP GUI'nin kendi menüleri ve SAP/BAPI/işletim sisteminin özgün teknik mesajları sistem/oturum dilinde kalabilir.
+
 | Alan | İlk denemede ne yapacaksınız? |
 |---|---|
+| Dil / Language (`P_LANG`) | Türkçe için **Türkçe (`T`)**, İngilizce için **English (`E`)**. Varsayılan **Otomatik / Logon language (`A`)** oturum dilini izler. |
 | Bülten tarih(ler)i (`S_DATE`) | Bülteni yayımlanmış geçmiş bir hafta içi günü; ilk seferde tek gün. |
 | Test çalıştırma (`P_TEST`) | **İşaretli kalsın.** |
 | Döviz alış (`P_FXBUY`) | Örnekte `M`; uygun ve tanımlı SAP kur tipinizi girin. |
@@ -71,7 +74,7 @@ Mevcut programın eski sürümü varsa üzerine yüklemeden önce kaynağını, 
 
 1. Seçim ekranında **Goto → Variants → Save as Variant** veya ilgili **Varyant olarak kaydet** düğmesini kullanın; çoğu GUI'de Ctrl+S'dir.
 2. Örneğin `TCMB_DENEME` adı ve kendi açıklamanızı girin. Bu örnek ad hazır gelmez.
-3. Kaydedin. Sonraki çalıştırmada bu varyantı seçerek aynı alanları doldurun.
+3. Kaydedin. Sonraki çalıştırmada bu varyantı seçerek dil dahil aynı alanları doldurun. Oturum dilinden bağımsız Türkçe çıktı istiyorsanız varyantta **Türkçe** seçimini saklayın.
 
 **Kontrol noktası:** seçimler yeniden yüklenebiliyor. Varyant yalnız SAP'nin standart seçim kaydıdır; özel profil tablolarına veya OB08'e kur yazmaz. Günlük işin tarihini 5. adımda dinamik yapacağız.
 
@@ -79,10 +82,10 @@ Mevcut programın eski sürümü varsa üzerine yüklemeden önce kaynağını, 
 
 ## 3. Bağlantıyı sınayın ve kaydetmeden çalıştırın
 
-1. **TCMB bağlantısını test et** düğmesine basın. Son yedi gün içinde yakın tarihli bir bülteni alıp okuyabilirse `Connection OK` mesajı verir. Bu düğme seçtiğiniz tarih aralığını kullanmaz ve kur yazmaz.
+1. **TCMB bağlantısını test et** düğmesine basın. Son yedi gün içinde yakın tarihli bir bülteni alıp okuyabilirse seçtiğiniz dilde bağlantının başarılı olduğunu bildiren mesaj verir. Bu düğme seçtiğiniz tarih aralığını kullanmaz ve kur yazmaz.
 2. Geçmiş tek gün seçiminizi kontrol edin. Bugünün bülteni henüz yayımlanmamış olabilir.
 3. **Test çalıştırma işaretli kalsın**, F8'e basın.
-4. ALV sonuç listesinde bülten tarihi, geçerlilik tarihi (`VALID_FROM`), para çifti, kur tipi, oranlar, durum ve açıklamayı inceleyin. TCMB değeriyle karşılaştırırken JPY gibi birim/oran etkisini dikkate alın.
+4. ALV sonuç listesinde bülten tarihi, geçerlilik tarihi (`VALID_FROM`), para çifti, kur tipi, oranlar, durum ve açıklamayı inceleyin. Başlıklar ve ek durum açıklaması seçtiğiniz dildedir; `NEW`, `ERROR` gibi teknik durum kodları aynı kalır. TCMB değeriyle karşılaştırırken JPY gibi birim/oran etkisini dikkate alın.
 
 | Durum | Test çalıştırmasında anlamı |
 |---|---|
@@ -128,7 +131,7 @@ Varsayılan adres `https://www.tcmb.gov.tr/kurlar` gerçek TCMB adresidir; kendi
 3. **SM36**'da `ZCHE_TCMB_LOAD` ve bu varyantla job oluşturun. Bültenin yayımlanmasından sonraya planlayın ve SAP/job saat dilimini doğrulayın.
 4. Sınırlı yetkili çalışma kullanıcısıyla deneyin. **SM37**, job log'u ve spool üzerinden sonuçları izleyin. Hata job'ı `Cancelled` yapar; önceki başarılı kayıtlar geri alınmaz.
 
-Varyantları hedef sistemde hazırlayın veya kurumunuzun standart varyant taşıma yolunu kullanın; özel profil tablosu transport'u yoktur. Cumartesi/pazar atlanır; hafta içi eksik HTTP bülteninin davranışını seçtiğiniz politika belirler. Kaydedilmiş varyant ve dinamik tarihli SM36 yolu bu sürümde SAP kabul testi bekliyor.
+Varyantları hedef sistemde hazırlayın veya kurumunuzun standart varyant taşıma yolunu kullanın; özel profil tablosu transport'u yoktur. Türkçe job çıktısı için varyantta **Dil / Language → Türkçe** seçimini saklayın; **Otomatik / Logon language**, çalıştırma sırasında SAP'nin kullandığı dili izler. Cumartesi/pazar atlanır; hafta içi eksik HTTP bülteninin davranışını seçtiğiniz politika belirler. Kaydedilmiş dil seçimi, arka plan yerelleştirmesi ve dinamik tarihli SM36 yolu bu sürümde SAP kabul testi bekliyor.
 
 ## Dosyadan okuma
 

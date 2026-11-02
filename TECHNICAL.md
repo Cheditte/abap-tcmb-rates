@@ -10,12 +10,17 @@ The syntax target is **ABAP 7.00**: explicit declarations, `CREATE OBJECT`, clas
 
 For manual creation, enable **Fixed point arithmetic** in report attributes. Do not force 72-character lines; import the complete source including tests. `SELECTION_TEXTS_MODIFY` creates labels; `VRM_SET_VALUES` fills the date-rule list. The text table must be exactly `STANDARD TABLE OF rsseltexts WITH DEFAULT KEY`. Verify these interfaces on the target older release.
 
+**Dil / Language (`P_LANG`)** selects the report's language without changing the SAP session. `A` = **Otomatik / Logon language**: Turkish when `sy-langu = 'T'`, otherwise English. `T` = **Türkçe**, `E` = **English**. Default `A` preserves the previous behavior. An explicit choice is stored in the variant and also applies in background execution.
+
+The choice covers selection labels, date-rule choices, project-authored connection/error/row/summary messages and all ALV headings. Technical status codes remain stable; an additional status description uses the selected language. SAP GUI menus and raw SAP/BAPI/OS diagnostic text may retain the underlying system/logon language. Language refresh, variant and job behavior still need SAP acceptance for this revision.
+
 ## Selection fields
 
 Variants store these standard selections. No custom profile table is used.
 
 | Field | Meaning / behavior |
 |---|---|
+| `P_LANG` | `A`: automatic, `T`: Türkçe, `E`: English. Stored in variants; controls report presentation and project messages. |
 | `S_DATE` | Bulletin date/range; Saturdays and Sundays are skipped. |
 | `P_TEST` | Default `X`; no write BAPI/commit. Reads, calculations, comparisons and exits still run. |
 | `P_FXBUY` | SAP rate type for `ForexBuying`. |
@@ -108,4 +113,4 @@ npm run check:source
 
 abaplint **2.120.92** uses `v700` with three small standard class/interface stand-ins committed to the repository. Standard type/API coverage is incomplete; lint proves neither activation nor older-release support. A supplemental scan checks selected syntax restrictions and the single-report package.
 
-The former `test:logic` harness was attempted with this report but could not resolve selection-screen, ALV and `CL_AUNIT_ASSERT` dependencies. It was removed rather than reporting old tests as current. **Run the 44 embedded tests in SAP.** [Contribution and acceptance checklist](CONTRIBUTING.md) · [Changes](CHANGELOG.md).
+The former `test:logic` harness was attempted with this report but could not resolve selection-screen, ALV and `CL_AUNIT_ASSERT` dependencies. It was removed rather than reporting old tests as current. **Run the 48 embedded tests in SAP.** Localization tests must not leak language state between cases; verify explicit English/Turkish choices and automatic behavior independently. [Contribution and acceptance checklist](CONTRIBUTING.md) · [Changes](CHANGELOG.md).
