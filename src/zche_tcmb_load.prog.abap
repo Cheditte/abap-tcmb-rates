@@ -7,7 +7,11 @@
 *& All settings are on the selection screen; save them as a variant.
 *& Run it as a background job on working days after 15:30, when TCMB
 *& publishes. In the background an error ends the job as "Cancelled".
-*& Your own rules: class LCL_EXIT below.
+*& Bilingual texts live in LCL_TEXT because copy/paste does not carry
+*& text elements. On non-Unicode systems without a Turkish code page,
+*& choose English if Turkish characters are not displayed correctly.
+*& Your own rules live in LCL_EXIT below. An update replaces that code;
+*& keep your changes separately and reapply them after every update.
 *&
 *& Classic ABAP syntax target: SAP_BASIS 7.00 (ECC 6.0). Runtime on that
 *& release still needs acceptance: no inline declarations, constructor
@@ -25,7 +29,7 @@ INTERFACE lif_tcmb.
 
   CONSTANTS version TYPE string VALUE `0.3.0`.
 
-  "! Address of the TCMB bulletins; one day is &lt;url&gt;/YYYYMM/DDMMYYYY.xml
+  " Address of the TCMB bulletins; one day is <url>/YYYYMM/DDMMYYYY.xml
   CONSTANTS default_url TYPE string VALUE `https://www.tcmb.gov.tr/kurlar`.
   CONSTANTS default_target TYPE waers VALUE 'TRY'.
 
@@ -303,6 +307,26 @@ CLASS lcl_text IMPLEMENTATION.
         lv_template = choose(
           iv_en = `SAP cannot reach TCMB (&1). Network team: allow outbound HTTPS from the SAP host to www.tcmb.gov.tr:443, or use a proxy in an SM59 destination`
           iv_tr = `SAP, TCMB'ye ulaşamıyor (&1). SAP sunucusundan www.tcmb.gov.tr:443 için HTTPS çıkışını açın veya SM59 hedefinde kurumunuzun proxy ayarını kullanın` ).
+      WHEN 'NO_TCURR_AUTH'.
+        lv_template = choose(
+          iv_en = `No authorization to change exchange rates (V_TCURR, S_TABU_DIS change authorization); ask your authorization administrator`
+          iv_tr = `Kur değiştirme yetkiniz yok (V_TCURR, S_TABU_DIS değiştirme); yetki yöneticinize başvurun` ).
+      WHEN 'URL_NOT_ALLOWED'.
+        lv_template = choose(
+          iv_en = `Use only https://www.tcmb.gov.tr or its paths, without spaces or @; use a Basis-managed SM59 destination for another host`
+          iv_tr = `Yalnız https://www.tcmb.gov.tr ve alt yollarını kullanın; boşluk ve @ kullanmayın. Başka sunucu için Basis yönetimindeki SM59 hedefini kullanın` ).
+      WHEN 'FOLDER_PARENT_PATH'.
+        lv_template = choose(
+          iv_en = `The server folder must not contain ..; enter its direct path`
+          iv_tr = `Sunucu klasörü .. içeremez; doğrudan klasör yolunu girin` ).
+      WHEN 'NO_FILE_AUTH'.
+        lv_template = choose(
+          iv_en = `No read authorization for server file &1 (S_DATASET)`
+          iv_tr = `&1 sunucu dosyası için okuma yetkiniz yok (S_DATASET)` ).
+      WHEN 'UNEXPECTED_ERROR'.
+        lv_template = choose(
+          iv_en = `Unexpected program error (&1): &2`
+          iv_tr = `Beklenmeyen program hatası (&1): &2` ).
       WHEN 'FILE_FOLDER_SCREEN'.
         lv_template = choose(
           iv_en = `Enter the folder of the bulletin files on the selection screen`
@@ -794,13 +818,27 @@ CLASS lcl_parser IMPLEMENTATION.
   METHOD child_value.
     DATA lv_text TYPE string.
     DATA lv_message TYPE string.
+    DATA lv_whole TYPE string.
+    DATA lv_fraction TYPE string.
+    DATA lv_dot TYPE i.
     lv_text = child_text( io_element = io_element iv_name = iv_name ).
     IF lv_text IS INITIAL.
       RETURN.
     ENDIF.
-    FIND REGEX '^[0-9]+([.][0-9]+)?$' IN lv_text.
-    IF sy-subrc <> 0.
+    lv_whole = lv_text.
+    FIND '.' IN lv_text MATCH OFFSET lv_dot.
+    IF sy-subrc = 0.
+      lv_whole = lv_text(lv_dot).
+      lv_dot = lv_dot + 1.
+      lv_fraction = lv_text+lv_dot.
+    ENDIF.
+    IF lv_whole IS INITIAL OR lv_whole CN '0123456789'.
       parse_error( iv_key = 'POSITIVE_DECIMAL' ).
+    ENDIF.
+    IF lv_text CS '.'.
+      IF lv_fraction IS INITIAL OR lv_fraction CN '0123456789'.
+        parse_error( iv_key = 'POSITIVE_DECIMAL' ).
+      ENDIF.
     ENDIF.
     TRY.
         rv_value = lv_text.
@@ -891,6 +929,12 @@ CLASS lcl_source_http DEFINITION FINAL.
   PUBLIC SECTION.
     INTERFACES lif_source.
 
+    "! Validates the direct host and removes trailing slashes
+    CLASS-METHODS normalize_base_url
+      IMPORTING iv_url TYPE csequence
+      RETURNING value(rv_url) TYPE string
+      RAISING lcx_tcmb.
+
     "! Path of one day below the base URL: YYYYMM/DDMMYYYY.xml
     CLASS-METHODS day_path
       IMPORTING
@@ -969,6 +1013,49 @@ CLASS lcl_source_http IMPLEMENTATION.
   ENDMETHOD.
 
 
+  METHOD normalize_base_url.
+    DATA lv_lower TYPE string.
+    DATA lv_host TYPE string VALUE `https://www.tcmb.gov.tr`.
+    DATA lv_length TYPE i.
+    DATA lv_bad TYPE abap_bool.
+    DATA lv_offset TYPE i.
+    DATA lv_char TYPE c.
+
+    rv_url = iv_url.
+    IF rv_url IS INITIAL.
+      rv_url = lif_tcmb=>default_url.
+      RETURN.
+    ENDIF.
+    lv_lower = rv_url.
+    TRANSLATE lv_lower TO LOWER CASE.
+    lv_length = strlen( rv_url ).
+    DO lv_length TIMES.
+      lv_offset = sy-index - 1.
+      lv_char = rv_url+lv_offset(1).
+      IF lv_char <= space.
+        lv_bad = abap_true.
+        EXIT.
+      ENDIF.
+    ENDDO.
+    IF rv_url CA '@\?#'.
+      lv_bad = abap_true.
+    ENDIF.
+    IF lv_lower <> lv_host AND lv_lower NP 'https://www.tcmb.gov.tr/*'.
+      lv_bad = abap_true.
+    ENDIF.
+    IF lv_bad = abap_true.
+      RAISE EXCEPTION TYPE lcx_tcmb
+        EXPORTING kind = lcx_tcmb=>kinds-config text_key = 'URL_NOT_ALLOWED'.
+    ENDIF.
+    " Canonicalize the scheme/host only: path case remains significant.
+    lv_length = strlen( lv_host ).
+    CONCATENATE lv_host rv_url+lv_length INTO rv_url.
+    WHILE rv_url CP '*/'.
+      lv_length = strlen( rv_url ) - 1.
+      rv_url = rv_url(lv_length).
+    ENDWHILE.
+  ENDMETHOD.
+
   METHOD create_client.
     DATA lv_base TYPE string.
     DATA lv_url TYPE string.
@@ -999,12 +1086,7 @@ CLASS lcl_source_http IMPLEMENTATION.
       RETURN.
     ENDIF.
 
-    IF is_settings-base_url IS INITIAL.
-      lv_base = lif_tcmb=>default_url.
-    ELSE.
-      lv_base = is_settings-base_url.
-      CONDENSE lv_base.
-    ENDIF.
+    lv_base = normalize_base_url( is_settings-base_url ).
     CONCATENATE lv_base `/` lv_path INTO lv_url.
     cl_http_client=>create_by_url(
       EXPORTING
@@ -1087,7 +1169,19 @@ CLASS lcl_source_file IMPLEMENTATION.
           text_key = 'FILE_FOLDER_SCREEN'.
     ENDIF.
 
+    IF is_settings-file_folder CS '..'.
+      RAISE EXCEPTION TYPE lcx_tcmb
+        EXPORTING kind = lcx_tcmb=>kinds-config text_key = 'FOLDER_PARENT_PATH'.
+    ENDIF.
     lv_file = file_name( iv_folder = is_settings-file_folder iv_date = iv_date ).
+    CALL FUNCTION 'AUTHORITY_CHECK_DATASET'
+      EXPORTING activity = 'READ' filename = lv_file
+      EXCEPTIONS no_authority = 1 activity_unknown = 2 OTHERS = 3.
+    IF sy-subrc <> 0.
+      lv_text = lcl_text=>message( iv_key = 'NO_FILE_AUTH' iv_1 = lv_file ).
+      RAISE EXCEPTION TYPE lcx_tcmb
+        EXPORTING kind = lcx_tcmb=>kinds-file text = lv_text.
+    ENDIF.
     TRY.
         OPEN DATASET lv_file FOR INPUT IN BINARY MODE MESSAGE lv_os_message.
       CATCH cx_sy_file_authority cx_sy_file_open cx_sy_file_access_error INTO lx_open.
@@ -1718,6 +1812,8 @@ CLASS lcl_loader DEFINITION FINAL.
     DATA mo_date_rule TYPE REF TO lcl_date_rule.
     DATA mo_exit TYPE REF TO lcl_exit.
 
+    METHODS check_write_authority RAISING lcx_tcmb.
+
     METHODS load_day
       IMPORTING
         iv_date         TYPE d
@@ -1767,6 +1863,18 @@ CLASS lcl_loader IMPLEMENTATION.
     DATA lo_date_rule TYPE REF TO lcl_date_rule.            "#EC NEEDED
     DATA lx_error TYPE REF TO lcx_tcmb.
     DATA lv_rate_type TYPE string.
+    DATA lv_url TYPE string.                                  "#EC NEEDED
+
+    TRY.
+        lv_url = lcl_source_http=>normalize_base_url( is_settings-base_url ).
+      CATCH lcx_tcmb INTO lx_error.
+        rv_problem = lx_error->get_text( ).
+        RETURN.
+    ENDTRY.
+    IF is_settings-file_folder CS '..'.
+      rv_problem = lcl_text=>message( iv_key = 'FOLDER_PARENT_PATH' ).
+      RETURN.
+    ENDIF.
 
     IF is_settings-mappings IS INITIAL.
       rv_problem = lcl_text=>message( iv_key = 'RATE_TYPE_REQUIRED' ).
@@ -1800,6 +1908,17 @@ CLASS lcl_loader IMPLEMENTATION.
   ENDMETHOD.
 
 
+  METHOD check_write_authority.
+    " The BAPI also checks authorization; fail once before processing any day.
+    CALL FUNCTION 'VIEW_AUTHORITY_CHECK'
+      EXPORTING view_action = 'U' view_name = 'V_TCURR'
+      EXCEPTIONS OTHERS = 1.
+    IF sy-subrc <> 0.
+      RAISE EXCEPTION TYPE lcx_tcmb
+        EXPORTING kind = lcx_tcmb=>kinds-config text_key = 'NO_TCURR_AUTH'.
+    ENDIF.
+  ENDMETHOD.
+
   METHOD run.
     DATA lv_problem TYPE string.
     DATA lv_text TYPE string.
@@ -1808,6 +1927,9 @@ CLASS lcl_loader IMPLEMENTATION.
     DATA lv_date TYPE d.
     DATA lt_day TYPE lif_tcmb=>ty_lines.
     DATA lx_error TYPE REF TO cx_root.
+    DATA lx_tcmb TYPE REF TO lcx_tcmb.
+    DATA lv_class TYPE string.
+    DATA lv_error TYPE string.
     DATA ls_error TYPE lif_tcmb=>ty_line.
 
     lv_problem = check( ms_settings ).
@@ -1816,6 +1938,9 @@ CLASS lcl_loader IMPLEMENTATION.
         EXPORTING
           kind = lcx_tcmb=>kinds-config
           text = lv_problem.
+    ENDIF.
+    IF iv_test = abap_false.
+      check_write_authority( ).
     ENDIF.
     IF iv_to < iv_from.
       lv_from = lcl_fmt=>date( iv_from ).
@@ -1849,11 +1974,22 @@ CLASS lcl_loader IMPLEMENTATION.
         TRY.
             lt_day = load_day( iv_date = lv_date iv_test = iv_test ).
             APPEND LINES OF lt_day TO rt_lines.
-          CATCH cx_root INTO lx_error.
+          CATCH lcx_tcmb INTO lx_tcmb.
             CLEAR ls_error.
             ls_error-bulletin_date = lv_date.
             ls_error-status = lif_tcmb=>status-error.
-            ls_error-message = lx_error->get_text( ).
+            ls_error-message = lx_tcmb->get_text( ).
+            APPEND ls_error TO rt_lines.
+            EXIT.
+          CATCH cx_root INTO lx_error.
+            " Preserve earlier row commits/results when an unexpected error stops the range.
+            lv_class = cl_abap_classdescr=>get_class_name( lx_error ).
+            lv_error = lx_error->get_text( ).
+            CLEAR ls_error.
+            ls_error-bulletin_date = lv_date.
+            ls_error-status = lif_tcmb=>status-error.
+            ls_error-message = lcl_text=>message(
+              iv_key = 'UNEXPECTED_ERROR' iv_1 = lv_class iv_2 = lv_error ).
             APPEND ls_error TO rt_lines.
             EXIT.
         ENDTRY.
@@ -2084,7 +2220,6 @@ SELECTION-SCREEN BEGIN OF BLOCK b_curr WITH FRAME TITLE t_curr.
 SELECTION-SCREEN COMMENT /1(75) c_curr.
 SELECT-OPTIONS s_curr FOR gv_tcmb_code NO INTERVALS.
 PARAMETERS p_map TYPE c LENGTH 100 VISIBLE LENGTH 30.
-PARAMETERS p_targ TYPE waers DEFAULT 'TRY'.
 PARAMETERS p_inv AS CHECKBOX DEFAULT ' '.
 SELECTION-SCREEN END OF BLOCK b_curr.
 
@@ -2251,8 +2386,6 @@ CLASS lcl_app IMPLEMENTATION.
               CHANGING  ct_texts = lt_texts ).
     add_text( EXPORTING iv_name = 'P_MAP'   iv_kind = 'P' iv_en = `Other SAP code (USD=USD2)`   iv_tr = `Farklı SAP kodu (USD=USD2)`
               CHANGING  ct_texts = lt_texts ).
-    add_text( EXPORTING iv_name = 'P_TARG'  iv_kind = 'P' iv_en = `Currency of the TCMB rates`  iv_tr = `TCMB kurlarının para birimi`
-              CHANGING  ct_texts = lt_texts ).
     add_text( EXPORTING iv_name = 'P_INV'   iv_kind = 'P' iv_en = `Also write TRY -> foreign`   iv_tr = `Ters yönü de yaz (TRY->döviz)`
               CHANGING  ct_texts = lt_texts ).
     add_text( EXPORTING iv_name = 'R_UPD'   iv_kind = 'P' iv_en = `Update it`                   iv_tr = `Güncelle`
@@ -2269,7 +2402,7 @@ CLASS lcl_app IMPLEMENTATION.
               CHANGING  ct_texts = lt_texts ).
     add_text( EXPORTING iv_name = 'P_DEST'  iv_kind = 'P' iv_en = `SM59 destination (optional)` iv_tr = `SM59 hedefi (isteğe bağlı)`
               CHANGING  ct_texts = lt_texts ).
-    add_text( EXPORTING iv_name = 'P_URL'   iv_kind = 'P' iv_en = `Other address (optional)`    iv_tr = `Farklı adres (isteğe bağlı)`
+    add_text( EXPORTING iv_name = 'P_URL'   iv_kind = 'P' iv_en = `TCMB base URL (normally blank)` iv_tr = `TCMB temel adresi (normalde boş)`
               CHANGING  ct_texts = lt_texts ).
     add_text( EXPORTING iv_name = 'R_FILE'  iv_kind = 'P' iv_en = `From a folder on the server` iv_tr = `Sunucudaki bir klasörden`
               CHANGING  ct_texts = lt_texts ).
@@ -2459,7 +2592,7 @@ CLASS lcl_app IMPLEMENTATION.
     rs_settings-mappings         = lt_mappings.
     rs_settings-date_rule        = p_rule.
     rs_settings-factory_calendar = p_cal.
-    rs_settings-target_currency  = p_targ.
+    rs_settings-target_currency  = lif_tcmb=>default_target.
     rs_settings-codes            = s_curr[].
     rs_settings-renames          = lcl_calc=>parse_renames( p_map ).
     rs_settings-write_inverse    = p_inv.
@@ -2482,7 +2615,7 @@ CLASS lcl_app IMPLEMENTATION.
     ENDIF.
     rs_settings-rfc_destination = p_dest.
     rs_settings-base_url        = p_url.
-    CONDENSE rs_settings-base_url.
+    " Keep whitespace visible to the URL validator; do not silently repair it.
     rs_settings-file_folder     = p_dir.
     SHIFT rs_settings-file_folder LEFT DELETING LEADING space.
     SHIFT rs_settings-file_folder RIGHT DELETING TRAILING space.
@@ -2714,6 +2847,14 @@ CLASS ltc_parser IMPLEMENTATION.
     CONCATENATE `<Tarih_Date Tarih="30.10.2026" Bulten_No="1">`
                 `<Currency CurrencyCode="USD"><Unit>1</Unit><ForexBuying>abc</ForexBuying></Currency>`
                 `</Tarih_Date>` INTO lv_xml.
+    assert_parse_error( lv_xml ).
+    REPLACE '>abc<' IN lv_xml WITH '>1.2.3<'.
+    assert_parse_error( lv_xml ).
+    REPLACE '>1.2.3<' IN lv_xml WITH '>1.<'.
+    assert_parse_error( lv_xml ).
+    REPLACE '>1.<' IN lv_xml WITH '>.5<'.
+    assert_parse_error( lv_xml ).
+    REPLACE '>.5<' IN lv_xml WITH '>1e2<'.
     assert_parse_error( lv_xml ).
   ENDMETHOD.
 
@@ -3367,6 +3508,13 @@ CLASS ltc_loader DEFINITION FINAL FOR TESTING.
     METHODS rate_type_used_twice FOR TESTING.
     METHODS needs_a_date_rule FOR TESTING.
     METHODS folder_needs_a_path FOR TESTING.
+    METHODS accepts_tcmb_url FOR TESTING.
+    METHODS rejects_external_url FOR TESTING.
+    METHODS rejects_userinfo_url FOR TESTING.
+    METHODS rejects_http_url FOR TESTING.
+    METHODS rejects_url_spaces FOR TESTING.
+    METHODS rejects_host_prefix FOR TESTING.
+    METHODS rejects_parent_folder FOR TESTING.
     METHODS rejects_cross_target FOR TESTING.
 
     METHODS assert_problem
@@ -3445,6 +3593,55 @@ CLASS ltc_loader IMPLEMENTATION.
     ms_settings-target_currency = 'EUR'.
     assert_problem( '*TRY*' ).
   ENDMETHOD.
+
+  METHOD accepts_tcmb_url.
+    DATA lv_problem TYPE string.
+    DATA lv_url TYPE string.
+    DATA lx_error TYPE REF TO lcx_tcmb.
+    ms_settings-base_url = `HTTPS://WWW.TCMB.GOV.TR/kurlar/`.
+    lv_problem = lcl_loader=>check( ms_settings ).
+    cl_aunit_assert=>assert_initial( act = lv_problem ).
+    TRY.
+        lv_url = lcl_source_http=>normalize_base_url( ms_settings-base_url ).
+        cl_aunit_assert=>assert_equals( act = lv_url exp = `https://www.tcmb.gov.tr/kurlar` ).
+        lv_url = lcl_source_http=>normalize_base_url( `https://www.tcmb.gov.tr` ).
+        cl_aunit_assert=>assert_equals( act = lv_url exp = `https://www.tcmb.gov.tr` ).
+      CATCH lcx_tcmb INTO lx_error.
+        lv_problem = lx_error->get_text( ).
+        cl_aunit_assert=>fail( lv_problem ).
+    ENDTRY.
+  ENDMETHOD.
+
+  METHOD rejects_external_url.
+    ms_settings-base_url = `https://evil.example`.
+    assert_problem( '*SM59*' ).
+  ENDMETHOD.
+
+  METHOD rejects_userinfo_url.
+    ms_settings-base_url = `https://www.tcmb.gov.tr@evil.example`.
+    assert_problem( '*SM59*' ).
+  ENDMETHOD.
+
+  METHOD rejects_http_url.
+    ms_settings-base_url = `http://www.tcmb.gov.tr`.
+    assert_problem( '*SM59*' ).
+  ENDMETHOD.
+
+  METHOD rejects_url_spaces.
+    ms_settings-base_url = `https://www.tcmb.gov.tr/two words`.
+    assert_problem( '*spaces*' ).
+  ENDMETHOD.
+
+  METHOD rejects_host_prefix.
+    ms_settings-base_url = `https://www.tcmb.gov.tr.evil.example/kurlar`.
+    assert_problem( '*SM59*' ).
+  ENDMETHOD.
+
+  METHOD rejects_parent_folder.
+    ms_settings-file_folder = `/tmp/../private`.
+    assert_problem( '*..*' ).
+  ENDMETHOD.
+
 
 
   METHOD assert_problem.

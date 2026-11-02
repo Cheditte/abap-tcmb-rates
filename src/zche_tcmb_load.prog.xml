@@ -97,12 +97,6 @@
     </item>
     <item>
      <ID>S</ID>
-     <KEY>P_TARG</KEY>
-     <ENTRY>Currency of the TCMB rates</ENTRY>
-     <LENGTH>34</LENGTH>
-    </item>
-    <item>
-     <ID>S</ID>
      <KEY>P_TEST</KEY>
      <ENTRY>Test run, write nothing</ENTRY>
      <LENGTH>31</LENGTH>
@@ -110,8 +104,8 @@
     <item>
      <ID>S</ID>
      <KEY>P_URL</KEY>
-     <ENTRY>Other address (optional)</ENTRY>
-     <LENGTH>32</LENGTH>
+     <ENTRY>TCMB base URL (normally blank)</ENTRY>
+     <LENGTH>38</LENGTH>
     </item>
     <item>
      <ID>S</ID>
