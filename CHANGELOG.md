@@ -1,34 +1,18 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 — unreleased
 
-This revision is pre-release. The current changes have local static and JavaScript-transpiled logic validation. An isolated single-file installation completed in SAP; final settings acceptance is partial. See the [validation record](docs/validation-2026-11-02.md). SAP acceptance is tracked in [CONTRIBUTING.md](CONTRIBUTING.md#sap-acceptance-checklist).
+- Install one executable `ZCHE_TCMB_LOAD` by copy/paste or upload in SE38; abapGit remains optional.
+- Replace custom profile tables and global classes with selection-screen settings and standard SAP variants.
+- Select Turkish or English independently of the SAP session, including result descriptions and job summaries.
+- Map six TCMB rate fields to SAP rate types; choose currencies, valid-from rules and optional code mappings.
+- Check change authorization once before a real run; retain the BAPI's own authorization checks.
+- Limit direct URLs to TCMB HTTPS addresses; use a Basis-managed SM59 destination for other hosts.
+- Reject parent-folder paths and check dataset read authorization before opening a server file.
+- Fix the quote currency to TRY and remove the redundant target-currency selection field.
+- Report unexpected exception class/text while preserving earlier results; retain per-row BAPI/commit and Keep-policy safeguards.
+- Add URL/path regression tests (55 embedded SAP tests total), retain the ABAP 7.00 syntax target and provide bilingual installation, use and job guides. [Verification](docs/validation.md).
 
-### Changed
+## Earlier multi-object edition
 
-- Rework the bilingual README and walkthrough from the overall flow and prerequisites to numbered actions and checkpoints, with clearer diagrams and maintainer-supplied SAP screenshots beside the relevant steps.
-- Respect blank/1/2/3 client controls, including local-only clients. Restore DDIC field metadata and selection-text prefixes, and activate report source/text objects correctly.
-- Remove the truncated `NEXT_WORKD` domain fixed value. Keep CHAR12 date rules and provide full-name F4 choices in the settings report, with application validation.
-
-- Restrict the target currency to blank/TRY so a TRY quote cannot be stored as an unrelated cross rate.
-- Preserve earlier results when a fatal source/parse error stops a range, and report the failing day.
-- Treat every file-open failure as a file error. A missing local file no longer implies that TCMB did not publish a bulletin.
-- Validate bulletin dates, units, positive numeric rates and currency identifiers, including duplicate codes.
-- Improve write/commit error handling and regression coverage around the writer and loader boundaries.
-- Preserve repeated spaces in application-server folder paths.
-
-### Added
-
-- Generated single-file SE38 installer with preview-only defaults, package/task checks, existing-object protection, embedded DDIC/OO/report metadata and test includes. Fresh installation only; the scope and limits of the completed SAP run are recorded.
-- Simple profile editor with explicit currency selection, table authorization/client/CTS checks, profile locking and stale-edit protection. Advanced profiles are preserved.
-- Twenty configuration-rule regression tests and generated-payload round-trip/completeness checks in CI. Updated bilingual guides and setup diagrams for the SE38 route.
-
-- Separate English/Turkish setup and usage guides and technical references, with static setup diagrams, explicit sample values and first-run result explanations.
-- Pinned local abaplint tooling, fixed-revision SAP stubs and GitHub Actions checks for 7.40 SP08 and 7.58 syntax targets.
-- A reproducible JavaScript-transpiled logic regression harness for selected calculator, runner and writer tests, with pinned dependencies and an explicit SAP-runtime limitation.
-- English/Turkish installation and first-run instructions, a DEV maintenance-dialog setup path, partial-write recovery guidance and explicit support limits.
-- Contribution and SAP acceptance guidance, plus an unpublished English SAP Community author outline and technical fact pack.
-
-### Historical baseline
-
-The README previously reported 26 passing ABAP Unit tests and end-to-end verification on an SAP ABAP Platform 2023 trial on 1 November 2026. That evidence belongs to the earlier revision and does not establish that these changes have passed SAP activation or runtime checks.
+The [previous edition at 3c28fbc](https://github.com/Cheditte/abap-tcmb-rates/commit/3c28fbc) used a generated installer, custom DDIC/profile tables and global classes. Version 0.3.0 replaces that setup with one report; preserve custom code and rebuild profile-based variants when upgrading.

@@ -1,55 +1,58 @@
-# Load TCMB exchange rates into SAP
+# TCMB exchange rates → SAP
 
 > **English** | [Türkçe](README.tr.md)
 
-Use this project to load the daily exchange rates published by the Central Bank of the Republic of Türkiye (TCMB) into SAP. You choose the currencies, buying or selling rates, and the date from which the rates are valid.
+`ZCHE_TCMB_LOAD` is a single ABAP report that loads daily exchange rates from the Central Bank of the Republic of Türkiye (TCMB) into SAP **OB08 / TCURR**, using `BAPI_EXCHANGERATE_CREATE`. Copy one file into SE38, preview the rates, then save them.
 
-**The flow:** SAP reads TCMB's daily bulletin and shows the results based on your settings, without saving exchange rates. Review them, choose to save, then verify the records in **OB08**, SAP's exchange-rate maintenance transaction.
+![TCMB rate preview in SAP](docs/images/result-preview.png)
 
-![TCMB daily bulletin and profile choices lead to a preview, then an explicit choice to save and verify in OB08](docs/images/overview-en.svg)
+[![ABAP checks](https://github.com/Cheditte/abap-tcmb-rates/actions/workflows/abaplint.yml/badge.svg)](https://github.com/Cheditte/abap-tcmb-rates/actions/workflows/abaplint.yml)
 
-## What do you need to start?
+## What do you want to do?
 
-The person installing the project should be an **ABAP developer** who can create and run reports in SE38. You can complete all the preparations yourself if you have the relevant access. Involve the FI or Basis/network owner where needed.
-
-![Three preparations: SAP development access, decisions about the rates, and HTTPS connectivity from SAP to TCMB](docs/images/prepare-en.svg)
-
-The standard HTTPS route needs no extra helper software on the SAP server. **No TCMB account, password or API key is required.** The SAP application server needs access to `www.tcmb.gov.tr:443` and certificate trust. Opening the site on your computer does not establish connectivity from SAP.
-
-## From installation to first use
-
-Start by **uploading one file in SE38**, without abapGit. The three reports have different purposes:
-
-| Order | Report to open in SE38 | What you do |
-|---|---|---|
-| 1 · Install | `ZCHE_TCMB_INSTALL` | Create the SAP objects in your package from the downloaded file. |
-| 2 · Configure | `ZCHE_TCMB_CONFIG` | Save currencies, rate type and date choices in a profile. |
-| 3 · Use | `ZCHE_TCMB_LOAD` | Select the profile and bulletin date; preview first, then choose to save. |
-
-A **profile** is a saved set of choices you reuse for each run. You create your first profile; none is preinstalled. Installation and saving a profile do not save exchange rates. Rates are written by the third report when you clear the test flag.
-
-**[Step-by-step installation and use, with SAP screenshots →](WALKTHROUGH.md)**
-
-[Open / save the single-file installer](https://raw.githubusercontent.com/Cheditte/abap-tcmb-rates/main/installer/zche_tcmb_install.prog.abap). Create report `ZCHE_TCMB_INSTALL` in SE38; follow the guide to upload it and perform the first checks.
-
-Start in DEV/a sandbox with **one day and a few currencies**. After verifying the results, you can schedule daily use as an SAP background job.
-
-## Scope and current status
-
-- The quote currency is **TRY**. The project does not calculate cross rates or create accounting documents. It loads standard SAP exchange-rate records through a BAPI.
-- Test mode is selected by default. Seeing `NEW` / `UPDATED` in a preview does not mean anything was saved.
-- The installer is for a **clean first installation**. Existing target objects stop the run without replacement or updates. Use normal transports for subsequent systems.
-- **Pre-release: v0.1.** An isolated SAP installation completed; final settings-save, transport and end-to-end acceptance checks remain pending. Static checks for 7.40 SP08 and 7.58 do not establish runtime compatibility on those releases. [Validation scope and remaining checks](docs/validation-2026-11-02.md).
-
-If SAP has no outbound internet access, an [alternative route](WALKTHROUGH.md#read-from-files) reads XML files staged in an SAP server folder. Downloading/preparing those files is outside this project.
-
-## Choose a guide
-
-| Your task | Document |
+| Goal | Guide |
 |---|---|
-| Install, configure and perform the first run | [Installation and usage guide](WALKTHROUGH.md) |
-| Look up all fields, call the classes from your own ABAP or extend the project | [Technical reference](TECHNICAL.md) |
-| Run checks or contribute | [CONTRIBUTING.md](CONTRIBUTING.md) |
-| Review changes | [CHANGELOG.md](CHANGELOG.md) |
+| Install the report | [One-file SE38 setup](WALKTHROUGH.md#install) |
+| Test without saving | [Preview rates](WALKTHROUGH.md#preview) |
+| Add or update OB08 rates | [Write and verify](WALKTHROUGH.md#first-write) |
+| Run automatically each day | [Dynamic-date variant and job](WALKTHROUGH.md#daily-use) |
+| Understand the fields or extend the report | [Technical reference](TECHNICAL.md) · [Screen guide, Turkish only](SCREENS.tr.md) |
 
-MIT licensed. [License](LICENSE) · [Report an issue / suggest an improvement](https://github.com/Cheditte/abap-tcmb-rates/issues)
+## Three things to prepare
+
+![SAP access, rate choices and connectivity](docs/images/prepare-en.svg)
+
+1. **SAP access:** create and activate `ZCHE_TCMB_LOAD` in SE38 using the [source file](src/zche_tcmb_load.prog.abap). A separate installer, custom tables and abapGit are unnecessary; abapGit remains an alternative.
+2. **Rate choices:** decide currencies, SAP rate types and valid-from dates. Check translation ratios in OBBS, especially for currencies quoted per 100 units.
+3. **Connection:** the SAP application server must reach `www.tcmb.gov.tr:443` over HTTPS and trust its certificate. No TCMB account, password or extra server software is required.
+
+Choose **Türkçe** or **English** on the report. Save reusable settings as a standard SAP variant. Test mode is selected initially; first try one day and one currency in DEV/test.
+
+## Compatibility and verification
+
+| Environment / check | Status |
+|---|---|
+| SAP ABAP Platform 2023 / SAP_BASIS 7.58 | Current report: warning-free activation, 55/55 SAP Unit tests, HTTPS preview and dynamic-date preview job passed. |
+| Current publication candidate | v700 lint/source checks pass; invalid direct URL and parent-folder selections rejected. Earlier revision: limited writes verified in OB08. |
+| ECC 6.0 / SAP_BASIS 7.00–7.02 | 7.00 syntax target; runtime not yet tested. Feedback welcome. |
+
+[Full verification table and known limits](docs/validation.md). [Upgrading an older installation](TECHNICAL.md#migration-from-the-old-edition).
+
+## Frequently asked questions
+
+### How do I load TCMB exchange rates into SAP automatically?
+Install the report, verify a preview and a controlled write, then schedule a daily SM36 job using a variant with **dynamic current date**. Follow [the job guide](WALKTHROUGH.md#daily-use).
+
+### Does it work on ECC 6.0?
+The code targets ABAP 7.00 syntax. Actual ECC 6.0 runtime acceptance is still pending; see the table above.
+
+### What happens on public holidays?
+Saturdays and Sundays are skipped. HTTP 404 on a requested weekday becomes `NO_BULLETIN`; select information, warning or job error behavior. Another day's rate is not substituted automatically.
+
+### Why is JPY per 100 units?
+TCMB's XML `Unit` states the quoted quantity. The report combines it with SAP's TCURF/OBBS factors; do not assume every currency uses 1:1. [Calculation](TECHNICAL.md#dates-and-ratios).
+
+### Which authorizations are needed?
+Writing requires table-maintenance change authorization for `V_TCURR` (typically `S_TABU_DIS`, group `FB32`; verify your system). Server files need `S_DATASET` read authorization. Job scheduling/execution needs the appropriate background permissions. [Who needs what](WALKTHROUGH.md#authorizations).
+
+MIT licensed · [License](LICENSE) · [Changes](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Issues](https://github.com/Cheditte/abap-tcmb-rates/issues)

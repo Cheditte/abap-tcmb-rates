@@ -13,27 +13,147 @@
    </PROGDIR>
    <TPOOL>
     <item>
+     <ID>S</ID>
+     <KEY>P_LANG</KEY>
+     <ENTRY>Dil / Language</ENTRY>
+     <LENGTH>22</LENGTH>
+    </item>
+    <item>
      <ID>R</ID>
      <ENTRY>TCMB exchange rates: load into TCURR</ENTRY>
      <LENGTH>36</LENGTH>
     </item>
     <item>
      <ID>S</ID>
-     <KEY>P_PROF</KEY>
-     <ENTRY>Rate profile</ENTRY>
+     <KEY>P_BNAVG</KEY>
+     <ENTRY>Banknote average</ENTRY>
+     <LENGTH>24</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_BNBUY</KEY>
+     <ENTRY>Banknote buying</ENTRY>
+     <LENGTH>23</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_BNSEL</KEY>
+     <ENTRY>Banknote selling</ENTRY>
+     <LENGTH>24</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_CAL</KEY>
+     <ENTRY>Factory calendar (next wd.)</ENTRY>
+     <LENGTH>35</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_DEST</KEY>
+     <ENTRY>SM59 destination (optional)</ENTRY>
+     <LENGTH>35</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_DIR</KEY>
+     <ENTRY>Folder of the XML files</ENTRY>
+     <LENGTH>31</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_FXAVG</KEY>
+     <ENTRY>Forex average (buy+sell)/2</ENTRY>
+     <LENGTH>34</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_FXBUY</KEY>
+     <ENTRY>Forex buying</ENTRY>
      <LENGTH>20</LENGTH>
     </item>
     <item>
      <ID>S</ID>
+     <KEY>P_FXSEL</KEY>
+     <ENTRY>Forex selling</ENTRY>
+     <LENGTH>21</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_INV</KEY>
+     <ENTRY>Also write TRY -&gt; foreign</ENTRY>
+     <LENGTH>33</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_MAP</KEY>
+     <ENTRY>Other SAP code (USD=USD2)</ENTRY>
+     <LENGTH>33</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
      <KEY>P_RULE</KEY>
-     <ENTRY>Date rule (empty: profile)</ENTRY>
-     <LENGTH>34</LENGTH>
+     <ENTRY>Date rule</ENTRY>
+     <LENGTH>17</LENGTH>
     </item>
     <item>
      <ID>S</ID>
      <KEY>P_TEST</KEY>
      <ENTRY>Test run, write nothing</ENTRY>
      <LENGTH>31</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>P_URL</KEY>
+     <ENTRY>TCMB base URL (normally blank)</ENTRY>
+     <LENGTH>38</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>R_FILE</KEY>
+     <ENTRY>From a folder on the server</ENTRY>
+     <LENGTH>35</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>R_HTTP</KEY>
+     <ENTRY>From TCMB over HTTPS</ENTRY>
+     <LENGTH>28</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>R_KEEP</KEY>
+     <ENTRY>Keep it</ENTRY>
+     <LENGTH>15</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>R_NBERR</KEY>
+     <ENTRY>Error (job is cancelled)</ENTRY>
+     <LENGTH>32</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>R_NBLOG</KEY>
+     <ENTRY>Only show it in the list</ENTRY>
+     <LENGTH>32</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>R_NBWRN</KEY>
+     <ENTRY>Warning</ENTRY>
+     <LENGTH>15</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>R_UPD</KEY>
+     <ENTRY>Update it</ENTRY>
+     <LENGTH>17</LENGTH>
+    </item>
+    <item>
+     <ID>S</ID>
+     <KEY>S_CURR</KEY>
+     <ENTRY>TCMB currency codes</ENTRY>
+     <LENGTH>27</LENGTH>
     </item>
     <item>
      <ID>S</ID>

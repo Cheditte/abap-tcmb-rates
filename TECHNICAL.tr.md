@@ -2,188 +2,136 @@
 
 > [English](TECHNICAL.md) | **Türkçe** · [README](README.tr.md) · [Kurulum ve kullanım](WALKTHROUGH.tr.md)
 
-Alan ayrıntıları, sınıf kullanımı, genişletme noktaları ve operasyon davranışı bu dosyada tutulur. İlk kurulum için kullanım rehberinden başlayın.
+## Yapı ve sürüm hedefi
 
-## Ne yapar?
+`src/zche_tcmb_load.prog.abap` tek çalıştırılabilir rapordur. Türler, iş mantığı, seçim ekranı, yerel sınıflar ve SAP Unit testleri aynı dosyadadır. Özel DDIC nesnesi veya global sınıf oluşturmaz. `src/package.devc.xml` ve rapor XML'i yalnız isteğe bağlı abapGit aktarımı için metaveridir.
 
-`ZCHE_TCMB_LOAD`, pazartesi–cuma bültenlerini HTTPS veya uygulama sunucusundaki klasörden alır. TCMB alanlarını SAP kur tipleriyle eşler, TCURF oranlarıyla hesaplar, TCURR ile karşılaştırır ve BAPI ile yazar. Sonuçlar açıklamalarıyla birlikte `NEW`, `UPDATED`, `UNCHANGED`, `SKIPPED`, `NO_BULLETIN` veya `ERROR` olur.
+Sözdizimi hedefi **ABAP 7.00**'dır. Açık bildirimler, `CREATE OBJECT`, klasik Open SQL, `CONCATENATE`, packed sayılar ve `CL_AUNIT_ASSERT` kullanılır. `RISK LEVEL`/`DURATION` ekleri yerine `"#AU` yorumları vardır. Gerçek 7.00/7.01/7.02 sistemde API ve çalışma zamanı uyumluluğu henüz doğrulanmadı; 7.58'de etkinleşmesi bunu kanıtlamaz. [Doğrulama kaydı](docs/validation.md).
 
-**Test run varsayılan olarak işaretlidir.** Bülteni alır, hesaplar ve karşılaştırır; yazma BAPI'sini çağırmaz. Yazma yetkisi, kilit davranışı ve commit başarısını kanıtlamaz. Özel exit'ler yine çalışır ve test moduna uymalıdır.
+Manuel kurulumda program özelliklerindeki **Fixed point arithmetic** açık olmalıdır. Satırları 72 karaktere zorlamayın; bütün kaynak ve testleri birlikte yükleyin. Seçim metinleri `SELECTION_TEXTS_MODIFY` ile, tarih listesi `VRM_SET_VALUES` ile hazırlanır. Metin tablosu tam olarak `STANDARD TABLE OF rsseltexts WITH DEFAULT KEY` olmalıdır. Bu arayüzler hedef eski sistemde ayrıca denenmelidir.
 
-Kurların karşılığı **TRY**'dir. `TARGET_CURRENCY` boş veya `TRY` olmalıdır; çapraz kur hesaplanmaz. İstenirse `TRY → döviz` yönü ters kotasyonla eklenir.
+**Dil / Language (`P_LANG`)**, SAP oturumunu değiştirmeden programın dilini seçer. `A` = **Otomatik / Logon language**: `sy-langu = 'T'` için Türkçe, diğer oturumlarda İngilizce. `T` = **Türkçe**, `E` = **English**. Varsayılan `A` önceki davranışı korur. Açık dil seçimi varyantla saklanır ve arka planda da uygulanır.
 
-## Destek ve gereksinimler
+Seçim etiketleri, tarih listesi, projeye ait bağlantı/hata/satır/özet mesajları ve bütün ALV başlıkları bu seçimi kullanır. Teknik durum kodları korunur; ek durum açıklaması seçilen dilde gösterilir. SAP GUI menüleri ve SAP/BAPI/işletim sisteminden gelen özgün tanılama metinleri alttaki sistem/oturum dilinde kalabilir.
 
-| Konu | Mevcut durum |
+<a id="secim-alanlari"></a>
+
+## Seçim alanları
+
+Varyantlar bu standart seçimleri saklar. Özel profil tablosu yoktur.
+
+| Alan | Anlamı / davranışı |
 |---|---|
-| Dil | On-premise/private sistemler için standart ABAP; **ABAP Cloud uygulaması değildir**. |
-| Statik hedefler | abaplint ile 7.40 SP08 ve 7.58 kontrol edilir; çalışma zamanı garantisi değildir. |
-| Çalışma zamanı kanıtı | Ayrı test adlarıyla temiz kurulum tamamlandı; son ayar ekranı kabulü kısmi. [Test kaydı](docs/validation-2026-11-02.md). |
-| Kurulum | Tek dosyalı SE38 installer ve basit ayar programı; abapGit isteğe bağlıdır. Hazır SM30 ekranı veya profil verisi yok. |
-| Bağlantı | SAP uygulama sunucusundan `www.tcmb.gov.tr:443` erişimi veya hazırlanmış dosyalar. Gerçek sertifika zinciri ve STRUST PSE'sini Basis doğrulamalı. |
-| SAP ayarları | Para birimleri, kur tipleri, OBBS'de TCURF oranları; `NEXT_WORKDAY` için fabrika takvimi. |
-| Yetkiler | Kurulumda geliştirme/içe aktarma ve profil bakımı; çalışma kullanıcısının BAPI, tablo ve dosya yetkileri ayrıca test edilmeli. |
+| `P_LANG` | `A`: otomatik, `T`: Türkçe, `E`: English. Dil seçimi varyantta saklanır; görüntü ve program mesajlarını etkiler. |
+| `S_DATE` | TCMB bülten günü veya aralığı; cumartesi/pazar atlanır. |
+| `P_TEST` | Varsayılan `X`; yazma BAPI'si ve commit çağrılmaz. Okuma, hesaplama, karşılaştırma ve exit'ler çalışır. |
+| `P_FXBUY` | Döviz alış / `ForexBuying` için SAP kur tipi. |
+| `P_FXSEL` | Döviz satış / `ForexSelling` için kur tipi. |
+| `P_BNBUY` | Efektif alış / `BanknoteBuying` için kur tipi. |
+| `P_BNSEL` | Efektif satış / `BanknoteSelling` için kur tipi. |
+| `P_FXAVG` | Döviz alış/satış aritmetik ortalaması için kur tipi; iki değer de gerekir. |
+| `P_BNAVG` | Efektif alış/satış aritmetik ortalaması için kur tipi; iki değer de gerekir. |
+| `P_RULE` | Zorunlu tarih kuralı; başlangıçta boş. Listeden seçim yapılır. |
+| `P_CAL` | `NEXT_WORKDAY` için gerçek SCAL fabrika takvimi. |
+| `S_CURR` | TCMB kodları için dahil etme/dışlama. Boş = bütün kodları değerlendir. |
+| `P_MAP` | `USD=USD2; XAU=GLD` biçiminde kod eşlemesi. TCMB kodu üç harf, SAP kodu en çok beş karakter. Değerler örnektir. |
+| `P_INV` | TRY → döviz yönünü ters kotasyonla ekler. |
+| `R_UPD` / `R_KEEP` | Farklı mevcut kuru güncelle / koru. Varsayılan Güncelle; ilk denemede korumayı seçin. Eşit kur her durumda `UNCHANGED`. |
+| `R_NBLOG` / `R_NBWRN` / `R_NBERR` | Eksik hafta içi HTTP bültenini listede göster / uyar / hata say. Varsayılan liste. |
+| `R_HTTP` | Varsayılan HTTPS kaynağı. |
+| `P_DEST` | İsteğe bağlı SM59 tip G HTTP hedefinin gerçek adı. Host `www.tcmb.gov.tr`, 443, SSL, boş path prefix. |
+| `P_URL` | Normalde boş. Yalnız TCMB HTTPS adresi ve alt yolları; sunucu adı büyük/küçük harfe duyarsızdır. Boşluk, @, ters eğik çizgi, sorgu/fragment ve başka sunucu reddedilir; sondaki / temizlenir. |
+| `R_FILE` / `P_DIR` | SAP sunucusu klasörü. `..` reddedilir; dosya açılmadan S_DATASET READ kontrol edilir. Klasör içindeki boşluklar korunur. |
 
-Kaynak alanı, SAP kur tipi, geçerlilik ve üzerine yazma kuralını muhasebe belirlemelidir. Proje mevzuata göre muhasebe veya vergi uygulaması seçmez.
+En az bir TCMB alanına kur tipi girilmelidir. Bir kur tipini iki farklı TCMB alanına vermek reddedilir. Para birimi kod eşlemesi dövizi başka bir dövize dönüştürmez. SAP'de tanımlı olmayan kod `SKIPPED` olur. Eksik TCMB alış/satış alanı da atlanır; sağlanmış ama sıfır/negatif/geçersiz sayı ise ayrıştırma hatasıdır.
 
-## Tek dosyalı kurulum ve ayar programı
-
-`installer/zche_tcmb_install.prog.abap`, `src/` ve `installer/template.abap` dosyalarından `npm run build:installer` ile üretilir. 7.40 SP08 sözdizimi hedefi korunur. abapGit veya GitHub bağlantısına ihtiyaç duymadan gömülü metaveriyi, sınıf/arayüz kaynaklarını ve ABAP Unit include'larını kurar. Paket oluşturmaz; mevcut Z/Y paketini ve kullanıcının değiştirilebilir Workbench task'ını ister. `$TMP` için task boş olmalıdır.
-
-Ön kontrol mevcut nesneleri hem TADIR hem yerel kataloglarda arar. Mevcut aktif/pasif nesneler engeldir; DDIC şeması güncellenmez. Gerçek kurulumda CTS kayıtları, DDIC oluşturma/aktivasyon, OO kaynak kaydı ve toplu aktivasyon yapılır. DDIC aktivasyon dönüş kodları kontrol edilir. Dinamik `CL_OO_FACTORY` kaynak API'si, bulunmadığı durumda klasik `CL_OO_SOURCE` yolu kullanılır. SAP'nin iç repository API'leri sürüme göre değişebilir; yerel lint bunları doğrulamaz. Ayrı test adlarıyla temiz kurulum tamamlandı; son profil kaydı ve transport kabulü test kaydında açık kalan maddelerdir. Yarıda kalmış kurulum otomatik geri alınmaz veya devam ettirilmez.
-
-`ZCHE_TCMB_CONFIG` tek eşleme ve açık para birimi listesi için sade editördür. Üç tablo aynı LUW içinde kaydedilir; hata halinde rollback ve profil kilidi temizliği yapılır. S_TABU_NAM, SCC4 ve CTS kontrolleri uygulanır. Mevcut profil önce yüklenmelidir; son okunan profil/eşleme/para birimleri değişmişse kayıt reddedilir. İleri profil yapıları sessizce daraltılmaz. Transport anahtarları istemci + 20 karakter profil anahtarıyla sınırlandırılır; MAP/CURR alt satırları için generic son ek kullanılır. SAP kabulünde silinen satırların hedefteki etkisini de doğrulayın. Doğrudan SQL bakımının tablo loglaması/ortamınızdaki izleme gereksinimlerini ayrıca değerlendirin.
-
-İstemci kontrolü CCCORACTIV değerlerini kullanır: boş = elle kayıt, 1 = otomatik kayıt, 2 = değişiklik yasak, 3 = yalnız yerel değişiklik. Yerel kayıtta task boş ve durum boş/3 olmalıdır; transportlu kayıtta task gerekir ve durum boş/1 olmalıdır. Bilinmeyen durumlar reddedilir. SCC4 ayarı değiştirilmez.
-
-<a id="advanced-profile-maintenance"></a>
-
-Tarih kuralı alanı CHAR12'dir. `NEXT_WORKDAY`, klasik DD07V sabit değer anahtarına sığmadığından domain'de kesilmiş sabit değerler tutulmaz. Basit ayar ekranı F4 seçenekleri ve uygulama doğrulaması sağlar. İleri bakımda tam kural adını yazın; `NEXT_WORKD` geçersizdir.
-
-## İleri profil bakımı
-
-Birden fazla kur tipi eşlemesi, dışlama, farklı SAP para birimi kodu veya özel kaynak için üç tabloyu SM30 ile yönetin. Bu **isteğe bağlı** yolun ekranları depoda yoktur. DEV'de SE11 → Utilities → Table Maintenance Generator (veya SE54 → Generated Objects → Create/Change) ile her tablo için uygun yetki grubu, müşteri fonksiyon grubu, tek adımlı ekran ve standart kayıt rutinini seçip üretin. Örnek fonksiyon grupları `ZCHE_TCMB_PROF_M`, `ZCHE_TCMB_MAP_M`, `ZCHE_TCMB_CURR_M`'dir; adları kurumunuza göre seçin. Ayrı gruplarda ekran 0001 olabilir. Bakım engelliyse SE11 bakım ayarını inceleyin. Nesne/ayarları normal transportla taşıyın; canlıda ekran üretmeyin. Bu üretim yolu henüz SAP'de doğrulanmadı. Basit kullanım için bunları yapmanız gerekmez.
-
-## Profil ayarları
-
-Üç tablo istemciye bağlıdır. Aşağıdaki değerler örnektir; hazır profil verisi sağlanmaz. İlk kurulum ve basit ayar ekranı için [kullanım rehberine](WALKTHROUGH.tr.md) bakın.
-
-**`ZCHE_TCMB_PROF`: bir profil**
-
-| Alan | İlk deneme değeri veya anlamı |
-|---|---|
-| `PROFILE` | `DEMO` |
-| `DESCRIPTION` | Açıklamanız |
-| `DATE_RULE` | Örnekte `SAME_DAY`; muhasebeyle doğrulayın |
-| `FACTORY_CALENDAR` | `NEXT_WORKDAY` dışında boş; gerekiyorsa SCAL'da tanımlı takvim |
-| `TARGET_CURRENCY` | `TRY` veya boş |
-| `WRITE_INVERSE` | Başlangıçta boş; `X` ters yönü ekler |
-| `EXISTING_RATE` | Başlangıçta `S`, farklı mevcut kuru korur; `U` veya boş güncellemeye izin verir |
-| `NO_BULLETIN` | `I`: yalnız sonuç; `W`: uyarı; `E`: hata |
-| `SOURCE_CLASS` | HTTPS için boş; dosya için `ZCL_CHE_TCMB_SOURCE_FILE` |
-| `RFC_DESTINATION` | İsteğe bağlı SM59 HTTP hedefi: TCMB sunucusu, 443, SSL, path prefix boş |
-| `BASE_URL` | Normalde boş; SM59 hedefi yoksa özel bülten kök adresi |
-| `FILE_FOLDER` | Dosya kaynağında zorunlu; uygulama sunucusu klasörü |
-| `EXIT_CLASS` | Başlangıçta boş |
-
-**`ZCHE_TCMB_MAP`: örnek eşleme**
-
-| `PROFILE` | `RATE_TYPE` | `SOURCE` |
-|---|---|---|
-| `DEMO` | `M` | `FX_BUY` |
-
-Bu yalnızca örnektir, muhasebe önerisi değildir. Profil/kur tipi başına tek TCMB alanı eşlenir; aynı alan birden fazla kur tipinde kullanılabilir.
-
-**`ZCHE_TCMB_CURR`: ilk çalıştırmayı sınırlandırın**
-
-| `PROFILE` | `TCMB_CODE` | `SAP_CURRENCY` | `EXCLUDE` |
-|---|---|---|---|
-| `DEMO` | `USD` | boş | boş |
-| `DEMO` | `JPY` | boş | boş |
-
-Önce ilgili TCURF oranlarını hazırlayın. `EXCLUDE` boş satırlar dahil etme listesidir; `X` satırlar dışarıda kalır. Dahil etme satırı yoksa dışlanmamış bütün bülten para birimleri değerlendirilir. `SAP_CURRENCY`, yabancı kodu SAP'deki karşılığına eşler; kuru başka para birimine dönüştürmez.
-
-## Tarih kuralları
+## Tarih ve oran hesabı
 
 | Kural | Geçerlilik tarihi |
 |---|---|
-| `SAME_DAY` | Bülten tarihi. |
+| `SAME_DAY` | Bülten günü. |
 | `NEXT_DAY` | Ertesi takvim günü. |
-| `NEXT_WORKDAY` | Seçilen fabrika takvimindeki sonraki iş günü; SCAL takvimi gerekir. |
+| `NEXT_WORKDAY` | Seçilen takvimde bülten gününden sonraki ilk iş günü. |
 
-Program cumartesi/pazarı indirmez. Fabrika takvimi indirilecek günleri değil, geçerlilik tarihini değiştirir. Raporun `P_RULE` alanı doluysa profilin tarih kuralını bu çalıştırma için geçersiz kılar.
+Fabrika takvimi indirilecek günleri değil geçerlilik tarihini etkiler. Başlangıç/bitiş ve XML tarihi takvim geçerliliği açısından kontrol edilir. XML tarihi istenen günle eşleşmelidir.
 
-## TCMB alanları
+Doğrudan kur: `TCMB değeri × FFACT / (Unit × TFACT)`. İlgili tarih için TCURF'tan en yeni geçerli oran alınır; Unit ve iki oran da pozitif olmalıdır. Ara hesap `TYPE p LENGTH 16 DECIMALS 10`, çıktı TCURR'ın beş ondalıklı alanıdır. Taşma veya sıfıra yuvarlama `ERROR` olur. Oranlar muhasebe/FI kararına göre hazırlanır; örnek oranı otomatik uygulamayın.
 
-| `SOURCE` | XML değeri |
-|---|---|
-| `FX_BUY` | `ForexBuying` — döviz alış |
-| `FX_SELL` | `ForexSelling` — döviz satış |
-| `BN_BUY` | `BanknoteBuying` — efektif alış |
-| `BN_SELL` | `BanknoteSelling` — efektif satış |
-| `FX_AVG` | Döviz alış/satış ortalaması |
-| `BN_AVG` | Efektif alış/satış ortalaması |
+`P_INV` yalnız S/4HANA 2023 deneme ortamında görüldü. Ters kotasyonda aynı doğrudan çiftin oranları kullanılır, yön değiştirilirken faktörler terslenir. TCURR ters kotasyonu negatif işaretle saklar; hesaplanan büyüklük pozitiftir. Bu yönü ve çevrim tutarını hedef SAP'de `CONVERT_TO_LOCAL_CURRENCY` gibi standart geri okumayla doğrulayın. Denemelerin kapsamı [doğrulama tablosunda](docs/validation.md) bulunur.
 
-Kaynak değeri yoksa `SKIPPED` olur; örneğin XDR satış veya efektif alanları boş olabilir. Ortalama için iki değer gerekir. Sistemde tanımlı kur tiplerini seçin.
+## Kaynaklar
 
-## Dosya kaynağı ve sorun giderme
+HTTPS, `YYYYMM/DDMMYYYY.xml` yolunu kullanır. Doğrudan bağlantı `ANONYM` SSL PSE'sini seçer. SM59 hedefi varsa `/kurlar/` yolu hedefe eklenir. Sertifika önerisinde sabit kök adına güvenmek yerine gerçek zinciri doğrulayın. HTTP 404 `NO_BULLETIN` olur; diğer bağlantı/HTTP/XML hataları hatadır.
 
-`SOURCE_CLASS = ZCL_CHE_TCMB_SOURCE_FILE` ve uygulama sunucusundaki `FILE_FOLDER` klasörünü ayarlayın. Seçilecek günün tam XML'ini önceden `GGAAYYYY.xml`, örneğin `30102026.xml`, adıyla yerleştirin. XML tarihi istenen tarihle aynı olmalıdır. İndirme ve dosya tamamlandıktan sonra klasöre taşıma dış sürecin sorumluluğudur; indirici kurulmaz.
+Dosya kaynağı `P_DIR` altında `GGAAYYYY.xml` okur. Eksik, yetkisiz veya okunamayan dosya **`ERROR`** olur; tatil sayılmaz. Klasörün içindeki yinelenen boşluklar korunur. İndirme ve tamamlanan dosyayı okunan klasöre taşıma dış sürecin sorumluluğudur. Kaynaklar arasında otomatik geçiş yoktur.
 
-**Değişen davranış:** eksik dosya dahil her açma başarısızlığı `ERROR` olur. Eksik dosya, yayımlanmayan bülten ile aktarım/erişim sorununu güvenilir biçimde ayıramaz. Dosyaları hazırlayın, aralığı buna göre seçin. Özel kaynak bültenin olmadığını doğrulayabiliyorsa açıkça `NO_BULLETIN` üretebilir.
+Bağlantı düğmesi son yedi güne bakar, `S_DATE` seçimini kullanmaz ve yazmaz. Dosya kaynağında yalnız eski dosya hazırsa o tarihle normal test çalıştırması yapın.
 
-| Belirti | Kontrol |
-|---|---|
-| TLS/SSL hatası | Basis: gerçek sertifika zinciri, STRUST PSE, SM59 SSL ve proxy |
-| Bağlantı hatası | Ağ ekibi: uygulama sunucusunun yönlendirme, firewall ve proxy ayarları |
-| HTTP hedefi hatası | Basis: hedef sunucu, SSL ve yol |
-| Dosya hatası | Dosya varlığı/içeriği, işletim sistemi ve SAP dosya yetkileri |
-| TCURF hatası | FI ekibi: OBBS'de çift, kur tipi, oran ve geçerlilik tarihi |
+<a id="yerel-siniflar-ve-genisletme"></a>
 
-## Hatalar, kısmi yazma ve yeniden çalıştırma
-
-**Tarih aralığı tek bir atomik işlem değildir.** Sonraki satır/gün hata verdiğinde önceki başarılı kayıtlar commit edilmiş olabilir. Başarısız/Cancelled job bunları geri almaz. Yeniden denemeden önce sonuç, spool ve OB08'i inceleyin. Kaynak/ayrıştırma gibi durdurucu hatalarda sonraki tarihler işlenmez; önceki sonuçlar ve hata satırı korunur.
-
-Nedeni düzeltip etkilenen aralığı test modunda çalıştırın. Eşit kayıtlar `UNCHANGED` olur. `EXISTING_RATE = S`, farklı mevcut kayıtları `SKIPPED` olarak korur; `U` veya boş değiştirmeye izin verir. Yalnızca üzerine yazmak istiyorsanız `U` kullanın. Commit hatasında önce kaydedilmiş kurlarla mutabakat yapın. Genel kurtarma yöntemi olarak kur silmeyin.
-
-Commit hatasında yeniden çalıştırmadan veya bir güncelleme isteğini tekrar işlemeden önce Basis ekibinden **SM13** üzerindeki başarısız/bekleyen güncellemeleri incelemesini isteyin.
-
-## Kendi ABAP kodunuzdan çağırma
-
-Aşağıdaki örnek, önceden oluşturduğunuz DEMO profilini kullanır; ayar oluşturmaz. Raporla aynı yükleme akışını **test modunda** çağırır. Tarihi, bülteni bulunan bir günle değiştirin.
-
-```abap
-TRY.
-    DATA(lo_loader) = NEW zcl_che_tcmb_loader( iv_profile = 'DEMO' ).
-    DATA(lt_results) = lo_loader->run(
-      iv_from = '20261030'
-      iv_to   = '20261030'
-      iv_test = abap_true ).
-    " Inspect every result STATUS and MESSAGE before using the results.
-  CATCH zcx_che_tcmb INTO DATA(lx_error).
-    DATA(lv_error) = lx_error->get_text( ).
-    " Handle the configuration or loading error in your application.
-ENDTRY.
-```
-
-Bu kod raporunuzun yürütme bloğu veya bir metodu içindir. `iv_test = abap_false` gerçek yazmayı ve commit işlemini etkinleştirir. `run` içindeki hata satırları her zaman exception olarak dışarı çıkmaz; `lt_results` içindeki `ERROR`, `SKIPPED` ve `NO_BULLETIN` sonuçlarını ayrıca değerlendirin. Alt katmanın commit yaptığı bu akışı, başka iş kayıtlarının tek transaction olarak tamamlanmasını beklediğiniz bir LUW içine eklemeyin.
-
-## Mimari ve genişletme
+## Yerel sınıflar ve genişletme
 
 | Nesne | Görevi |
 |---|---|
-| `ZCHE_TCMB_LOAD` | Seçim, sonuçlar, job sonucu |
-| `ZCL_CHE_TCMB_LOADER` | Profil, tarih ve akış |
-| `ZCL_CHE_TCMB_RUNNER` | Tarih aralığı ve durdurucu hata sonrasında sonuçları koruma |
-| `ZCL_CHE_TCMB_SOURCE_HTTP`, `_FILE` | Bülten alma |
-| `ZCL_CHE_TCMB_PARSER` | XML ayrıştırma/doğrulama |
-| `ZCL_CHE_TCMB_DATE_RULE` | Geçerlilik tarihi |
-| `ZCL_CHE_TCMB_CALC` | Veritabanına erişmeden hesaplama |
-| `ZCL_CHE_TCMB_WRITER` | TCURR karşılaştırması ve BAPI ile yazma |
-| `ZCL_CHE_TCMB_RATE_STORE` | Yazıcının kullandığı SAP kalıcılık adaptörü |
+| `LIF_TCMB`, `LCX_TCMB`, `LCL_FMT` | Ortak türler, hata ve metin biçimleri. |
+| `LIF_SOURCE`, `LCL_SOURCE_HTTP`, `LCL_SOURCE_FILE` | Bülteni alma. |
+| `LCL_PARSER` | XML, tarih, birim, pozitif sayılar ve tekil para birimi doğrulama. |
+| `LCL_DATE_RULE` | Geçerlilik tarihi. |
+| `LCL_CALC` | Verilen oranlarla hesaplama; veritabanına erişmez. |
+| `LCL_WRITER` | TCURR karşılaştırması, standart BAPI, satır bazında commit. |
+| `LCL_LOADER` | Tarih aralığı, kaynak, hesaplama ve yazma akışı. |
+| `LCL_EXIT` | Kaynak içindeki boş genişletme metotları. |
+| `LCL_APP` | Seçim ekranı, ALV, job özeti ve hata durumu. |
 
-Özel kaynaklar `ZIF_CHE_TCMB_SOURCE`, exit'ler `ZIF_CHE_TCMB_EXIT` arayüzünü uygular. `BEFORE_WRITE` satırları değiştirebilir; `AFTER_WRITE` sonuçları ve test bayrağını alır. `BEFORE_WRITE` test bayrağı almaz; yalnızca verilen satırları değiştirmelidir. `AFTER_WRITE`, `iv_test` alır ve test modunda yazma/dış yan etkileri engellemelidir. Uzantıları SAP'te doğrulayın.
+Yerel sınıflar başka bir rapordan global sınıf gibi çağrılamaz. Aynı rapor içindeki **`LCL_EXIT`** bölümünü değiştirin veya standart rapor/varyant çalıştırma yolunu kullanın. Eski global `ZCL_CHE_TCMB_LOADER` çağrıları bu sürümün API'si değildir.
 
-## Doğrulama ve katkı
+`BEFORE_WRITE`, satırları karşılaştırmadan önce değiştirebilir; test bayrağı almaz, kalıcı kayıt veya dış yan etki üretmemelidir. `AFTER_WRITE`, `iv_test` alır; testte yazmayı/bildirim gibi dış etkileri engellemelidir. Başlangıçta ikisi de boştur. **Her kaynak güncellemesi LCL_EXIT kodunu ezer; özel kuralları ayrı saklayıp yeniden uygulayın ve test edin.** Alt akış commit yaptığı için başka iş kayıtlarıyla tek atomik LUW beklenen bir çağrı içine gömmeyin.
 
-Node.js 22+ ve Git ile:
+<a id="hatalar-ve-yeniden-deneme"></a>
+
+## Hatalar ve yeniden deneme
+
+Tarih aralığı tek atomik işlem değildir. Yazma ve commit satır bazında kontrol edilir. BAPI hatasında satır `ERROR` olur ve rollback çağrılır. Commit hatası başarı gibi gösterilmez; OB08 ve SM13'le mutabakat gerekir. `R_KEEP`, BAPI'nin güncellemeye izin bayrağını da kapatır; eşzamanlı eklenen kayıt üzerine yazılmamalıdır. Kilit/yarış durumunu SAP'de ayrıca doğrulayın.
+
+Sonraki gün kaynak/ayrıştırma hatası verirse önceki günlerin sonuçları ve hata satırı listede tutulur, sonraki günlere geçilmez. Başarısız veya Cancelled job önceki commit'leri geri almaz. Yeniden denemeden önce sonuç/spool ve OB08'i kontrol edin; commit sorunu varsa yetkili kişiyle SM13'ü inceleyin. Genel kurtarma yöntemi olarak kur silmeyin.
+
+Gerçek yazmadan önce OB08 bakım işleminden çıkın; başka oturumda açık bırakmak kilidi kaldırmaz. Gerekirse yetkili kişi SM12’de kilit sahibini/nesnesini incelesin. [Kurtarma adımları](WALKTHROUGH.tr.md#kilit-ve-kismi-kayit).
+
+Test modu yazma BAPI'sini ve commit'i çağırmaz. Gerçek yetki, kilit ve kayıt başarısını kanıtlamaz. Arka planda özet job log'una, sonuç listesi spool'a gider; `ERROR` job'ı iptal eder.
+
+<a id="eski-surumden-gecis"></a>
+
+## Eski sürümden geçiş
+
+1. DEV'de mevcut rapor kaynağını, özel eklemeleri, varyantları ve job tanımlarını koruyun.
+2. Güncel tek dosyayı `ZCHE_TCMB_LOAD` olarak yükleyin; bu raporun eski sürümünün yerini alır. Yeni kaynakta eski özel tablolar/global sınıflar kullanılmaz.
+3. Eski `P_PROF` alanını kullanan varyant/job'lar yeni ekranla uyumlu değildir. Eski profil kararlarını yeni alanlara elle aktarın, yeni varyantlar oluşturup test edin. Mevcut işleri doğrulamadan yeni rapora yönlendirmeyin.
+4. Programı normal transport süreciyle taşıyın. Varyant taşıma/oluşturma ve bağlantı/FI/yetki kontrollerini hedefte tamamlayın.
+
+SAP'deki eski nesneler ve ayar verileri otomatik silinmez. Silme veya paket/transport temizliği bu değişikliğin parçası değildir. Ayrı Z program adıyla denerseniz `REPORT` adını da uyarlayın; kur kayıtları yine ortak TCURR'a gider.
+
+Eski çok nesneli kurulum abapGit ile izleniyorsa, bu sürüme Pull sırasında kaldırılan dosyalar SAP nesnesi silme farkları olarak görünebilir. Bu farkları DEV'de bağımlılıklarıyla inceleyin; eski nesneleri koruma kararını vermeden toplu silme adımını onaylamayın. Tek kaynak dosyayı SE38'e yüklemek bu silme işlemlerini yapmaz.
+
+## Yerel kontroller
 
 ```sh
 npm ci --ignore-scripts
-npm run build:installer
-npm run check:installer
 npm run lint
-npm run test:logic
+npm run check:source
 ```
 
-`npm run lint:740` ve `npm run lint:758` hedefleri ayrı çalıştırır. SAP tanımları sabit `abaplint/deps` revizyonuyla yok sayılan `.abaplint-deps/` içine alınır; npm sürümü kilitlidir. GitHub Actions aynı kontrolleri çalıştırır. Eksik bağımlılık tanımları; SAP aktivasyonu, ATC, ABAP Unit ve entegrasyon testlerinin yerine geçmez.
+abaplint **2.120.92**, `v700` ayarı ve depodaki üç küçük standart sınıf/arayüz yer tutucusuyla çalışır. Standart SAP tür/API kapsamı eksiktir; lint aktivasyon veya eski sürüm desteği kanıtı değildir. Ek kaynak taraması bazı yeni sözdizimi yapılarını ve tek rapor paketini kontrol eder.
 
-`test:logic`, hesaplayıcı, ayar doğrulayıcısı, çalıştırıcı ve yazıcının seçilmiş testlerini basitleştirilmiş DDIC tanımları ve sahte kalıcılık katmanıyla JavaScript'e çevirir. Çevirici/çalışma zamanı ve `open-abap-core` revizyonu sabittir. SAP aktivasyonu, gerçek BAPI/veritabanı/commit, yetki, fabrika takvimi, girdi entegrasyonu ve SAP ondalık/taşma davranışlarını doğrulamaz.
+55 gömülü testi SAP’de çalıştırın; yerel taramada bulunan sayı test sonucu değildir. [Katkı](CONTRIBUTING.md) · [Doğrulama](docs/validation.md).
 
-**Geçmiş kanıt:** 1 Kasım 2026'da dışa aktarılan önceki revizyonda ABAP Platform 2023 üzerinde 26 testin geçtiği; USD/EUR/JPY yazma ve geri okuma, ters kotasyon, dosya ve job testlerinin yapıldığı raporlandı. Bu sonuçlar **sonraki değişiklikleri doğrulamaz**. Boş kurulum, kısıtlı kullanıcı, SM59, bakım ekranı üretimi ve eski sürümler kabul testi bekliyor.
+## Yetki sınırları
 
-[CONTRIBUTING.md](CONTRIBUTING.md), [CHANGELOG.md](CHANGELOG.md) ve yayımlanmamış [SAP Community yazar taslağına](docs/sap-community-draft.md) bakın.
+`LCL_LOADER->RUN`, ayar kontrolünden sonra yalnız gerçek yazmada küçük `CHECK_WRITE_AUTHORITY` metodunu çağırır; gün döngüsü başlamadan `VIEW_AUTHORITY_CHECK`, `V_TCURR`, U işlemi kontrol edilir. BAPI’nin kendi yetki kontrolü devam eder. Önceden BAPI koruması olmadığı söylenmez; yeni kontrol aynı hatanın her satırda tekrarlanmasını önler. Grup SAP tarafından belirlenir (genellikle FB32), kodda sabitlenmez. Ek S_EXCHRATE kontrolü eklenmez.
 
-## Lisans
+`AUTHORITY_CHECK_DATASET`, READ işlemi ve oluşturulan dosya adıyla OPEN DATASET öncesinde çağrılır. Yetkisizlik dosya hatasıdır. Bu yerel SAP kontrolleri uygun kullanıcılarla çalışma testi gerektirir; Unit testler rol değiştirmeden ayarları sınar. [Yetki tablosu](WALKTHROUGH.tr.md#yetkiler).
 
-MIT. Bkz. [LICENSE](LICENSE). Copyright (c) 2026 Ali Emre Altuntaş.
+Doğrudan HTTPS adresinin sunucusu www.tcmb.gov.tr ile sınırlıdır. Farklı sunucu, Basis yönetimindeki SM59 hedefinde tanımlanır; istek yolu /kurlar/YYYYMM/GGAAYYYY.xml olur. Hedef, yöneticinin kontrolündeki güven sınırıdır.
+
+Beklenen LCX_TCMB hatası kendi açıklamasıyla kalır. Beklenmeyen CX_ROOT hatasında çalışma zamanı sınıfı ve metin gösterilir; önceki satır commit’leri ve sonuçları kaybolmasın diye hata satırı korunur.
+
+Türkçe kod sayfası olmayan Unicode dışı sistemlerde metin bozulursa English seçin.
