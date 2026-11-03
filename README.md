@@ -6,6 +6,8 @@
 
 Use `ZCHE_TCMB_LOAD` to view daily exchange rates from the Central Bank of the Republic of Türkiye (TCMB) in SAP, inspect them without saving, and then import them. You can also schedule the same process to run automatically each day.
 
+Article on SAP Community: [Import TCMB Exchange Rates into SAP with a Single ABAP Report](https://community.sap.com/t5/technology-blog-posts-by-members/import-tcmb-exchange-rates-into-sap-with-a-single-abap-report/ba-p/14515126)
+
 ![TCMB rate preview in SAP](docs/images/result-preview.png)
 
 [![ABAP checks](https://github.com/Cheditte/abap-tcmb-rates/actions/workflows/abaplint.yml/badge.svg)](https://github.com/Cheditte/abap-tcmb-rates/actions/workflows/abaplint.yml)
