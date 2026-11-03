@@ -6,6 +6,8 @@
 
 `ZCHE_TCMB_LOAD` ile TCMB'nin günlük döviz kurlarını SAP'de görüntüleyebilir, kaydetmeden inceleyebilir ve ardından SAP'ye aktarabilirsiniz. Aynı işlemi her gün otomatik çalışacak şekilde de planlayabilirsiniz.
 
+SAP Community yazısı (İngilizce): [Import TCMB Exchange Rates into SAP with a Single ABAP Report](https://community.sap.com/t5/technology-blog-posts-by-members/import-tcmb-exchange-rates-into-sap-with-a-single-abap-report/ba-p/14515126)
+
 ![SAP'de TCMB kur ön izlemesi](docs/images/result-preview.png)
 
 [![ABAP kontrolleri](https://github.com/Cheditte/abap-tcmb-rates/actions/workflows/abaplint.yml/badge.svg)](https://github.com/Cheditte/abap-tcmb-rates/actions/workflows/abaplint.yml)
