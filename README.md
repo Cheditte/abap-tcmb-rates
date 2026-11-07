@@ -1,3 +1,5 @@
+![TCMB rates inside SAP: one ABAP report to preview, save and schedule](docs/images/tcmb-cover.png)
+
 # TCMB exchange rates → SAP
 
 > **English** | [Türkçe](README.tr.md)

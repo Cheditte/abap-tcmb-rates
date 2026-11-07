@@ -1,3 +1,5 @@
+![TCMB kurlarını tek ABAP raporuyla SAP’ye alın: ön izleme, kayıt ve zamanlama](docs/images/tcmb-cover.png)
+
 # TCMB döviz kurları → SAP
 
 > [English](README.md) | **Türkçe**
